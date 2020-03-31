@@ -1,7 +1,7 @@
 astropy==3.2.2
 attrs==19.3.0
 backcall==0.1.0
-bleach==3.1.1
+bleach==3.1.4
 cftime==1.0.3.4
 configobj==5.0.6
 cycler==0.10.0
