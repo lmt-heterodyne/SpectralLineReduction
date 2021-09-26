@@ -39,7 +39,7 @@ void rms_stats(int n, float *RMS, int *Pixel,
   float frob = 1.5;   // hardcoded for a robust mean/std
   
   if (n<0 || npix<0) return;
-  printf("rms_stats: %d %g\n",n, rms_cutoff);
+  printf("rms_stats: n=%d rms_cutoff=%g\n",n, rms_cutoff);
   dat = (float *) malloc(n * sizeof(float));  
 
   for (i=0; i<MAXPIXEL; i++) {
