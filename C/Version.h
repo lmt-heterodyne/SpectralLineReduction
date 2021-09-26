@@ -1,5 +1,5 @@
 
-#define LMTSLR_VERSION "LMTSLR 23-mar-2021"
+#define LMTSLR_VERSION "LMTSLR 26-sep-2021"
 
 // some other important things to share
 #define MAXHIST 100000
