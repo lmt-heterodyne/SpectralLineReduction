@@ -23,7 +23,7 @@ typedef struct
   int nsamples;
   float otf_jinc_a, otf_jinc_b, otf_jinc_c;
   int model;  // set if a_filename was given
-  
+  int fuzzy_edge;
 
   // fixed in code
   int n_cell;
