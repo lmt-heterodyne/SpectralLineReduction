@@ -11,7 +11,7 @@ typedef struct
 {
   int obsnum[MAXOBS];
   int nobsnum;
-  char source[32];
+  char source[40];
   float x_position, y_position;
   float *cube;
   float *caxis[3];
@@ -23,7 +23,7 @@ typedef struct
   double restfreq;
   float vlsr;
   float zsource;
-  char date_obs[20];
+  char date_obs[40];
   float resolution_size;
   char history1[MAXHIST];
   char history2[MAXHIST];
