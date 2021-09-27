@@ -190,24 +190,6 @@ int read_sdfits_file(SpecFile *S, char *filename)
       printf("DATA in column %d  nchan=%d\n",col_data,nchan);
     }
   } //for(i)
-
-  int col_crval2 =  keyindex(ncols, colnames, "CRVAL2") + 1;
-  int col_crval3 =  keyindex(ncols, colnames, "CRVAL3") + 1;
-  int col_tcal   =  keyindex(ncols, colnames, "TCAL") + 1;
-
-  int col_crval1 =  keyindex(ncols, colnames, "CRVAL1") + 1;
-  int col_crpix1 =  keyindex(ncols, colnames, "CRPIX1") + 1;
-  int col_cdelt1 =  keyindex(ncols, colnames, "CDELT1") + 1;
-  int col_ctype1 =  keyindex(ncols, colnames, "CTYPE1") + 1;
-  printf("crval1: %d %d %d %d\n", col_crval1, col_crpix1, col_cdelt1, col_ctype1);
-  int col_date_obs = keyindex(ncols, colnames, "DATE-OBS") + 1;
-  printf("date-obs: %d\n", col_date_obs);
-
-  if (col_tcal < 0)
-    printf("Warning: no TCAL, cannot calibrate, assumed all are 1.0\n");
-  printf("CRVAL2,3: cols=%d %d\n",col_crval2, col_crval3);
-
-
   nspec = nrows;
 
   S->theData = (float *)malloc(nspec*nchan*sizeof(float));      // the big chunk N-dim waterfall if you wish
@@ -233,14 +215,40 @@ int read_sdfits_file(SpecFile *S, char *filename)
   double crval2_center=0.0, crval3_center=0.0;
   
 
+  
+  int *fdnum_data = get_column_int(fptr, "FDNUM", nrows, ncols, colnames);
+  int *ifnum_data = get_column_int(fptr, "IFNUM", nrows, ncols, colnames);
+  int *plnum_data = get_column_int(fptr, "PLNUM", nrows, ncols, colnames);
+  int *int_data   = get_column_int(fptr, "INT",   nrows, ncols, colnames);   // can be absent
 
-#if 1
+  int fd_min, fd_max, if_min, if_max, pl_min, pl_max;
+  minmaxi(nrows, fdnum_data, &fd_min, &fd_max);
+  minmaxi(nrows, ifnum_data, &if_min, &if_max);
+  minmaxi(nrows, plnum_data, &pl_min, &pl_max);
+  printf("FDNUM: %d %d\n", fd_min, fd_max);
+  printf("IFNUM: %d %d\n", if_min, if_max);
+  printf("PLNUM: %d %d\n", pl_min, pl_max);
+  printf("INT: @ 0x%d\n", int_data);
+
+
   int anynul = 0;
   char nulvalc = '\0';
   int  nulvali = 0;
   float nulvalf = 0.0;
   double nulvald = 0.0;
   char *nulvals = "\0";
+  
+#if 1
+  char **sig_data = get_column_str(fptr, "SIG", nrows, ncols, colnames);
+  char **cal_data = get_column_str(fptr, "CAL", nrows, ncols, colnames);
+
+  for (i=0; i<nrows; i++) {
+      printf("%d  %c %c  %d %d %d  %.8g \n", i,
+             sig_data[i][0],  cal_data[i][0],  
+             fdnum_data[i], ifnum_data[i], plnum_data[i], crval1_data[i]/1e9);
+  }
+  
+#else  
 
   int col_cal  =    keyindex(ncols, colnames, "CAL") + 1;
   int col_sig  =    keyindex(ncols, colnames, "SIG") + 1;
@@ -253,25 +261,15 @@ int read_sdfits_file(SpecFile *S, char *filename)
   char *cal_data = (char *) malloc(nspec*sizeof(char));
   fits_read_col(fptr, TBYTE, col_cal, 1, 1, nrows, &nulvalc, cal_data, &anynul, &fstatus);
   iferror(fptr,fstatus);
-#endif
-
-  int *fdnum_data = get_column_int(fptr, "FDNUM", nrows, ncols, colnames);
-  int *ifnum_data = get_column_int(fptr, "IFNUM", nrows, ncols, colnames);
-  int *plnum_data = get_column_int(fptr, "PLNUM", nrows, ncols, colnames);
-
-  int fd_min, fd_max, if_min, if_max, pl_min, pl_max;
-  minmaxi(nrows, fdnum_data, &fd_min, &fd_max);
-  minmaxi(nrows, ifnum_data, &if_min, &if_max);
-  minmaxi(nrows, plnum_data, &pl_min, &pl_max);
-  printf("FDNUM: %d %d\n", fd_min, fd_max);
-  printf("IFNUM: %d %d\n", if_min, if_max);
-  printf("PLNUM: %d %d\n", pl_min, pl_max);
 
   for (i=0; i<nrows; i++) {
       printf("%d  %c %c  %d %d %d  %.8g \n", i,
              sig_data[i],  cal_data[i],  
              fdnum_data[i], ifnum_data[i], plnum_data[i], crval1_data[i]/1e9);
   }
+
+#endif
+
   
 
   // warning: only one IFNUM needs to be selected
