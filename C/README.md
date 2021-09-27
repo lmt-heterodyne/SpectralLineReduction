@@ -116,7 +116,7 @@ optional arguments:
   -m MAXTSYS, --maxtsys MAXTSYS
                         max Tsys value to use
 
- -z MINTSYS, --mintsys MINTSYS
+  -z MINTSYS, --mintsys MINTSYS
                         min Tsys value to use
   --clobber             Overwrites existing output files if set.
   -k {gauss,gaussbessel,nearest}, --kernel {gauss,gaussbessel,nearest}
@@ -159,4 +159,8 @@ optional arguments:
 
 ## todo
 
-there will be more selections needed, pixel )-u) is one, but band is likely. polarization?
+there will be more selections needed
+
+band:      select one band, or allow band-merge
+pol:       select one pol, or allow averaging, or diff to see problems?
+beam:      presumably for OTF, but the -u flag already selects them.
