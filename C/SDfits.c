@@ -15,6 +15,14 @@
 #include "SpecFile.h"
 #include "fitsio.h"
 
+typedef struct  {
+  fitsfile *fptr;
+  int nrows;
+  int ncols;
+  char **colnames;
+  int *tdim;
+} bintable, *bintableptr;
+
 void iferror(fitsfile *fptr, int fstatus)
 {
   if (fstatus) {
@@ -95,19 +103,11 @@ char **get_column_str(fitsfile *fptr, char *colname, int nrows, int ncols, char 
   char *vals = (char *) malloc(nrows*(slen+1)*sizeof(char));
   for (int i=0; i<nrows; i++)
     data[i] = &vals[(slen+1)*i];
-  int nulval = '\0';
+  char *nulval = "\0";
   int anynul;
-  fits_read_col(fptr, TBYTE, col, 1, 1, nrows*slen, &nulval, data, &anynul, &fstatus);
+  fits_read_col_str(fptr,       col, 1, 1, nrows, nulval, data, &anynul, &fstatus);  
   if (anynul) printf("get_column %s -> %d null's\n", colname, anynul);  
   return data;
-
-#if 0
-    if (strcmp(colname,"DATA")==0 || strcmp(colname,"SPECTRUM")==0) {  // classic SDFITS or CLASS FITS
-      col_data = ii;
-      fits_make_keyn("TFORM", ii, keyword, &fstatus);
-
-    }
-#endif  
 }
 
 
@@ -284,7 +284,7 @@ int read_sdfits_file(SpecFile *S, char *filename)
 #else  
   char **date_obs_data = (char **) malloc(nspec*sizeof(char **));
   date_obs_data[0] = date_obs;
-  date_obs_data[1] = &date_obs[23];
+  date_obs_data[1] = &date_obs[23];   //  with 22 it fails on 2nd one, 23 is ok
   //fits_read_col(fptr, TSTRING, col_date_obs, 1, 1, 1, &nulvals, &date_obs, &anynul, &fstatus);
   fits_read_col_str(fptr, col_date_obs, 1, 1, 2, nulvals, date_obs_data, &anynul, &fstatus);
 #endif  
@@ -318,7 +318,7 @@ int read_sdfits_file(SpecFile *S, char *filename)
   free(crval3_data);
 
 
-  printf("file: %s nspec= %zu nchan= %zu\n",filename,nspec,nchan);
+  printf("file: %s nspec= %ld nchan= %d\n",filename,nspec,nchan);
   S->nspec = nspec;
   S->nchan = nchan;
 
