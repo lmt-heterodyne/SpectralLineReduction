@@ -15,12 +15,12 @@
 #include "SpecFile.h"
 #include "fitsio.h"
 
-typedef struct  {
+typedef struct  {  // not used yet
   fitsfile *fptr;
   int nrows;
   int ncols;
   char **colnames;
-  int *tdim;
+  int *tdim;         // 0 terminating list e.g. 1024,1,1,1,0
 } bintable, *bintableptr;
 
 void iferror(fitsfile *fptr, int fstatus)
@@ -131,39 +131,41 @@ int read_sdfits_file(SpecFile *S, char *filename)
   char date_obs2[FLEN_KEYWORD];  
   char telescop[FLEN_KEYWORD];
   char instrume[FLEN_KEYWORD];
+  char sdfitver[FLEN_KEYWORD];
+  char fitsver[FLEN_KEYWORD];
 
   printf("WARNING:   the SDFITS reader is still experimental\n");
 
+  /*
+   *   Step 1:   open the first HDU to read the main keywords
+   */
+
+  printf("Opening SDfits file %s\n",filename);
   fits_open_file(&fptr, filename, fmode, &fstatus);
   fits_get_hdrspace(fptr, &nkeys, NULL, &fstatus);
-  printf("nkeys: %d\n", nkeys);
+  printf("nkeys: %d in HDU-1\n", nkeys);
   for (ii = 1; ii <= nkeys; ii++)  { 
     fits_read_record(fptr, ii, card, &fstatus);
     printf("%s\n", card);
   }
-  // DATE-OBS should really be a column
-  fits_read_keyword(fptr,"DATE-OBS", date_obs, NULL, &fstatus);
-  if (fstatus) {
-    strcpy(date_obs,"");
-    fstatus = 0;
-  }
   fits_read_keyword(fptr,"TELESCOP", telescop, NULL, &fstatus);
   fits_read_keyword(fptr,"INSTRUME", instrume, NULL, &fstatus);
-  printf("DATE-OBS: %s\n", date_obs);
-  iferror(fptr,fstatus);  
+  fits_read_keyword(fptr,"SDFITVER", sdfitver, NULL, &fstatus);   // e.g.  'sdfits ver1.22' 
+  fits_read_keyword(fptr,"FITSVER",  fitsver,  NULL, &fstatus);   // e.g.  '1.9     '
+  
   fits_close_file(fptr, &fstatus);
   iferror(fptr,fstatus);
 
-  // SDFITVER= 'sdfits ver1.2'      / this file was created by sdfits                
-  // FITSVER = '1.2     '           / FITS definition version                       
 
-  // EXTNAME = 'SINGLE DISH'
+  /*
+   *  Step 2:  open the 2nd HDU which should contain the "SINGLE DISH" extname
+   *           Note we currently don't open any subsequent HDU's
+   */
   
-  printf("Opening SDfits file %s\n",filename);
   fits_open_table(&fptr, filename, fmode, &fstatus);
   iferror(fptr,fstatus);
-  fits_get_hdrspace(fptr, &nkeys, NULL, &fstatus);
-  printf("nkeys: %d\n", nkeys);
+  fits_get_hdrspace(fptr, &nkeys, NULL, &fstatus);  // usually there isn't anything useful in this header
+  printf("nkeys: %d in HDU-2\n", nkeys);
   fits_get_num_rows(fptr, &nrows, &fstatus);
   iferror(fptr,fstatus);
   fits_get_num_cols(fptr, &ncols, &fstatus);
@@ -171,8 +173,9 @@ int read_sdfits_file(SpecFile *S, char *filename)
   printf("%s : Nrows: %ld   Ncols: %d\n",filename,nrows,ncols);
 
 
-  // gather all column names, but collect which column "DATA" or "SPECTRUM" is
-  // also collect 'nchan' from the dimension of the DATA
+  // gather all column names, but remember which column "DATA" or "SPECTRUM" is
+  // in order to find 'nchan' from the dimension of the DATA
+  // Warning:  some dialects set a corresponding TDIM is not (nchan,1,1,1) but e.g. (nchan/2,2,1,1)
   // In a BINTABLE each column name is under the FITS keyword TTYPEn
   char **colnames = (char **) malloc(ncols * sizeof(char *));
   int col_data = -1;
@@ -205,16 +208,16 @@ int read_sdfits_file(SpecFile *S, char *filename)
   double *crval1_data   = get_column_dbl(fptr, "CRVAL1", nrows, ncols, colnames);    
   double *crpix1_data   = get_column_dbl(fptr, "CRPIX1", nrows, ncols, colnames);    
   double *cdelt1_data   = get_column_dbl(fptr, "CDELT1", nrows, ncols, colnames);
+  char  **ctype1_data   = get_column_str(fptr, "CTYPE1", nrows, ncols, colnames);
   double *restfreq_data = get_column_dbl(fptr, "RESTFREQ", nrows, ncols, colnames);  
-  printf("Spectral Axis: %g @ %g %g\n", crval1_data[0], crpix1_data[0], cdelt1_data[0]);
+  printf("Spectral Axis: %s  %g @ %g %g   %s\n",
+	 ctype1_data[0],crval1_data[0], crpix1_data[0], cdelt1_data[0]);
   printf("RESTFREQ: %.8f GHz\n", restfreq_data[0]/1e9);
   
-  // RA,DEC (or whatever spatial system)
+  // RA,DEC (or whatever spatial system via CTYPE2,CTYPE3)
   double *crval2_data = get_column_dbl(fptr, "CRVAL2", nrows, ncols, colnames);  
   double *crval3_data = get_column_dbl(fptr, "CRVAL3", nrows, ncols, colnames);  
   double crval2_center=0.0, crval3_center=0.0;
-  
-
   
   int *fdnum_data = get_column_int(fptr, "FDNUM", nrows, ncols, colnames);
   int *ifnum_data = get_column_int(fptr, "IFNUM", nrows, ncols, colnames);
@@ -272,23 +275,16 @@ int read_sdfits_file(SpecFile *S, char *filename)
 
   
 
-  // warning: only one IFNUM needs to be selected
-  //          two PLNUM's can be combined, if they are the summation type
-  //          different FDNUM can be selected
+  // warning: only one IFNUM should to be selected (the -b flag was used before in making the Specfile)
+  //          two PLNUM's can be combined, if they are the summation type, then they need to be averaged
+  //          different FDNUM can be selected via the -u flag
 
 
-#if 1
   char **date_obs_data = get_column_str(fptr, "DATE-OBS", nrows, ncols, colnames);
-#else  
-  char **date_obs_data = (char **) malloc(nspec*sizeof(char **));
-  date_obs_data[0] = date_obs;
-  date_obs_data[1] = &date_obs[23];   //  with 22 it fails on 2nd one, 23 is ok
-  //fits_read_col(fptr, TSTRING, col_date_obs, 1, 1, 1, &nulvals, &date_obs, &anynul, &fstatus);
-  fits_read_col_str(fptr, col_date_obs, 1, 1, 2, nulvals, date_obs_data, &anynul, &fstatus);
-#endif  
-  printf("DATE-OBS2: '%s' '%s'\n",date_obs_data[0],date_obs_data[1]);
+  printf("DATE-OBS: '%s' '%s'\n",date_obs_data[0],date_obs_data[nrows-1]);
 
-  // these data should be read in sections if plnum/fdnum/ifnum dictate
+  // Read the big data
+  //     @todo  these data should be read in sections if plnum/fdnum/ifnum dictate so
   fits_read_col(fptr, TFLOAT,  col_data,   1, 1, nchan*nrows, &nulvalf, S->theData, &anynul, &fstatus);
 
 
