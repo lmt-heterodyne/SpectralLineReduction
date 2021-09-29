@@ -27,15 +27,15 @@ ELIBS =
 CFLAGS += `pkg-config --cflags cfitsio netcdf`
 LIBS   += `pkg-config --libs   cfitsio netcdf`
 
-all:	spec_driver_fits lmtgridder
+all:	spec_driver_fits slgridder
 	@./spec_driver_fits
-	@./lmtgridder
+	@./slgridder
 
 clean:
 	rm -f *.o *~ spec_driver_fits
 
-install: spec_driver_fits lmtgridder
-	cp spec_driver_fits lmtgridder ../bin
+install: spec_driver_fits slgridder
+	cp spec_driver_fits slgridder ../bin
 
 Cube.o : Cube.h Cube.c SpecFile.h
 	$(CC) $(CFLAGS) -c Cube.c $(INCLUDES)
@@ -64,6 +64,6 @@ DEPS = Cube.o Plane.o SpecFile.o ConvolveFunction.o OTFParameters.o Stats.o SDfi
 spec_driver_fits : $(DEPS) spec_driver_fits.c SpecFile.h
 	$(CC) $(CFLAGS) -o spec_driver_fits spec_driver_fits.c $(DEPS)  $(INCLUDES) $(LIBS)  $(ELIBS)
 
-lmtgridder : $(DEPS) lmtgridder.c SpecFile.h
-	$(CC) $(CFLAGS) -o lmtgridder lmtgridder.c $(DEPS)  $(INCLUDES) $(LIBS)  $(ELIBS)
+slgridder : $(DEPS) slgridder.c SpecFile.h
+	$(CC) $(CFLAGS) -o slgridder slgridder.c $(DEPS)  $(INCLUDES) $(LIBS)  $(ELIBS)
 
