@@ -100,19 +100,31 @@ class IFProc():
 
             date_obs2 = self.nc.variables['Data.TelescopeBackend.TelTime'][-1:].tolist()[0]
             date_obs2 = datetime.datetime.fromtimestamp(date_obs2).strftime('%Y-%m-%dT%H:%M:%S')
-            print("%s end   %s" % (date_obs2, self.filename))            
-            
+            print("%s end   %s" % (date_obs2, self.filename))
+            if True:
+                # report on the stats of BufPos
+                on = self.nc.variables['Header.Dcs.ObsNum'][0]
+                tt = self.nc.variables['Data.TelescopeBackend.TelTime'][:]
+                bp = self.nc.variables['Data.TelescopeBackend.BufPos'][:]            
+                nt  = len(tt)
+                tt0 = tt[0]
+                bp0 = bp[0]
+                for i in range(1,nt):
+                    if bp[i] != bp0:
+                        print("BufPos %3d  %6.1f sec %s" % (bp0, tt[i] - tt0, on))
+                        bp0 = bp[i]
+                        tt0 = tt[i]
+                print("BufPos %3d  %6.1f sec %s" % (bp[-1], tt[-1] - tt0, on))
+
             
             self.source_RA = self.nc.variables['Header.Source.Ra'][0]
             self.source_Dec = self.nc.variables['Header.Source.Dec'][0]
             self.obspgm = b''.join(self.nc.variables['Header.Dcs.ObsPgm'][:]
                                   ).decode().strip()
             if 'ifproc' in filename:
-                self.calobsnum = self.nc.variables['Header.IfProc.CalObsNum'
-                                                  ][0]
+                self.calobsnum = self.nc.variables['Header.IfProc.CalObsNum'][0]
             elif 'lmttpm' in filename:
-                self.calobsnum = self.nc.variables['Header.LmtTpm.CalObsNum'
-                                                  ][0]
+                self.calobsnum = self.nc.variables['Header.LmtTpm.CalObsNum'][0]
             else:
                 self.calobsnum = 0
                     
@@ -453,7 +465,7 @@ class IFProcData(IFProc):
         Constructor for IFProcData class.
         Args:
             filename (str): name of target NetCDF data file
-            npix (int): number of pixels (default is 16)
+            npix (int): number of pixels or beams (default is 16)
         Returns:
             none
         """
