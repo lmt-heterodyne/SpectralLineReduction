@@ -1,16 +1,16 @@
 # Gridding Programs
 
-## lmtgridder
+## slgridder
 
 grid_data.py is the python front-end that calls the gridder.  We have two gridders:
 
-1. spec_driver_fits  - reads SpecFile (netCDF) format
-2. lmtgridder - reads SDFITS, and optionally the SpecFile
+1. spec_driver_fits  - reads SpecFile (netCDF) format (will eventually be deprecated)
+2. slgridder - reads SDFITS, and optionally the SpecFile
 
 
    grid_data.py               G   details
    ------------              ---  -------
-p PP --program_path PP        -   Executable [Default: spec_driver_fits]
+-p PP --program_path PP       -   Executable [Default: spec_driver_fits]
 -i INPUT --input INPUT        i   Input SpecFile (no default)
 -o OUTPUT --output OUTPUT     o   Output map (no default)
 -w WEIGHT --weight WEIGHT     w   Output weight map (no default)
@@ -35,7 +35,7 @@ p PP --program_path PP        -   Executable [Default: spec_driver_fits]
 
 ## gbtgridder
 
-For good measure, here are the options for gbtgridder (development branch)
+For good measure, here are the options for gbtgridder (their development branch)
 
 -c  --channels         Optional channel range to use.  '<start>:<end>' counting from 0.
 
