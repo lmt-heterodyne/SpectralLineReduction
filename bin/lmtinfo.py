@@ -58,6 +58,10 @@ import netCDF4
 
 from docopt import docopt
 
+version="11-oct-2021"
+
+
+
 #  ifproc/ifproc_2018-06-29_078085_00_0001.nc
 #  spectrometer/roach0/roach0_78085_0_1_CHI-Cyg_2018-06-29_041713.nc
 #  RedshiftChassis0/RedshiftChassis0_2015-01-22_033551_00_0001.nc
@@ -133,10 +137,12 @@ def slr_summary(ifproc, rc=False):
         
     if rc:
         print('# <lmtinfo>')
+        print('# version=%s' % version)
         print('# ifproc="%s"' % ifproc)
         print('# date-obs="%s"' % date_obs)
         print('# skytime=%g sec' % tsky)
         print('# inttime=%g sec' % tint)
+        print('obsnum="%s"' % obsnum)
         print('obspgm="%s"' % obspgm)
         print('ProjectId="%s"' % pid)
         print('# SkyOff=%g %g' % (az1,el1))
@@ -229,6 +235,7 @@ def rsr_summary(rsr_file, rc=False):
         print('# date-obs="%s"' % date_obs)
         #print('# skytime=%g sec' % tsky)
         print('# inttime=%g sec' % tint)
+        print('obsnum="%s"' % obsnum)
         print('obspgm="%s"' % obspgm)
         print('ProjectId="%s"' % pid)
         #print('# SkyOff=%g %g' % (az1,el1))
@@ -336,7 +343,8 @@ elif len(sys.argv) == 3:
         if len(fn) > 0:
             rsr_summary(fn[0], rc=True)
         else:
-            print("Warning - no RSR files found")
+            print("# Warning - no RSR files found, possibly unknown obsnum")
+            print("obsnum=0")
 else:
                                                      # no other modes
     print("Usage : %s [path] obsnum" % sys.argv[0])
