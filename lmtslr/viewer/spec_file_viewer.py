@@ -177,11 +177,12 @@ class SpecFileViewer():
         s1 = max(self.sequence)+1
         print("Max sequence=%d" % s1)
         if all:
-            pl.plot(self.xpos,self.ypos, 'k.')
+            pl.plot(self.xpos,self.ypos, 'k.', markersize=0.2)
         else:
-            pl.plot(self.xpos[s0:s1],self.ypos[s0:s1], 'k.')
-        pl.xlabel('X')
-        pl.ylabel('Y')
+            pl.plot(self.xpos[s0:s1],self.ypos[s0:s1], 'k.', markersize=0.2)
+        pl.title("Coverage around RA,DEC=")
+        pl.xlabel('X offset [arcsec]')
+        pl.ylabel('Y offset [arcsec]')
         Plots.savefig()        
 
     def sx_position_plot(self, all=True):
