@@ -53,7 +53,8 @@ def main(argv):
     for i in range(len(LineList)):
         pl.plot(LineList[i].xarray,LineList[i].yarray)
         #pl.axis([-20,20,-1,1])
-        pl.xlabel('VSRC')
+        #pl.xlabel('VSRC')
+        pl.xlabel(Opts.x_axis)
     pl.show()
 
 
