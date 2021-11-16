@@ -11,6 +11,16 @@ Usage: lmtar.py OBSNUM
 
 This routine finds all LMT raw files for given OBSNUM
 
+Example 1: 
+
+     cd $DATA_LMT
+     rsync -avR `lmtar.py 79447 79448` lma:/lma/data_lmt
+
+Example 2: Giving my collaborator the raw data for an observation
+
+     cd $DATA_LMT
+     tar cf ~/public_html/secret.tar `lmtar.py 79447 79448`
+
 """
 
 import os
