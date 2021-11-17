@@ -58,7 +58,7 @@ import netCDF4
 
 from docopt import docopt
 
-version="11-oct-2021"
+version="16-nov-2021"
 
 
 
@@ -92,7 +92,11 @@ def slr_summary(ifproc, rc=False):
         
     bufpos = nc.variables['Data.TelescopeBackend.BufPos'][:]
     ubufpos = np.unique(bufpos)
-    # Header.Dcs.ObsNum 
+    # Header.Dcs.ObsNum
+
+    obsnum = nc.variables['Header.Dcs.ObsNum'][0]
+    calobsnum = nc.variables['Header.IfProc.CalObsNum'][0]
+    
     obspgm = b''.join(nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
     # Header.Dcs.ProjectId
     pid = "Unknown"
@@ -143,6 +147,7 @@ def slr_summary(ifproc, rc=False):
         print('# skytime=%g sec' % tsky)
         print('# inttime=%g sec' % tint)
         print('obsnum="%s"' % obsnum)
+        print('calobsnum="%s"' % calobsnum)
         print('obspgm="%s"' % obspgm)
         print('ProjectId="%s"' % pid)
         print('# SkyOff=%g %g' % (az1,el1))
@@ -207,10 +212,14 @@ def rsr_summary(rsr_file, rc=False):
     
     # Header.Dcs.ObsNum = 33551 ;
     obsnum = nc.variables['Header.Dcs.ObsNum'][0]
-
+    # yuck, with the RSR filenameconvention this is the trick to find the chassic
+    chassis   = rsr_file[ rsr_file.rfind('/') + 16 ]
+    con_name  = 'Header.RedshiftChassis_%s_.CalObsNum' % chassis
+    calobsnum = nc.variables[con_name][0]
+    
     # Bs, Cal
     obspgm = b''.join(nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
-    
+
     # Header.Radiometer.UpdateDate = "21/01/2015 23:12:07
     date_obs = b''.join(nc.variables['Header.Radiometer.UpdateDate'][:]).decode().strip()
     date_obs = new_date_obs(date_obs)
@@ -236,6 +245,7 @@ def rsr_summary(rsr_file, rc=False):
         #print('# skytime=%g sec' % tsky)
         print('# inttime=%g sec' % tint)
         print('obsnum="%s"' % obsnum)
+        print('calobsnum="%s"' % calobsnum)
         print('obspgm="%s"' % obspgm)
         print('ProjectId="%s"' % pid)
         #print('# SkyOff=%g %g' % (az1,el1))
