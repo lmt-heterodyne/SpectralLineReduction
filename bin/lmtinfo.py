@@ -58,7 +58,7 @@ import netCDF4
 
 from docopt import docopt
 
-version="16-nov-2021"
+version="21-nov-2021"
 
 
 
@@ -98,9 +98,10 @@ def slr_summary(ifproc, rc=False):
     calobsnum = nc.variables['Header.IfProc.CalObsNum'][0]
     
     obspgm = b''.join(nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
-    # Header.Dcs.ProjectId
-    pid = "Unknown"
-    pid = b''.join(nc.variables['Header.Dcs.ProjectId'][:]).decode().strip()
+    try:
+        pid = b''.join(nc.variables['Header.Dcs.ProjectId'][:]).decode().strip()
+    except:
+        pid = "Unknown"
     
     # the following Map only if obspgm=='Map'
     if obspgm=='Map':
@@ -207,9 +208,11 @@ def rsr_summary(rsr_file, rc=False):
     # Header.Source.SourceName
     src = b''.join(nc.variables['Header.Source.SourceName'][:]).decode().strip()
 
-    pid = "Unknown"
-    pid = b''.join(nc.variables['Header.Dcs.ProjectId'][:]).decode().strip()
-    
+    try:
+        pid = b''.join(nc.variables['Header.Dcs.ProjectId'][:]).decode().strip()
+    except:
+        pid = "Unknown"
+        
     # Header.Dcs.ObsNum = 33551 ;
     obsnum = nc.variables['Header.Dcs.ObsNum'][0]
     # yuck, with the RSR filenameconvention this is the trick to find the chassic
