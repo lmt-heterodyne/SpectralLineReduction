@@ -58,7 +58,7 @@ import netCDF4
 
 from docopt import docopt
 
-version="21-nov-2021"
+version="1-dec-2021"
 
 
 
@@ -168,10 +168,12 @@ def slr_summary(ifproc, rc=False):
         print('y_extent=%g   # arcsec' % ylen)
         print('instrument="%s"' % instrument)
         print("# </lmtinfo>")
-    else:    
-        print("%-20s %7s  %-5s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" % (date_obs, fn[2], obspgm, src, restfreq, vlsr, tint, ra, dec, az, el, az1,el1))
+    else:
+        print("%-20s %7s  %-5s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" % (date_obs, obsnum, obspgm, src, restfreq, vlsr, tint, ra, dec, az, el, az1,el1))
 
 #       print("%-20s %7d  %-5s %-30s RSR  0      %5.1f  %10.6f %10.6f  %5.1f %5.1f" %   (date_obs, obsnum, obspgm, src, tint, ra, dec, az, el))
+
+    # -end slr_summary() 
 
 def rsr_summary(rsr_file, rc=False):
     def new_date_obs(date):
@@ -268,6 +270,9 @@ def rsr_summary(rsr_file, rc=False):
 
     else:     # one line summary
         print("%-20s %7d  %-5s %-30s     RSR      0    %6.1f  %10.6f %10.6f  %5.1f %5.1f" %   (date_obs, obsnum, obspgm, src, tint, ra, dec, az, el))
+
+    # -end  rsr_summary()
+    
 
 #   SLR
 #   print("%-20s %7s  %-5s %-30s %g %g %g" % (date_obs, fn[2], obspgm, src, restfreq, vlsr, dt))
