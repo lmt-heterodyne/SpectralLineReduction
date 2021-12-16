@@ -21,6 +21,8 @@ Usage: lmtinfo.py OBSNUM
        lmtinfo.py IFPROCFILE
        lmtinfo.py PATH OBSNUM
        lmtinfo.py PATH
+       lmtinfo.py grep TERMS
+       lmtinfo.py build
 
 -h --help  This help
 
@@ -44,6 +46,10 @@ OBSNUM for early SLR (testing?) are 99nnnnn,
 but after 2018-04-14 back to the normal nnnnnn, where 074686
 seems to be the first.
 
+grep:     search in database
+
+build:    rebuild the database
+
 """
 
 import sys
@@ -58,8 +64,24 @@ import netCDF4
 
 from docopt import docopt
 
-version="1-dec-2021"
+version="16-dec-2021"
 
+def grep(terms):
+    """
+    search a predefined $DATA_LMT/data_lmt.log file for terms
+    @todo check if the log file exists
+    """
+    cmd = "grep -i %s $DATA_LMT/data_lmt.log" % (terms)
+    os.system(cmd)
+
+
+def build():
+    """
+    search a predefined $DATA_LMT/data_lmt.log file for terms
+    @todo check if the log file exists
+    """
+    cmd = "cd $DATA_LMT; make new"
+    os.system(cmd)
 
 
 #  ifproc/ifproc_2018-06-29_078085_00_0001.nc
@@ -286,6 +308,11 @@ arguments = docopt(__doc__,options_first=True, version='0.1')
 
 if len(sys.argv) == 2:
 
+    if sys.argv[1] == "build":
+        print("Special rebuild of a new")
+        build()
+        sys.exit(0)        
+
     print("# Y-M-D   T H:M:S     ObsNum ObsPgm SourceName                     RestFreq  VLSR   TINT     RA        DEC          AZ    EL")
     
                                                      # mode 1: obsnum or nc_file or path
@@ -346,6 +373,11 @@ if len(sys.argv) == 2:
             print("%s: failed" % ifproc)
                
 elif len(sys.argv) == 3:
+
+    if sys.argv[1] == "grep":
+        grep(sys.argv[2])
+        sys.exit(0)
+
                                                      # mode 2: path and obsnum : differentiate between SLR and RSR
     path = sys.argv[1]
     obsnum = sys.argv[2]
