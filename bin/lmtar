@@ -23,11 +23,6 @@
 
 log=$DATA_LMT/data_lmt.log
 
-if [ ! -e $log ]; then
-    echo "No $log, generate this as follows: (this can take a long time)"
-    echo '     lmtinfo.py $DATA_LMT  | sort -r > $DATA_LMT/data_lmt.log'
-    exit 0
-fi
 
 if [ $# = 0  ]; then
     echo Usage: lmtar tarfile OBSNUM [OBSNUM ...]
