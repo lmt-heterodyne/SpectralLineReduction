@@ -21,7 +21,7 @@ Usage: lmtinfo.py OBSNUM
        lmtinfo.py IFPROCFILE
        lmtinfo.py PATH OBSNUM
        lmtinfo.py PATH
-       lmtinfo.py grep TERMS
+       lmtinfo.py grep TERM1 [TERM2 ...]
        lmtinfo.py build
 
 -h --help  This help
@@ -46,7 +46,7 @@ OBSNUM for early SLR (testing?) are 99nnnnn,
 but after 2018-04-14 back to the normal nnnnnn, where 074686
 seems to be the first.
 
-grep:     search in database
+grep:     search in database, terms are logically AND-ed
 
 build:    rebuild the database
 
@@ -64,14 +64,22 @@ import netCDF4
 
 from docopt import docopt
 
-version="16-dec-2021"
+version="17-dec-2021"
 
 def grep(terms):
     """
     search a predefined $DATA_LMT/data_lmt.log file for terms
     @todo check if the log file exists
     """
-    cmd = "grep -i %s $DATA_LMT/data_lmt.log" % (terms)
+
+    if len(terms) == 1:
+        cmd = "grep -i %s $DATA_LMT/data_lmt.log" % (terms[0])
+    elif len(terms) == 2:
+        cmd = "grep -i %s $DATA_LMT/data_lmt.log | grep -i %s" % (terms[0],terms[1])
+    elif len(terms) == 3:
+        cmd = "grep -i %s $DATA_LMT/data_lmt.log | grep -i %s | grep -i %s" % (terms[0],terms[1],terms[2])
+    elif len(terms) == 4:
+        cmd = "grep -i %s $DATA_LMT/data_lmt.log | grep -i %s | grep -i %s | grep -i %s" % (terms[0],terms[1],terms[2],terms[3])
     os.system(cmd)
 
 
@@ -374,8 +382,9 @@ if len(sys.argv) == 2:
                
 elif len(sys.argv) == 3:
 
+    # special case:
     if sys.argv[1] == "grep":
-        grep(sys.argv[2])
+        grep(sys.argv[2:])
         sys.exit(0)
 
                                                      # mode 2: path and obsnum : differentiate between SLR and RSR
@@ -396,6 +405,11 @@ elif len(sys.argv) == 3:
             print("# Warning - no RSR files found, possibly unknown obsnum")
             print("obsnum=0")
 else:
+    # special case:
+    if sys.argv[1] == "grep":
+        grep(sys.argv[2:])
+        sys.exit(0)
+    
                                                      # no other modes
     print("Usage : %s [path] obsnum" % sys.argv[0])
     sys.exit(0)
