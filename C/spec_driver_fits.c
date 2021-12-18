@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
   int ngood=0;
   float x,y,X,Y,distance,weight,rmsweight; 
   float xpos, ypos, cosp, sinp, rot_angle = 0.0;   // future support? - grid rot_angle in degrees
-  int fuzzy_edge = 0;    //  1:  fuzzy edge      0: good sharp edge where M (mask) > 0 [should be default]
+  int fuzzy_edge = 1;    //  1:  fuzzy edge      0: good sharp edge where M (mask) > 0 [should be default]
   int n[3];
   int hlen;
 
@@ -131,7 +131,9 @@ int main(int argc, char *argv[])
   initialize_plane_axis(&M, Y_AXIS, 0.0, (n[1]-1.)/2.+1., OTF.cell_size, "Y", "arcsec");
 
   if (OTF.model)
-    read_fits_plane(&A, OTF.a_filename);  
+    read_fits_plane(&A, OTF.a_filename);
+
+  fuzzy_edge = OTF.fuzzy_edge;
 
   // rot_angle is the counter clock wise angle over which the image is rotated.
   //rot_angle = 30.0;   // PJT test

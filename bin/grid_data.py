@@ -20,6 +20,7 @@
 --otf_b OTF_B                 OTF B parameter [default: 4.75]
 --otf_c OTF_C                 OTF C parameter [default: 2.0]
 --sample P,S0,S1,P,...        Blank sample S0 to S1 for pixel P, etc. [Default: -1,0,0]
+--edge EDGE                   Fuzzy edge?  [default: 1]
 
 -h --help                     show this help
 
@@ -97,6 +98,7 @@ def main(argv):
                                        '-1',av['--otf_b'],
                                        '-2',av['--otf_c'],
                                        '-b',av['--sample'],
+                                       '-e',av['--edge'],
                                        ], 
                                       stdout=outputfile,
                                       stderr=errorfile)
