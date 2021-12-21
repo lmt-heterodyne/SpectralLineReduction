@@ -64,7 +64,7 @@ import netCDF4
 
 from docopt import docopt
 
-version="17-dec-2021"
+version="21-dec-2021"
 
 def grep(terms):
     """
@@ -125,8 +125,11 @@ def slr_summary(ifproc, rc=False):
     # Header.Dcs.ObsNum
 
     obsnum = nc.variables['Header.Dcs.ObsNum'][0]
-    calobsnum = nc.variables['Header.IfProc.CalObsNum'][0]
-    
+    try:
+        calobsnum = nc.variables['Header.IfProc.CalObsNum'][0]
+    except:
+        calobsnum = -1
+        
     obspgm = b''.join(nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
     try:
         pid = b''.join(nc.variables['Header.Dcs.ProjectId'][:]).decode().strip()
