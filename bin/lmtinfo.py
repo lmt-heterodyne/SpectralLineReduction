@@ -64,7 +64,7 @@ import netCDF4
 
 from docopt import docopt
 
-version="17-dec-2021"
+version="21-dec-2021"
 
 def grep(terms):
     """
@@ -125,8 +125,11 @@ def slr_summary(ifproc, rc=False):
     # Header.Dcs.ObsNum
 
     obsnum = nc.variables['Header.Dcs.ObsNum'][0]
-    calobsnum = nc.variables['Header.IfProc.CalObsNum'][0]
-    
+    try:
+        calobsnum = nc.variables['Header.IfProc.CalObsNum'][0]
+    except:
+        calobsnum = -1
+        
     obspgm = b''.join(nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
     try:
         pid = b''.join(nc.variables['Header.Dcs.ProjectId'][:]).decode().strip()
@@ -137,15 +140,23 @@ def slr_summary(ifproc, rc=False):
     if obspgm=='Map':
         xlen = nc.variables['Header.Map.XLength'][0] * 206264.806
         ylen = nc.variables['Header.Map.YLength'][0] * 206264.806
+        xoff = nc.variables['Header.Map.XOffset'][0] * 206264.806
+        yoff = nc.variables['Header.Map.YOffset'][0] * 206264.806
         xram = nc.variables['Header.Map.XRamp'][0]   * 206264.806
         yram = nc.variables['Header.Map.YRamp'][0]   * 206264.806
         hpbw = nc.variables['Header.Map.HPBW'][0]    * 206264.806
+        xstep= nc.variables['Header.Map.XStep'][0] 
+        ystep= nc.variables['Header.Map.YStep'][0] 
     else:
         xlen = 0
         ylen = 0
+        xoff = 0
+        yoff = 0
         xram = 0
         yram = 0
         hpbw = 0
+        xstep= 0
+        ystep= 0
 
     date_obs = nc.variables['Data.TelescopeBackend.TelTime'][0].tolist()
     date_obs = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%dT%H:%M:%S')
@@ -186,6 +197,8 @@ def slr_summary(ifproc, rc=False):
         print('# HPBW=%g arcsec' % hpbw)
         print('# XYLength=%g %g arcsec' % (xlen,ylen))
         print('# XYRamp=%g %g arcsec' % (xram,yram))
+        print('# XYoff=%g %g arcsec' % (xoff,yoff))
+        print('# XYstep=%g %g' % (xstep,ystep))
         print('vlsr=%g        # km/s' % vlsr)
         print('skyfreq=%g     # GHz' % skyfreq)
         print('restfreq=%g    # Ghz' % restfreq)
