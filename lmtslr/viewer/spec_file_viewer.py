@@ -343,6 +343,9 @@ class SpecFileViewer():
                 rindex = np.where(self.rms[pindex] < rms_cut)[0]
             ax4[np.mod(the_pixel, 4), the_pixel // 4].plot(self.caxis, 
                 np.mean(self.data[pindex[rindex]], axis=0))
+            ax4[np.mod(the_pixel, 4), the_pixel // 4].text(0.05 * len(rindex),
+                self.caxis[0] + 0.85 * (self.caxis[-1] - self.caxis[0]), 
+                '%d'%(the_pixel))
         Plots.savefig()
 
     def pixel_mean_spectrum_plot(self, the_pixel, rms_cut):
