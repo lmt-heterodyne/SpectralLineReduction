@@ -41,6 +41,7 @@ def read_obsnum_ps(obsnum, list_of_pixels, bank, use_calibration,
         obsnum (int): sequential id (ObsNum) of the observation
         list_of_pixels (list): identifies which elements of the 
             spectrometer are to be read
+        bank (int):  which spectral window bank to read
         use_calibration (bool): set True if we are to use calibration 
             scan for cal. 
             False just multiplies by system temperature
@@ -113,6 +114,7 @@ def read_obsnum_bs(obsnum, list_of_pixels, bank,
         list_of_pixels (list): identifies which elements of the 
             spectrometer are to be read - for BS observation this is 
             just the two pixels used for the switch
+        bank
         use_calibration (bool): set True if we are to use calibration 
             scan for cal. 
             False just multiplies by system temperature
@@ -184,6 +186,7 @@ def read_obsnum_otf(obsnum, list_of_pixels, bank,
         obsnum (int): sequential id (ObsNum) of the observation
         list_of_pixels (list): identifies which elements of the 
             spectrometer are to be read
+        bank
         use_calibration (bool): set True if we are to use calibration 
             scan for cal. 
             False just multiplies by system temperature
