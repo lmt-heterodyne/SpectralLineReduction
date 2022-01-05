@@ -279,8 +279,7 @@ class IFProc():
                 
             # Spectral Information
             self.velocity = self.nc.variables['Header.Source.Velocity'][0]
-            self.velocity_system = self.nc.variables['Header.Source.VelSys'
-                                                    ][0]
+            self.velocity_system = self.nc.variables['Header.Source.VelSys'][0]
 
             try:
                 self.line_list = ast.literal_eval(str(netCDF4.chartostring(
