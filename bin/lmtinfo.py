@@ -64,7 +64,7 @@ import netCDF4
 
 from docopt import docopt
 
-version="21-dec-2021"
+version="11-jan-2022"
 
 def grep(terms):
     """
@@ -112,6 +112,7 @@ def slr_summary(ifproc, rc=False):
         instrument = 'SEQ'
         bbtime = nc.variables['Data.IfProc.BasebandTime'][:]
     else:
+        # @todo is 1MM the only option
         skyfreq  = nc.variables['Header.Msip1mm.SkyFreq'][0]
         restfreq = nc.variables['Header.Msip1mm.LineFreq'][0]
         instrument = '1MM'        
@@ -123,6 +124,9 @@ def slr_summary(ifproc, rc=False):
     bufpos = nc.variables['Data.TelescopeBackend.BufPos'][:]
     ubufpos = np.unique(bufpos)
     # Header.Dcs.ObsNum
+
+    # Header.Sequoia.NumBands or Header.IfProc.NumBands
+    numbands = nc.variables['Header.Sequoia.NumBands'][0]
 
     obsnum = nc.variables['Header.Dcs.ObsNum'][0]
     try:
@@ -199,6 +203,7 @@ def slr_summary(ifproc, rc=False):
         print('# XYRamp=%g %g arcsec' % (xram,yram))
         print('# XYoff=%g %g arcsec' % (xoff,yoff))
         print('# XYstep=%g %g' % (xstep,ystep))
+        print('numbands=%d' % numbands)
         print('vlsr=%g        # km/s' % vlsr)
         print('skyfreq=%g     # GHz' % skyfreq)
         print('restfreq=%g    # Ghz' % restfreq)
