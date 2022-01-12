@@ -96,6 +96,9 @@ def build():
 #  spectrometer/roach0/roach0_78085_0_1_CHI-Cyg_2018-06-29_041713.nc
 #  RedshiftChassis0/RedshiftChassis0_2015-01-22_033551_00_0001.nc
 
+# there are also weird (?) names, e.g.
+#  ifproc_2018-02-26_9901395_00_0001.nc
+
 def slr_summary(ifproc, rc=False):
     """   summary a procnum in a single line
     """
@@ -338,10 +341,18 @@ if len(sys.argv) == 2:
     
                                                      # mode 1: obsnum or nc_file or path
     obsnum = sys.argv[1]
-    fn = glob.glob('*/ifproc/ifproc_*%s*.nc' % obsnum)
+    if True:
+        obsnum=int(obsnum)
+        globs = '*/ifproc/ifproc_*_%06d_*.nc' % obsnum
+        print("# GLOBS:",globs)
+        fn = glob.glob(globs)
+    else:
+        # old bad one
+        fn = glob.glob('*/ifproc/ifproc_*%s*.nc' % obsnum)
     if len(fn) > 0:
         ifproc = fn[0]
     else:
+        # must be an ifproc filename
         ifproc = sys.argv[1]
 
     if os.path.isdir(ifproc):
@@ -402,8 +413,9 @@ elif len(sys.argv) == 3:
 
                                                      # mode 2: path and obsnum : differentiate between SLR and RSR
     path = sys.argv[1]
-    obsnum = sys.argv[2]
-    globs = '%s/ifproc/ifproc*%s*.nc' % (path,obsnum)
+    obsnum = int(sys.argv[2])
+    globs = '%s/ifproc/ifproc*%06d*.nc' % (path,obsnum)
+    print("# GLOBS:",globs)
     fn = glob.glob(globs)
     if len(fn) > 0:
         ifproc = fn[0]
