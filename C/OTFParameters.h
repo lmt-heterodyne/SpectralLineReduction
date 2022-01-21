@@ -1,8 +1,8 @@
 #ifndef _OTF_PARAMETERS_H_
 #define _OTF_PARAMETERS_H_
 
-#define OTF_FILE_NAME_LENGTH 80
-#define N_INPUT_FILES 20
+#define OTF_FILE_NAME_LENGTH 200
+#define N_INPUT_FILES 2000
 typedef struct
 {
   char i_filename[N_INPUT_FILES][OTF_FILE_NAME_LENGTH];

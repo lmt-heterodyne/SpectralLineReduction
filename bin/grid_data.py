@@ -42,6 +42,7 @@ def main(argv):
                                        '-c',str(Opts.cell),
                                        '-u',str(Opts.pix_list),
                                        '-z',str(Opts.rms_cut),
+                                       '-s',str(Opts.noise_sigma),
                                        '-n',str(Opts.n_samples),
                                        '-r',str(Opts.rmax),
                                        '-0',str(Opts.otf_a),

@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
   int i,j,k;
   int ii,jj;
   int ix,iy,iz,ixp,iyp,izp;
-  float x,y,X,Y,distance,weight;
+  float x,y,X,Y,distance,weight,rmsweight;
   int n[3];
 
   printf("1\n");
@@ -103,7 +103,12 @@ int main(int argc, char *argv[])
 			    x = S.XPos[i]-C.caxis[X_AXIS][ix+ii];
 			    y = S.YPos[i]-C.caxis[Y_AXIS][iy+jj];
 			    distance = sqrt(x*x+y*y);
-			    weight = get_weight(&CF, distance);
+			    if ((S.RMS[i] != 0.0) && (OTF.noise_sigma > 0.0)) {
+			      rmsweight = 1.0 /(S.RMS[i] * S.RMS[i]);
+			    } else {
+			      rmsweight = 1.0;
+			    }
+			    weight = get_weight(&CF, distance) * rmsweight;
 			    iz = cube_z_index(&C, C.caxis[X_AXIS][ix+ii], C.caxis[Y_AXIS][iy+jj]);
 			    for(k=0;k<C.n[Z_AXIS];k++)
 			      C.cube[iz+k] = C.cube[iz+k] + weight * spectrum[k];

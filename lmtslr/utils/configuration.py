@@ -12,9 +12,9 @@ otf_config_spec_text = """
 #lmtslr general items
 [general]
 # input path for scan files
-path = string(max=100, default='/data_lmt')
+path = string(max=500, default='/data_lmt')
 # output filename
-output = string(max=100, default='./output.nc')
+output = string(max=500, default='./output.nc')
 # If reducing single Obsnum, the integer Observation number
 obsnum = integer(1, 100000)
 
@@ -25,6 +25,45 @@ bank = integer(min=0, max=3, default=0)
 pix_list = int_list(min=1, max=32, default=list(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15))
 # channels to eliminate
 eliminate_list = int_list(min=1, default=list(4096,))
+# spectral reduction type
+stype = integer(min=0, max=3, default=1)
+# If use_cal is True find and use the calibration scan
+use_cal = boolean(default=False)
+# if use_cal is False use this Tsys
+tsys = float(min=10, default=200)
+# use CAL within OTF scan
+use_otf_cal = boolean(default=False)
+# select spectral x axis
+x_axis = option('VLSR', 'VSKY', 'VBARY', 'VSRC', 'FLSR', 'FSKY', 'FBARY', 'FSRC', default='VLSR')
+# baseline order
+b_order = integer(min=0, max=4, default=0)
+# list of lists for baselines
+b_regions = string(default='[[-193, -93], [107,207]]')
+# list of lists for line fit regions
+l_regions = string(default='[[-93, 107]]')
+# list to specify slice from spectrum for processing
+slice = float_list(min=2, max=2, default=list(-200, 200))
+"""
+
+ps_config_spec_text = """
+#lmtslr general items
+[general]
+# input path for scan files
+path = string(max=500, default='/data_lmt')
+# output filename
+output = string(max=500, default='./output.nc')
+# If reducing single Obsnum, the integer Observation number
+obs_list = int_list()
+
+[spectra]
+# spectral bank for processing
+bank = integer(min=0, max=3, default=0)
+# list of pixels to process
+pix_list = int_list(min=1, max=32, default=list(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15))
+# channels to eliminate
+eliminate_list = int_list(min=1, default=list(4096,))
+# spectral reduction type
+stype = integer(min=0, max=3, default=1)
 # If use_cal is True find and use the calibration scan
 use_cal = boolean(default=False)
 # if use_cal is False use this Tsys
@@ -45,7 +84,7 @@ viewspec_config_spec_text = """
 #lmtslr general items
 [general]
 # input path for scan files
-input = string(max=100, default='./input.nc')
+input = string(max=500, default='./input.nc')
 
 [spectra]
 # show all pixels?
@@ -64,7 +103,7 @@ viewcube_config_spec_text = """
 #lmtslr general items
 [general]
 # input path for scan files
-input = string(max=100, default='input.fits')
+input = string(max=500, default='input.fits')
 
 [spectra]
 # velocity range in km/s for integrated intensity
@@ -91,11 +130,11 @@ grid_config_text = """
 #lmtslr general items
 [general]
 # full path name to the gridding program
-program_path = string(max=200, default='/usr/local/env/specenv/bin/spec_driver_fits')
+program_path = string(max=500, default='/usr/local/env/specenv/bin/spec_driver_fits')
 # input NC filename
-input = string(max=100, default='./input.nc')
+input = string(max=50000, default='./input.nc')
 # output FITS filename
-output = string(max=100, default='./output.fits')
+output = string(max=500, default='./output.fits')
 
 [cube]
 # angular resolution to use for gridding (in arcsec)
@@ -106,6 +145,8 @@ cell = float(min=0, default=7)
 pix_list = int_list(min=1, max=32, default=list(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15))
 # rms cut off to use
 rms_cut = float(default=10000)
+# noise_sigma - apply rms weighting if > 0.0
+noise_sigma = float(default=1.0)
 # x extent of cube in arcsec (cube will go to +/- x_extent)
 x_extent = float(min=1, default=300)
 # y extent of cube in arcsec (cube will go to +/- y_extent)

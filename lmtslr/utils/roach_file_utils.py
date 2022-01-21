@@ -6,7 +6,8 @@ roach_pixels_all = [[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15]]
 
 def lookup_roach_files(obsnum,
                        roach_list=['roach0', 'roach1', 'roach2', 'roach3'],
-                       path='/data_lmt/spectrometer/'):
+                       path='/data_lmt/spectrometer/',
+                       debug=False):
     """
     Returns a tuple of the roach files which match a particular obsnum 
     and the number of those files.
@@ -14,6 +15,7 @@ def lookup_roach_files(obsnum,
         obsnum (int): target obvservation number
         roach_list (list): list of the directories of roach files
         path (str): path to the roach directories
+        debug (boolean): if debug True, tends to print out more information
     Returns:
         (filenames (list), result (int)) : list of file names, number 
         of files found
@@ -25,14 +27,17 @@ def lookup_roach_files(obsnum,
         spec_filenames = glob.glob(os.path.join(path, roach, 
                                    '%s_%d_*.nc' % (roach, obsnum)))
         for filename in spec_filenames:
-            print('found %s' % (filename))
+            if debug:
+                print('found %s' % (filename))
             if  not 'allantest' in filename:
-                print('append %s' % (filename))
+                if debug:
+                    print('append %s' % (filename))
                 filenames.append(filename)
                 result = result + 1
     if filenames == []:
-        print('lookup_roach_files: no files for obsnum', obsnum)
-    return(filenames, result)
+        if debug:
+            print('lookup_roach_files: no files for obsnum', obsnum)
+    return (filenames, result)
 
 
 def find_roach_from_pixel(pixel_id):

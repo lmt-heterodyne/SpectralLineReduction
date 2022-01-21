@@ -2,7 +2,7 @@ import os
 #import fnmatch
 import glob
 
-def lookup_ifproc_file(obsnum, path='/data_lmt/ifproc/'):
+def lookup_ifproc_file(obsnum, path='/data_lmt/ifproc/', debug=False):
     """
     Returns the path to the NetCDF data file for a given obsnum.
     Args:
@@ -21,12 +21,14 @@ def lookup_ifproc_file(obsnum, path='/data_lmt/ifproc/'):
     if 'tel' not in path:
         paths += ['/data_lmt/tel/']
 
-    print(paths)
+    if debug:
+        print(paths)
 
     for path in paths:
         filenames = glob.glob(os.path.join(path, '*_%06d_*.nc' % obsnum))
         if len(filenames) > 0:
-            print('found %s' % (filenames[0]))
+            if debug:
+                print('found %s' % (filenames[0]))
             return filenames[0]
     return ''
     #filename = ''

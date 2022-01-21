@@ -19,42 +19,42 @@ from lmtslr.reduction.line_reduction import *
 
 from lmtslr.utils.reader import read_obsnum_ps
 #from lmtslr.utils.parser import HandleProcessOptions
-from lmtslr.utils.argparser import HandleProcessOptions
+from lmtslr.utils.argparser import HandlePSProcessOptions
 
 def main(argv):
     
-    Opts = HandleProcessOptions()
-    result = Opts.parse_options(argv, 'process_ps', 1)
-    if result == 0:
-        # this will be a list of processed spectral lines
-        LineList = []
-        # here are the number of spectra to be reduced
-        nscans = len(Opts.obs_list)
-        npixels = len(Opts.pix_list)
+    Opts = HandlePSProcessOptions()
+    result = Opts.parse_options(argv, 'process_ps', 1, True)
+    #if result == 0:
+    # this will be a list of processed spectral lines
+    LineList = []
+    # here are the number of spectra to be reduced
+    nscans = len(Opts.obs_list)
+    npixels = len(Opts.pix_list)
 
-        for obs in Opts.obs_list:
-    
-            I,S = read_obsnum_ps(obs,
-                                 Opts.pix_list,
-                                 Opts.bank,
-                                 Opts.use_cal,
-                                 tsys=Opts.tsys,
-                                 path=Opts.data_path)
+    for obs in Opts.obs_list:
 
-            # create a LineData object for each "pixel" in pix_list
-            # we could do processing here...
-            for i in range(npixels):
-                LD = LineData(I,Opts.bank,S.nchan,S.bandwidth,S.roach[i].ps_spectrum)
-                LD.set_x_axis(Opts.x_axis)
-                LineList.append(LD)
+        I,S = read_obsnum_ps(obs,
+                             Opts.pix_list,
+                             Opts.bank,
+                             Opts.use_cal,
+                             tsys=Opts.tsys,
+                             path=Opts.data_path)
 
-        # show all the plots just to illustrate reduction
-        # this will be replaced by write out of spectra to FITS file.
-        for i in range(len(LineList)):
-            pl.plot(LineList[i].xarray,LineList[i].yarray)
-            pl.axis([-20,20,-1,1])
-            pl.xlabel('VSRC')
-        pl.show()
+        # create a LineData object for each "pixel" in pix_list
+        # we could do processing here...
+        for i in range(npixels):
+            LD = LineData(I,Opts.bank,S.nchan,S.bandwidth,S.roach[i].ps_spectrum)
+            LD.set_x_axis(Opts.x_axis)
+            LineList.append(LD)
+
+    # show all the plots just to illustrate reduction
+    # this will be replaced by write out of spectra to FITS file.
+    for i in range(len(LineList)):
+        pl.plot(LineList[i].xarray,LineList[i].yarray)
+        #pl.axis([-20,20,-1,1])
+        pl.xlabel('VSRC')
+    pl.show()
 
 
 if __name__ == '__main__':

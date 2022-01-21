@@ -1,7 +1,12 @@
 import argparse
 from lmtslr.utils.configuration import Configuration, \
     otf_config_spec_text, viewspec_config_spec_text, \
-    viewcube_config_spec_text, grid_config_text
+    viewcube_config_spec_text, grid_config_text, \
+    ps_config_spec_text
+
+def comma_separated(instr):
+    if isinstance(instr, str):
+        return ','.join([a.strip() for a in instr.split(',')])
 
 class HandleOptions:
     def __init__(self):
@@ -22,9 +27,10 @@ class HandleOptions:
             self.output_file_name = self.output
             self.attrs.add('output_file_name')
         if hasattr(self, 'input'):
-            self.input_file_name = self.input
+            self.input_file_name = comma_separated(self.input)
             self.attrs.add('input_file_name')            
         if hasattr(self, 'b_regions'):
+            print(self.b_regions)
             self.b_regions = eval(self.b_regions)
         if hasattr(self, 'l_regions'):
             self.l_regions = eval(self.l_regions)
@@ -34,7 +40,78 @@ class HandleOptions:
         for attr in self.attrs:
             print("%s      =   %s" % (attr, getattr(self, attr)))
             
-class HandleProcessOptions(HandleOptions):
+class HandleOTFProcessOptions(HandleOptions):
+    def __init__(self):
+        HandleOptions.__init__(self)
+
+    def parse_options(self, args, program, arglevel=0, print_options=False):
+        self.program = program
+        self.arglevel = arglevel
+        self.parser = argparse.ArgumentParser(prog=program,
+                                              formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        self.parser.add_argument("-c", "--config", dest="config", 
+                            help="Name of configuration file to set parameters")
+        self.parser.add_argument("-p", "--path", dest="path", default='/data_lmt', 
+                            help="data path")
+        self.parser.add_argument("-o", "--output", dest="output",
+                            help="name of output SpecFile")
+        self.parser.add_argument("-O", "--obsnum", dest="obsnum", type=int,
+                            help="ObsNum of observation")
+        #self.parser.add_argument("--obs_list", dest="obs_list", type=str,
+        #                help="Comma separated list of ObsNums")
+        self.parser.add_argument("-b", "--bank", dest="bank", type=int,
+                            help="Spectral Bank for processing")
+        self.parser.add_argument("--pix_list", dest="pix_list", type=str,
+                            help="Comma separated list of pixels")
+        self.parser.add_argument("--eliminate_list", dest="eliminate_list", type=str,
+                            help="Comma separated list of pixels")
+        self.parser.add_argument("--use_cal", dest="use_cal", action="store_true",
+                            default=False, help="Use Calibration scan")
+        self.parser.add_argument("--tsys", dest="tsys", type=float,
+                            default=250.0,
+                            help="If use_cal is False, value of Tsys to use")
+        self.parser.add_argument("--use_otf_cal", dest="use_otf_cal",
+                                 action="store_true", default=False, help="Use calibration within OTF scan")
+        self.parser.add_argument("--stype", dest="stype", type=int,
+                                 default=1, help="type of spectral line reduction; 0 - median; 1 - single ref spectra; 2 - bracketed ref")
+        self.parser.add_argument("--x_axis", dest="x_axis",
+                            default='VLSR',
+                            help="select spectral x axis. options one of VLSR, VSKY, VBARY, VSRC, FLSR, FSKY, FBARY, FSRC")
+        self.parser.add_argument("--b_order", dest="b_order", type=int,
+                            default=0, help="set polynomial baseline order")
+        self.parser.add_argument("--b_regions", dest="b_regions", type=str, default="[[],[]]",
+                            help="enter list of lists for baseline regions")
+        self.parser.add_argument("--l_regions", dest="l_regions", type=str, default="[[],[]]",
+                            help="enter list of lists for line fit regions")
+        self.parser.add_argument("--slice", dest="slice", type=str,
+                            help="enter list to specify slice from spectrum for processing")
+
+        args = self.parser.parse_args(args)
+        if 'help' in args.__dict__:
+            self.parser.print_help()
+        for k, v in args.__dict__.items():
+            if v is not None:
+                setattr(self, k, v)
+                self.attrs.add(k)
+            if k == 'x_axis' and v is not None:
+                if self.x_axis not in ['VLSR', 'VSKY', 'VBARY', 'VSRC', 'FLSR', 'FSKY', 'FBARY','FSRC']:
+                    self.x_axis = None
+            if k in ('pix_list', 'eliminate_list') and v is not None:
+                setattr(self, k, list(map(int, v.split(','))))
+            if k in ('b_regions', 'l_regions', 'slice') and v is not None:
+                setattr(self, k, eval(v))
+        if args.path:
+            self.data_path = args.path
+            self.attrs.add('data_path')
+        if args.output:
+            self.output_file_name = args.output
+            self.attrs.add('output_file_name')
+        if 'config' in args.__dict__ and args.config is not None:
+            self.read_config_file(args.config, otf_config_spec_text)
+        if print_options:
+            self.print_all_options()
+
+class HandlePSProcessOptions(HandleOptions):
     def __init__(self):
         HandleOptions.__init__(self)
 
@@ -49,10 +126,10 @@ class HandleProcessOptions(HandleOptions):
                             help="data path")
         self.parser.add_argument("-o", "--output", dest="output",
                             help="name of output SpecFile")
-        self.parser.add_argument("-O", "--obsnum", dest="obsnum", type=int,
-                            help="ObsNum of observation")
-        #self.parser.add_argument("--obs_list", dest="obs_list", type=str,
-        #                help="Comma separated list of ObsNums")
+        #self.parser.add_argument("-O", "--obsnum", dest="obsnum", type=int,
+        #                    help="ObsNum of observation")
+        self.parser.add_argument("--obs_list", dest="obs_list", type=str,
+                        help="Comma separated list of ObsNums")
         self.parser.add_argument("-b", "--bank", dest="bank", type=int,
                             help="Spectral Bank for processing")
         self.parser.add_argument("--pix_list", dest="pix_list", type=str,
@@ -62,6 +139,8 @@ class HandleProcessOptions(HandleOptions):
         self.parser.add_argument("--tsys", dest="tsys", type=float,
                             default=250.0,
                             help="If use_cal is False, value of Tsys to use")
+        self.parser.add_argument("--stype", dest="stype", type=int,
+                                 default=1, help="type of spectral line reduction; 0 - median; 1 - single ref spectra; 2 - bracketed ref")
         self.parser.add_argument("--x_axis", dest="x_axis",
                             default='VLSR',
                             help="select spectral x axis. options one of VLSR, VSKY, VBARY, VSRC, FLSR, FSKY, FBARY, FSRC")
@@ -84,7 +163,7 @@ class HandleProcessOptions(HandleOptions):
             if k == 'x_axis' and v is not None:
                 if self.x_axis not in ['VLSR', 'VSKY', 'VBARY', 'VSRC', 'FLSR', 'FSKY', 'FBARY','FSRC']:
                     self.x_axis = None
-            if k in ('pix_list', ) and v is not None:
+            if k in ('pix_list', 'obs_list') and v is not None:
                 setattr(self, k, list(map(int, v.split(','))))
             if k in ('b_regions', 'l_regions', 'slice') and v is not None:
                 setattr(self, k, eval(v))
@@ -94,11 +173,11 @@ class HandleProcessOptions(HandleOptions):
         if args.output:
             self.output_file_name = args.output
             self.attrs.add('output_file_name')
-        if 'config' in args.__dict__:
-            self.read_config_file(args.config, otf_config_spec_text)
+        if 'config' in args.__dict__ and args.config is not None:
+            self.read_config_file(args.config, ps_config_spec_text)
         if print_options:
             self.print_all_options()
-
+            
 class HandleViewSpecFileOptions(HandleOptions):
     def __init__(self):
         HandleOptions.__init__(self)
@@ -140,9 +219,9 @@ class HandleViewSpecFileOptions(HandleOptions):
         if hasattr(self, 'show_pixel') and self.show_pixel is not None:
             self.show_all_pixels = False
         if args.input:
-            self.input_file_name = args.input
+            self.input_file_name = comma_separated(args.input)
             self.attrs.add('input_file_name')
-        if 'config' in args.__dict__:
+        if 'config' in args.__dict__ and args.config is not None:
             self.read_config_file(args.config, viewspec_config_spec_text)
         if print_options:
             self.print_all_options()
@@ -192,9 +271,9 @@ class HandleViewCubeOptions(HandleOptions):
             if k in ('v_range', 'location', 'limits', 'tmax_range', 'tint_range') and v is not None:
                 setattr(self, k, list(map(float, v.split(','))))
         if args.input:
-            self.input_file_name = args.input
+            self.input_file_name = comma_separated(args.input)
             self.attrs.add('input_file_name')
-        if 'config' in args.__dict__:
+        if 'config' in args.__dict__ and args.config is not None:
             self.read_config_file(args.config, viewcube_config_spec_text)
         if print_options:
             self.print_all_options()
@@ -227,7 +306,10 @@ class HandleGridOptions(HandleOptions):
                             help="Comma separated list of pixels")        
         self.parser.add_argument("--rms_cut", dest="rms_cut",
                                  type=float,
-                                 help="rms threshold for data")        
+                                 help="rms threshold for data")
+        self.parser.add_argument("--noise_sigma", dest="noise_sigma",
+                                 type=float, default=1.0,
+                                 help="noise weighting - apply if > 0")                
         self.parser.add_argument("--x_extent", dest="x_extent", type=float,
                                  help="x extent of cube (arcsec) note: cube will go to +/- x_extent")
         self.parser.add_argument("--y_extent", dest="y_extent", type=float,
@@ -261,12 +343,12 @@ class HandleGridOptions(HandleOptions):
             if k in ('pix_list', ) and v is not None:
                 setattr(self, k, list(map(int, v.split(','))))                
         if args.input:
-            self.input_file_name = args.input
+            self.input_file_name = comma_separated(args.input)
             self.attrs.add('input_file_name')
         if args.output:
             self.output_file_name = args.output
             self.attrs.add('output_file_name')
-        if 'config' in args.__dict__:
+        if 'config' in args.__dict__ and args.config is not None:
             self.read_config_file(args.config, grid_config_text)
         if hasattr(self, 'pix_list'):
             self.pix_list = '[' + ','.join(['%d' % d for d in self.pix_list]) + ']'

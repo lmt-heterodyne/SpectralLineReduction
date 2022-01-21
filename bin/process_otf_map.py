@@ -18,13 +18,13 @@ from lmtslr.grid.grid import *
 
 from lmtslr.utils.reader import read_obsnum_otf, count_otf_spectra
 #from lmtslr.utils.parser import HandleProcessOptions
-from lmtslr.utils.argparser import HandleProcessOptions
+from lmtslr.utils.argparser import HandleOTFProcessOptions
 
 import time
 
 def main(argv):
     print(time.time(), time.clock())
-    Opts = HandleProcessOptions()
+    Opts = HandleOTFProcessOptions()
     Opts.parse_options(argv, 'process_otf_map', 1, True)
 
     # set up the grid geometry
