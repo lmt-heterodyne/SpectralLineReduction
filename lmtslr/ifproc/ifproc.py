@@ -23,12 +23,6 @@ import traceback
 
 from lmtslr.ifproc.RSRUtilities import TempSens # move into utils folder?
 from lmtslr.utils.ifproc_file_utils import lookup_ifproc_file
-from lmtslr.utils.lmtheader import LMTHeader
-from lmtslr.utils.lmtslr_exceptions import LMTSLRArgumentError, \
-    LMTSLRGeneralError
-from lmtslr.logging import logger
-logger.name = __name__
-
 """
 def lookup_ifproc_file(obsnum,path='/data_lmt/ifproc/'):
     filename = ''
@@ -37,7 +31,8 @@ def lookup_ifproc_file(obsnum,path='/data_lmt/ifproc/'):
             print('found %s'%(file))
             filename = path+file
     if filename == '':
-        print('lookup_ifproc_file: no file for obsnum ', obsnum)        if 'lmttpm' not in path:
+        print('lookup_ifproc_file: no file for obsnum ', obsnum)
+        if 'lmttpm' not in path:
             print('look in lmttpm')
             return lookup_ifproc_file(obsnum,path='/data_lmt/lmttpm/')
     return(filename)
@@ -59,14 +54,13 @@ class IFProcQuick():
         self.filename = filename
         if os.path.isfile(self.filename):
             self.nc = netCDF4.Dataset(self.filename)
-            hdr = LMTHeader(self.nc.variables, self.nc.dimensions)
-            self.header = hdr.make_nominal_header()   
-            self.nc.close()            
-            self.obspgm = self.header.get('Dcs.ObsPgm')
-            self.obsnum = self.header.get('Dcs.ObsNum')
-            self.receiver = self.header.get('Dcs.Receiver')
+            self.obspgm = b''.join(self.nc.variables['Header.Dcs.ObsPgm'][:]
+                                  ).decode().strip()
+            self.obsnum = self.nc.variables['Header.Dcs.ObsNum'][0]
+            self.receiver = b''.join(self.nc.variables['Header.Dcs.Receiver'
+                                                      ][:]).decode().strip()
+            self.nc.close()
         else:
-            raise LMTSLRGeneralError("File Not Found", "%s not found" % (self.filename))
             print('IFProcQuick: file \'%s\' is not found'%(self.filename))
 
 class IFProc():
@@ -87,8 +81,6 @@ class IFProc():
             self.nc = netCDF4.Dataset(self.filename)
 
             # header information
-            hdr = LMTHeader(self.nc.variables, self.nc.dimensions)
-            self.header = hdr.make_nominal_header()
             self.source = b''.join(self.nc.variables['Header.Source.SourceName'
                                                     ][:]).decode().strip()
             self.source_RA = self.nc.variables['Header.Source.Ra'][0]
@@ -325,10 +317,10 @@ class IFProc():
         self.nc.close()
 
     def process_chopped_encoder(self, chop, chan,
-                                thresholds=[[[15,45,181],[110,135]],
-                                            [[15,45,181],[110,135]],
-                                            [[15,45,181],[110,135]],
-                                            [[15,45,181],[110,135]],
+                                thresholds=[[[15,45,181],[105,135]],
+                                            [[15,45,181],[105,135]],
+                                            [[15,45,181],[105,135]],
+                                            [[15,45,181],[105,135]],
                                             [[0,45,155],[65,135]],
                                             [[0,45,155],[65,135]]]):
         # create array of indices for main and ref based on chop array
@@ -339,10 +331,10 @@ class IFProc():
         return midx, ridx
 
     def process_chopped_signal(self, bb_level, chop, chop_option, ww=25,
-                               thresholds=[[[15,45,181],[110,135]],
-                                           [[15,45,181],[110,135]],
-                                           [[15,45,181],[110,135]],
-                                           [[15,45,181],[110,135]],
+                               thresholds=[[[15,45,181],[105,135]],
+                                           [[15,45,181],[105,135]],
+                                           [[15,45,181],[105,135]],
+                                           [[15,45,181],[105,135]],
                                            [[0,45,155],[65,135]],
                                            [[0,45,155],[65,135]]]):
 
