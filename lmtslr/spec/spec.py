@@ -178,13 +178,13 @@ class RoachSpec():
         else:
             self.on_spectrum = self.on_spectrum * tsys_no_cal
 
-    def reduce_ps_spectrum(self, type=2, normal_ps=True, calibrate=False, 
+    def reduce_ps_spectrum(self, stype=2, normal_ps=True, calibrate=False, 
                            tsys_spectrum=0, tsys_no_cal=1):
         """
         Creates a PS spectrum returned as self.ps_spectrum. Reduction 
-        procedure depends on the type parameter.
+        procedure depends on the stype parameter.
         Args:
-            type (int): type of reduction to run (default is 2)
+            stype (int): type of reduction to run (default is 2)
                         0: not defined
                         1: compute average of all refs and mains and 
                            take the difference
@@ -202,7 +202,7 @@ class RoachSpec():
         Returns:
             none
         """
-        if type == 1:
+        if stype == 1:
             self.compute_main_spectrum()
             self.compute_reference_spectrum()
             if normal_ps == True:
@@ -212,7 +212,7 @@ class RoachSpec():
             else:
                 self.ps_spectrum = (self.reference_spectrum - 
                                     self.main_spectrum) / self.main_spectrum
-        else: # type == 2:
+        else: # stype == 2:
             self.compute_main_spectra()
             self.compute_reference_spectra()
             if self.nons == self.nrefs:
@@ -238,13 +238,13 @@ class RoachSpec():
         else:
             self.ps_spectrum = self.ps_spectrum * tsys_no_cal
 
-    def reduce_spectra(self, type=0, calibrate=False,
+    def reduce_spectra(self, stype=0, calibrate=False,
                        tsys_spectrum=0, tsys_no_cal=1):
         """
         Creates a list of all the "on" spectra in the file. The on 
-        spectra are reduced according to the value of "type".
+        spectra are reduced according to the value of "stype".
         Args:
-            type (int): type of reduction to run (default is 0)
+            stype (int): type of reduction to run (default is 0)
                         0: use the median spectrum for the whole thing
                         1: use a single reference spectra which is 
                            average of all refs
@@ -262,14 +262,14 @@ class RoachSpec():
         spectra = []
 
         if self.nrefs == 0:
-            type = 0
+            stype = 0
 
-        if type == 0:
+        if stype == 0:
             self.compute_median_spectrum()
             for i in self.ons:
                 spectra.append((self.raw_spec[i,:] - self.median_spectrum[:]) 
                                 / self.median_spectrum[:])
-        elif type == 1:
+        elif stype == 1:
             if self.nrefs != 0:
                 self.compute_reference_spectrum()
                 for i in self.ons:
@@ -279,7 +279,7 @@ class RoachSpec():
             else:
                 for i in self.ons:
                     spectra.append((self.raw_spec[i,:]))
-        else: # type == 2:
+        else: # stype == 2:
             if self.nrefs != 0:
                 self.compute_reference_spectra()
                 nbins = self.nrefs - 1
@@ -328,7 +328,7 @@ class RoachSpec():
         return(baseline, rms)
 
     def integrate_spectra(self, channel_list, n_channel_list, baseline_list, 
-                          n_baseline_list, baseline_order=0, type=0):
+                          n_baseline_list, baseline_order=0, stype=0):
         """
         Computes the integral of the spectrum over some range of 
         channels (channel_list) with baseline removed using 
@@ -340,7 +340,7 @@ class RoachSpec():
             n_baseline_list (int): number of baselines to use
             baseline_order (int): order of fitting function (default is
                 0)
-            type (int): type of integration to use. 0 is YINT and 1 is
+            stype (int): type of integration to use. 0 is YINT and 1 is
                 YMAX.
         Returns:
             np.array(spectra) (array): array of integrated spectra 
@@ -352,7 +352,7 @@ class RoachSpec():
                                          baseline_list, n_baseline_list, 
                                          baseline_order)
             baselined_spectrum = self.reduced_spectra[i] - baseline
-            if type == 0:
+            if stype == 0:
                 spectra.append(np.sum(baselined_spectrum[channel_list]))
             else:
                 spectra.append(np.max(baselined_spectrum[channel_list]))
@@ -361,7 +361,7 @@ class RoachSpec():
 
     def integrate_spectrum(self, on_list, channel_list, n_channel_list,
                            baseline_list, n_baseline_list, baseline_order=0, 
-                           type=0):
+                           stype=0):
         """
         Averages reduced spectra over list of indices (on_list) and 
         then computes the integral of the spectrum over some range of 
@@ -375,7 +375,7 @@ class RoachSpec():
             n_baseline_list (int): number of baselines to use
             baseline_order (int): order of fitting function (default is
                 0)
-            type (int): type of integration to use. 0 is YINT and 1 is
+            stype (int): type of integration to use. 0 is YINT and 1 is
                 YMAX.
         Returns:
             (baselined_spectrum (array), result (float)): 
@@ -389,7 +389,7 @@ class RoachSpec():
         baseline,rms = self.baseline(spectrum, baseline_list, n_baseline_list,
                                      baseline_order)
         baselined_spectrum = spectrum - baseline 
-        if type == 0:
+        if stype == 0:
             result = np.sum(baselined_spectrum[channel_list]) # YINT
         else:
             result = np.max(baselined_spectrum[channel_list]) # YMAX
@@ -858,7 +858,7 @@ class SpecBankData(SpecBank):
     def create_map_data(self, channel_list, n_channel_list, baseline_list, 
                         n_baseline_list, baseline_order=0, 
                         pixel_list=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], 
-                        type=0):
+                        stype=0):
         """
         Processes a list of pixel ids to make a set of integrated 
         spectra for mapping (and fitting).
@@ -871,7 +871,7 @@ class SpecBankData(SpecBank):
                 0)
             pixel_list (list): list of pixels to process (default is 
                 all)
-            type (int): type of integration to use. 0 is YINT and 1 is
+            stype (int): type of integration to use. 0 is YINT and 1 is
                 YMAX.
         Returns:
             none
@@ -893,7 +893,7 @@ class SpecBankData(SpecBank):
             n_list.append(len(self.roach[i].xmap[self.roach[i].ons]))
             data_list.append(self.roach[i].integrate_spectra(channel_list, 
                 n_channel_list, baseline_list, n_baseline_list, 
-                baseline_order, type=type))
+                baseline_order, stype=stype))
         self.map_pixel_list = np.array(mp_list)
         self.map_t = np.array(t_list)
         self.map_x = np.array(x_list)
@@ -909,7 +909,7 @@ class SpecBankData(SpecBank):
                                          baseline_order=0, 
                                          pixel_list=[0,1,2,3,4,5,6,7,8,9,10,
                                                      11,12,13,14,15], 
-                                         type=0):
+                                         stype=0):
         """
         Processes a list of pixel ids to make a set of bufpos grids for
         mapping (and fitting).
@@ -925,7 +925,7 @@ class SpecBankData(SpecBank):
                 0)
             pixel_list (list): list of pixels to process (default is 
                 all)
-            type (int): type of integration to use. 0 is YINT and 1 is
+            stype (int): type of integration to use. 0 is YINT and 1 is
                 YMAX.
         Returns:
             none
@@ -955,7 +955,7 @@ class SpecBankData(SpecBank):
                                        n_baseline_list, baseline_order=0, 
                                        pixel_list=[0,1,2,3,4,5,6,7,8,9,10,11,
                                                    12,13,14,15],
-                                       type=0):
+                                       stype=0):
         """
         Processes a list of pixel ids to make a set of grid data for 
         mapping (and fitting).
@@ -971,7 +971,7 @@ class SpecBankData(SpecBank):
                 0)
             pixel_list (list): list of pixels to process (default is 
                 all)
-            type (int): type of integration to use. 0 is YINT and 1 is
+            stype (int): type of integration to use. 0 is YINT and 1 is
                 YMAX.
         Returns:
             none
@@ -1032,7 +1032,7 @@ class SpecBankData(SpecBank):
                     # z is the integrated intensity value for the averaged spectrum
                     zspec,z = self.roach[i].integrate_spectrum(grid_list, 
                         channel_list, n_channel_list, baseline_list, 
-                        n_baseline_list, baseline_order, type)
+                        n_baseline_list, baseline_order, stype)
                     pdata_list.append(z)
                     pspectrum_list.append(zspec)
 
@@ -1062,7 +1062,7 @@ class SpecBankData(SpecBank):
     def create_map_grid_data(self, channel_list, n_channel_list, 
                              baseline_list, n_baseline_list, baseline_order, 
                              pixel_list=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
-                             type=0):
+                             stype=0):
         """
         Processes a list of pixel ids to make a set of grid data for 
         mapping (and fitting).
@@ -1075,7 +1075,7 @@ class SpecBankData(SpecBank):
                 0)
             pixel_list (list): list of pixels to process (default is 
                 all)
-            type (int): type of integration to use. 0 is YINT and 1 is
+            stype (int): type of integration to use. 0 is YINT and 1 is
                 YMAX.
         Returns:
             none
@@ -1120,7 +1120,7 @@ class SpecBankData(SpecBank):
                 # z is the integrated intensity value for the averaged spectrum
                 zspec,z = self.roach[i].integrate_spectrum(grid_list, 
                     channel_list, n_channel_list, baseline_list, 
-                    n_baseline_list, baseline_order, type)
+                    n_baseline_list, baseline_order, stype)
                 pdata_list.append(z)
                 pspectrum_list.append(zspec)
 
