@@ -64,7 +64,7 @@ import netCDF4
 
 from docopt import docopt
 
-version="11-jan-2022"
+version="24-jan-2022"
 
 def grep(terms):
     """
@@ -104,6 +104,8 @@ def slr_summary(ifproc, rc=False):
     #   e.g. ['ifproc', '2020-02-20', '091111', '00', '0001']
     
     nc = netCDF4.Dataset(ifproc)
+    obsnum = nc.variables['Header.Dcs.ObsNum'][0]
+    
     vlsr = nc.variables['Header.Source.Velocity'][0]
     src = b''.join(nc.variables['Header.Source.SourceName'][:]).decode().strip()
     if 'Header.Sequoia.SkyFreq' in nc.variables:
@@ -118,7 +120,7 @@ def slr_summary(ifproc, rc=False):
         instrument = '1MM'        
         bbtime = nc.variables['Data.IfProc.BasebandTime'][:]
         if len(bbtime.shape) > 1:
-            print('Warning: PJT1',bbtime,'pjt2',bbtime[0],'pjt3',bbtime.shape)
+            print('# Warning: PJT bbtime',bbtime.shape,'for obsnum',obsnum)
             bbtime = bbtime[:,0]
         
     bufpos = nc.variables['Data.TelescopeBackend.BufPos'][:]
@@ -126,9 +128,9 @@ def slr_summary(ifproc, rc=False):
     # Header.Dcs.ObsNum
 
     # Header.Sequoia.NumBands or Header.IfProc.NumBands
-    numbands = nc.variables['Header.Sequoia.NumBands'][0]
-
-    obsnum = nc.variables['Header.Dcs.ObsNum'][0]
+    #numbands = nc.variables['Header.Sequoia.NumBands'][0]
+    numbands = nc.variables['Header.IfProc.NumBands'][0]
+    
     try:
         calobsnum = nc.variables['Header.IfProc.CalObsNum'][0]
     except:
