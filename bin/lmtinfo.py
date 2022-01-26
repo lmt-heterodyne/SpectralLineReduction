@@ -108,32 +108,33 @@ def slr_summary(ifproc, rc=False):
     
     nc = netCDF4.Dataset(ifproc)
     obsnum = nc.variables['Header.Dcs.ObsNum'][0]
+    receiver = b''.join(nc.variables['Header.Dcs.Receiver'][:]).decode().strip()
     
     vlsr = nc.variables['Header.Source.Velocity'][0]
     src = b''.join(nc.variables['Header.Source.SourceName'][:]).decode().strip()
-    if 'Header.Sequoia.SkyFreq' in nc.variables:
+    if receiver == 'Sequoia':
+        instrument = 'SEQ'
         skyfreq  = nc.variables['Header.Sequoia.SkyFreq'][0]
         restfreq = nc.variables['Header.Sequoia.LineFreq'][0]
-        instrument = 'SEQ'
+        numbands = nc.variables['Header.Sequoia.NumBands'][0]        
         bbtime = nc.variables['Data.IfProc.BasebandTime'][:]
-    else:
-        # @todo is 1MM the only option
+    elif receiver == 'Msip1mm':
+        instrument = '1MM'        
         skyfreq  = nc.variables['Header.Msip1mm.SkyFreq'][0]
         restfreq = nc.variables['Header.Msip1mm.LineFreq'][0]
-        instrument = '1MM'        
+        numbands = nc.variables['Header.Msip1mm.NumBands'][0]
         bbtime = nc.variables['Data.IfProc.BasebandTime'][:]
         if len(bbtime.shape) > 1:
             print('# Warning: PJT bbtime',bbtime.shape,'for obsnum',obsnum)
             bbtime = bbtime[:,0]
+    else:
+        print('receiver %s not supported yet' % receiver)
+        sys.exit(1)
         
     bufpos = nc.variables['Data.TelescopeBackend.BufPos'][:]
     ubufpos = np.unique(bufpos)
     # Header.Dcs.ObsNum
 
-    # Header.Sequoia.NumBands or Header.IfProc.NumBands
-    #numbands = nc.variables['Header.Sequoia.NumBands'][0]
-    numbands = nc.variables['Header.IfProc.NumBands'][0]
-    
     try:
         calobsnum = nc.variables['Header.IfProc.CalObsNum'][0]
     except:
