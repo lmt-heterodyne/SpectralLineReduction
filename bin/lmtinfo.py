@@ -64,7 +64,7 @@ import netCDF4
 
 from docopt import docopt
 
-version="24-jan-2022"
+version="25-jan-2022"
 
 def grep(terms):
     """
@@ -116,6 +116,7 @@ def slr_summary(ifproc, rc=False):
         restfreq = nc.variables['Header.Sequoia.LineFreq'][0]
         instrument = 'SEQ'
         bbtime = nc.variables['Data.IfProc.BasebandTime'][:]
+        numbands = nc.variables['Header.Sequoia.NumBands'][0]        
     else:
         # @todo is 1MM the only option
         skyfreq  = nc.variables['Header.Msip1mm.SkyFreq'][0]
@@ -125,15 +126,12 @@ def slr_summary(ifproc, rc=False):
         if len(bbtime.shape) > 1:
             print('# Warning: PJT bbtime',bbtime.shape,'for obsnum',obsnum)
             bbtime = bbtime[:,0]
+        numbands = nc.variables['Header.Msip1mm.NumBands'][0]                    
         
     bufpos = nc.variables['Data.TelescopeBackend.BufPos'][:]
     ubufpos = np.unique(bufpos)
     # Header.Dcs.ObsNum
 
-    # Header.Sequoia.NumBands or Header.IfProc.NumBands
-    #numbands = nc.variables['Header.Sequoia.NumBands'][0]
-    numbands = nc.variables['Header.IfProc.NumBands'][0]
-    
     try:
         calobsnum = nc.variables['Header.IfProc.CalObsNum'][0]
     except:
