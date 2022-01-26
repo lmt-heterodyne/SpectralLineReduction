@@ -78,6 +78,7 @@ int main(int argc, char *argv[])
   strncpy(C.source,S.source,18);  // @todo 18, seriously?   - there's 20, 32 and now 18?
   printf("%s\n",C.source);
   strncpy(C.date_obs,S.date_obs,20);
+  strncpy(C.receiver,S.receiver,20);
   strncpy(C.history1,S.history,MAXHIST);   
   printf("DATE-OBS %s\n",C.date_obs);  
   C.x_position = S.x_position;

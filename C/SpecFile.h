@@ -20,6 +20,7 @@ typedef struct
   float vlsr;                          // km/s
   float zsource;
   char date_obs[40];                   // e.g. 2021-09-14T07:25:23.370
+  char receiver[40];                   // SEQ,OMA,1MM
   // axis parameters from line header
   double CRPIX, CRVAL, CDELT;          // km/s
   double *CAXIS;                       // km/s
