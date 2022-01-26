@@ -361,10 +361,6 @@ if len(sys.argv) == 2:
     
                                                      # mode 1: obsnum or nc_file or path
     obsnum = sys.argv[1]
-<<<<<<< HEAD
-    # @todo fix
-=======
->>>>>>> 11e49835b9b9007528409f481e806a5cadd3fd0d
     if obsnum.isnumeric():
         obsnum=int(obsnum)
         globs = '*/ifproc/ifproc_*_%06d_*.nc' % obsnum
