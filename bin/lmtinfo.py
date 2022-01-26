@@ -64,7 +64,7 @@ import netCDF4
 
 from docopt import docopt
 
-version="25-jan-2022"
+version="26-jan-2022"
 
 def grep(terms):
     """
@@ -91,6 +91,19 @@ def build():
     cmd = "cd $DATA_LMT; make -f $LMTOY/data_lmt/Makefile new"
     os.system(cmd)
 
+def alist(x):
+    """
+    print an array as a comma separated list
+    """
+    n = len(x)
+    s = repr(x[0])
+    if n==1:
+        return s
+    
+    for i in range(1,n):
+        s = s + ",%s" % repr(x[i])
+    return s
+
 
 #  ifproc/ifproc_2018-06-29_078085_00_0001.nc
 #  spectrometer/roach0/roach0_78085_0_1_CHI-Cyg_2018-06-29_041713.nc
@@ -114,15 +127,15 @@ def slr_summary(ifproc, rc=False):
     src = b''.join(nc.variables['Header.Source.SourceName'][:]).decode().strip()
     if receiver == 'Sequoia':
         instrument = 'SEQ'
-        skyfreq  = nc.variables['Header.Sequoia.SkyFreq'][0]
-        restfreq = nc.variables['Header.Sequoia.LineFreq'][0]
         numbands = nc.variables['Header.Sequoia.NumBands'][0]        
+        skyfreq  = nc.variables['Header.Sequoia.SkyFreq'][:numbands]
+        restfreq = nc.variables['Header.Sequoia.LineFreq'][:numbands]
         bbtime = nc.variables['Data.IfProc.BasebandTime'][:]
     elif receiver == 'Msip1mm':
         instrument = '1MM'        
-        skyfreq  = nc.variables['Header.Msip1mm.SkyFreq'][0]
-        restfreq = nc.variables['Header.Msip1mm.LineFreq'][0]
         numbands = nc.variables['Header.Msip1mm.NumBands'][0]
+        skyfreq  = nc.variables['Header.Msip1mm.SkyFreq'][:numbands]
+        restfreq = nc.variables['Header.Msip1mm.LineFreq'][:numbands]
         bbtime = nc.variables['Data.IfProc.BasebandTime'][:]
         if len(bbtime.shape) > 1:
             print('# Warning: PJT bbtime',bbtime.shape,'for obsnum',obsnum)
@@ -130,10 +143,9 @@ def slr_summary(ifproc, rc=False):
     else:
         print('receiver %s not supported yet' % receiver)
         sys.exit(1)
-        
+
     bufpos = nc.variables['Data.TelescopeBackend.BufPos'][:]
     ubufpos = np.unique(bufpos)
-    # Header.Dcs.ObsNum
 
     try:
         calobsnum = nc.variables['Header.IfProc.CalObsNum'][0]
@@ -211,10 +223,10 @@ def slr_summary(ifproc, rc=False):
         print('# XYstep=%g %g' % (xstep,ystep))
         print('numbands=%d' % numbands)
         print('vlsr=%g        # km/s' % vlsr)
-        print('skyfreq=%g     # GHz' % skyfreq)
-        print('restfreq=%g    # Ghz' % restfreq)
+        print('skyfreq=%s     # GHz' % alist(skyfreq))
+        print('restfreq=%s    # Ghz' % alist(restfreq))
         print('src="%s"' % src)
-        resolution = math.ceil(1.0 * 299792458 / skyfreq / 1e9 / 50.0 * 206264.806)
+        resolution = math.ceil(1.0 * 299792458 / skyfreq[0] / 1e9 / 50.0 * 206264.806)
         print('resolution=%g  # arcsec' % resolution)
         print('cell=%g   # arcsec' % (resolution/2.0))
         # @todo https://github.com/astroumd/lmtoy/issues/9     xlen needs to be equal to ylen
@@ -349,7 +361,10 @@ if len(sys.argv) == 2:
     
                                                      # mode 1: obsnum or nc_file or path
     obsnum = sys.argv[1]
+<<<<<<< HEAD
     # @todo fix
+=======
+>>>>>>> 11e49835b9b9007528409f481e806a5cadd3fd0d
     if obsnum.isnumeric():
         obsnum=int(obsnum)
         globs = '*/ifproc/ifproc_*_%06d_*.nc' % obsnum
