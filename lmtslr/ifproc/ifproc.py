@@ -152,38 +152,29 @@ class IFProc():
             self.zc0 = self.nc.variables['Header.M1.ZernikeC'][0]
             self.zc_enabled = self.nc.variables['Header.M1.ZernikeEnabled'][0]
 
-            # sometimes the Receiver designation is wrong; check and warn but \
-            # don't stop
-            self.receiver = b''.join(self.nc.variables['Header.Dcs.Receiver'
-                                                      ][:]).decode().strip()
+            # sometimes the Receiver designation is wrong; check and warn but don't stop
+            self.receiver = b''.join(self.nc.variables['Header.Dcs.Receiver'][:]).decode().strip()
             try:
                 print('before read npix')
-                self.npix = int(self.nc.variables['Header.' + self.receiver + 
-                                                  '.NumPixels'][0])
+                self.npix = int(self.nc.variables['Header.' + self.receiver + '.NumPixels'][0])
                 print('from pixels npix =', self.npix)
                 if 'ifproc' in filename:
                     if 'Data.IfProc.BasebandLevel_ylen' in self.nc.dimensions:
-                        self.npix = len(self.nc.dimensions[
-                            'Data.IfProc.BasebandLevel_ylen'])
+                        self.npix = len(self.nc.dimensions['Data.IfProc.BasebandLevel_ylen'])
                     else:
-                        self.npix = len(self.nc.dimensions[
-                            'Data.IfProc.BasebandLevel_xlen'])
+                        self.npix = len(self.nc.dimensions['Data.IfProc.BasebandLevel_xlen'])
                     if 'Data.IfProc.DetectorLevel_ylen' in self.nc.dimensions:
-                        self.npix += len(self.nc.dimensions[
-                            'Data.IfProc.DetectorLevel_ylen'])
+                        self.npix += len(self.nc.dimensions['Data.IfProc.DetectorLevel_ylen'])
                 elif 'lmttpm' in filename:
-                    self.npix = len(self.nc.dimensions[
-                        'Data.LmtTpm.Signal_xlen'])
+                    self.npix = len(self.nc.dimensions['Data.LmtTpm.Signal_xlen'])
                     if True or self.receiver == 'B4r':
                         self.npix = 1
                 else:
                         self.npix = 1
                 print('from xlen npix =', self.npix)
-                self.tracking_beam = self.nc.variables[
-                    'Header.' + self.receiver + '.BeamSelected'][0]
+                self.tracking_beam = self.nc.variables['Header.' + self.receiver + '.BeamSelected'][0]
                 if self.tracking_beam != -1:
-                    print('TRACKING ' + self.receiver + ' PIXEL ', 
-                          self.tracking_beam)
+                    print('TRACKING ' + self.receiver + ' PIXEL ', self.tracking_beam)
             except Exception as e:
                 print(e)
                 print('WARNING: NOT AN HETERODYNE FILE')
@@ -208,50 +199,34 @@ class IFProc():
                            * 206264.8
             self.el_user = self.nc.variables['Header.PointModel.ElUserOff'][0]\
                            * 206264.8
-            self.az_paddle = self.nc.variables['Header.PointModel.AzPaddleOff'
-                                              ][0] * 206264.8
-            self.el_paddle = self.nc.variables['Header.PointModel.ElPaddleOff'
-                                              ][0] * 206264.8
-            self.az_total = self.nc.variables['Header.PointModel.AzTotalCor'
-                                             ][0] * 206264.8
-            self.el_total = self.nc.variables['Header.PointModel.ElTotalCor'
-                                             ][0] * 206264.8
-            self.az_receiver = self.nc.variables[
-                'Header.PointModel.AzReceiverOff'][0] * 206264.8
-            self.el_receiver = self.nc.variables[
-                'Header.PointModel.ElReceiverOff'][0] * 206264.8
-            self.el_m2 = self.nc.variables['Header.PointModel.ElM2Cor'][0]\
-                         * 206264.8
-            self.az_m2 = self.nc.variables['Header.PointModel.AzM2Cor'][0]\
-                         * 206264.8
+            self.az_paddle = self.nc.variables['Header.PointModel.AzPaddleOff'][0] * 206264.8
+            self.el_paddle = self.nc.variables['Header.PointModel.ElPaddleOff'][0] * 206264.8
+            self.az_total = self.nc.variables['Header.PointModel.AzTotalCor'][0] * 206264.8
+            self.el_total = self.nc.variables['Header.PointModel.ElTotalCor'][0] * 206264.8
+            self.az_receiver = self.nc.variables['Header.PointModel.AzReceiverOff'][0] * 206264.8
+            self.el_receiver = self.nc.variables['Header.PointModel.ElReceiverOff'][0] * 206264.8
+            self.el_m2 = self.nc.variables['Header.PointModel.ElM2Cor'][0] * 206264.8
+            self.az_m2 = self.nc.variables['Header.PointModel.AzM2Cor'][0] * 206264.8
 
             # TILTMETER Information                                                                                  
-            self.tilt0_x = self.nc.variables['Header.Tiltmeter_0_.TiltX'][0]\
-                           * 206264.8
-            self.tilt0_y = self.nc.variables['Header.Tiltmeter_0_.TiltY'][0]\
-                           * 206264.8
-            self.tilt1_x = self.nc.variables['Header.Tiltmeter_1_.TiltX'][0]\
-                           * 206264.8
-            self.tilt1_y = self.nc.variables['Header.Tiltmeter_1_.TiltY'][0]\
-                           * 206264.8
+            self.tilt0_x = self.nc.variables['Header.Tiltmeter_0_.TiltX'][0] * 206264.8
+            self.tilt0_y = self.nc.variables['Header.Tiltmeter_0_.TiltY'][0] * 206264.8
+            self.tilt1_x = self.nc.variables['Header.Tiltmeter_1_.TiltX'][0] * 206264.8
+            self.tilt1_y = self.nc.variables['Header.Tiltmeter_1_.TiltY'][0] * 206264.8
 
             # TEMPERATURE SENSOR Information
-            self.T = TempSens(self.nc.variables['Header.TempSens.TempSens'][:]
-                              / 100)
+            self.T = TempSens(self.nc.variables['Header.TempSens.TempSens'][:] / 100)
 
             # map parameters 
             try:
                 self.hpbw = self.nc.variables['Header.Map.HPBW'][0] * 206264.8
-                self.xlength = self.nc.variables['Header.Map.XLength'][0]\
-                               * 206264.8
-                self.ylength = self.nc.variables['Header.Map.YLength'][0]\
-                               * 206264.8
+                self.xlength = self.nc.variables['Header.Map.XLength'][0] * 206264.8
+                self.ylength = self.nc.variables['Header.Map.YLength'][0] * 206264.8
                 self.xstep = self.nc.variables['Header.Map.XStep'][0]
                 self.ystep = self.nc.variables['Header.Map.YStep'][0]
                 self.rows = self.nc.variables['Header.Map.RowsPerScan'][0]
                 # check the coordinate system Az = 0; Ra = 1; default =0
-                test_map_coord = b''.join(self.nc.variables[
-                    'Header.Map.MapCoord'][:]).decode().strip()
+                test_map_coord = b''.join(self.nc.variables['Header.Map.MapCoord'][:]).decode().strip()
                 if test_map_coord[0] == 'A':
                     self.map_coord = 0
                 elif test_map_coord[0] == 'R':
@@ -259,10 +234,8 @@ class IFProc():
                 else:
                     self.map_coord = 0
 
-                self.map_motion = b''.join(self.nc.variables[
-                    'Header.Map.MapMotion'][:]).decode().strip()
-                print('Map Parameters: %s %s'%(test_map_coord, self.map_motion
-                                              ))
+                self.map_motion = b''.join(self.nc.variables['Header.Map.MapMotion'][:]).decode().strip()
+                print('Map Parameters: %s %s'%(test_map_coord, self.map_motion))
                 print('HPBW=%5.1f XLength=%8.1f YLength=%8.1f XStep=%6.2f \
                        YStep=%6.2f'%(self.hpbw, self.xlength, self.ylength, 
                                      self.xstep, self.ystep))
@@ -292,42 +265,24 @@ class IFProc():
                 self.line_list = []
                 self.baseline_list = []
             try:
-                self.line_rest_frequency = self.nc.variables[
-                    'Header.' + self.receiver + '.LineFreq'][0:2]
-                self.doppler_track = self.nc.variables[
-                    'Header.' + self.receiver + '.DopplerTrack'][0]
-                self.observatory_velocity = self.nc.variables[
-                    'Header.Sky.ObsVel'][0]
-                self.barycenter_velocity = self.nc.variables[
-                    'Header.Sky.BaryVel'][0]
-                self.sky_frequency = self.nc.variables[
-                    'Header.' + self.receiver + '.SkyFreq'][0:2]
-                self.lo_1_frequency = self.nc.variables[
-                    'Header.' + self.receiver + '.Lo1Freq'][0]
-                self.lo_2_frequency = self.nc.variables[
-                    'Header.' + self.receiver + '.Lo2Freq'][0:2]
-                self.if_1_frequency = self.nc.variables[
-                    'Header.' + self.receiver + '.If1Freq'][0:2]
-                self.if_2_frequency = self.nc.variables[
-                    'Header.' + self.receiver + '.If2Freq'][0:2]
-                self.synthesizer_harmonic = self.nc.variables[
-                    'Header.' + self.receiver + '.SynthHarm'][0:2]
-                self.synthesizer_frequency = self.nc.variables[
-                    'Header.' + self.receiver + '.SynthFreq'][0:2]
-                self.sideband_1_lo_type = self.nc.variables[
-                    'Header.' + self.receiver + '.SideBand1LoType'][0:2]
-                self.sideband_2_lo_type = self.nc.variables[
-                    'Header.' + self.receiver + '.SideBand2LoType'][0:2]
-                self.sideband_1_lo = self.nc.variables[
-                    'Header.' + self.receiver + '.SideBand1Lo'][0:2]
-                self.sideband_2_lo = self.nc.variables[
-                    'Header.' + self.receiver + '.SideBand2Lo'][0:2]
-                self.velocity_definition = self.nc.variables[
-                    'Header.' + self.receiver + '.VelocityDefinition'][0]
-                self.frequency_offset = self.nc.variables[
-                    'Header.' + self.receiver + '.LineOffset'][0:2]
-                self.line_redshift = self.nc.variables[
-                    'Header.' + self.receiver + '.LineRedshift'][0:2]
+                self.line_rest_frequency = self.nc.variables['Header.' + self.receiver + '.LineFreq'][0:2]
+                self.doppler_track = self.nc.variables['Header.' + self.receiver + '.DopplerTrack'][0]
+                self.observatory_velocity = self.nc.variables['Header.Sky.ObsVel'][0]
+                self.barycenter_velocity = self.nc.variables['Header.Sky.BaryVel'][0]
+                self.sky_frequency = self.nc.variables['Header.' + self.receiver + '.SkyFreq'][0:2]
+                self.lo_1_frequency = self.nc.variables['Header.' + self.receiver + '.Lo1Freq'][0]
+                self.lo_2_frequency = self.nc.variables['Header.' + self.receiver + '.Lo2Freq'][0:2]
+                self.if_1_frequency = self.nc.variables['Header.' + self.receiver + '.If1Freq'][0:2]
+                self.if_2_frequency = self.nc.variables['Header.' + self.receiver + '.If2Freq'][0:2]
+                self.synthesizer_harmonic = self.nc.variables['Header.' + self.receiver + '.SynthHarm'][0:2]
+                self.synthesizer_frequency = self.nc.variables['Header.' + self.receiver + '.SynthFreq'][0:2]
+                self.sideband_1_lo_type = self.nc.variables['Header.' + self.receiver + '.SideBand1LoType'][0:2]
+                self.sideband_2_lo_type = self.nc.variables['Header.' + self.receiver + '.SideBand2LoType'][0:2]
+                self.sideband_1_lo = self.nc.variables['Header.' + self.receiver + '.SideBand1Lo'][0:2]
+                self.sideband_2_lo = self.nc.variables['Header.' + self.receiver + '.SideBand2Lo'][0:2]
+                self.velocity_definition = self.nc.variables['Header.' + self.receiver + '.VelocityDefinition'][0]
+                self.frequency_offset = self.nc.variables['Header.' + self.receiver + '.LineOffset'][0:2]
+                self.line_redshift = self.nc.variables['Header.' + self.receiver + '.LineRedshift'][0:2]
                 
             except Exception as e:
                 self.line_rest_frequency = 0
