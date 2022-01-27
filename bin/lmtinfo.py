@@ -235,9 +235,7 @@ def slr_summary(ifproc, rc=False):
         print('instrument="%s"' % instrument)
         print("# </lmtinfo>")
     else:
-        print("%-20s %7s  %-5s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" % (date_obs, obsnum, obspgm, src, restfreq, vlsr, tint, ra, dec, az, el, az1,el1))
-
-#       print("%-20s %7d  %-5s %-30s RSR  0      %5.1f  %10.6f %10.6f  %5.1f %5.1f" %   (date_obs, obsnum, obspgm, src, tint, ra, dec, az, el))
+        print("%-22s  %7s  %-5s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" % (date_obs, obsnum, obspgm, src, restfreq[0], vlsr, tint, ra, dec, az, el, az1,el1))
 
     # -end slr_summary() 
 
@@ -402,7 +400,7 @@ if len(sys.argv) == 2:
                 except:
                     yyyymmdd = "1900-00-00"
                     obsnum   = " "
-                print("%-20s %7s  failed for %s" % (yyyymmdd,obsnum,f))                    
+                print("%-20s %7s  failed for rsr %s" % (yyyymmdd,obsnum,f))                    
 
         globs = '%s/ifproc/ifproc*.nc' % path
         fn = glob.glob(globs)
@@ -416,7 +414,7 @@ if len(sys.argv) == 2:
                 except:
                     yyyymmdd = "1900-00-00"
                     obsnum   = " "
-                print("%-20s %7s  failed for %s" % (yyyymmdd,obsnum,f))
+                print("%-20s %7s  failed for slr %s" % (yyyymmdd,obsnum,f))
         sys.exit(0)
     elif os.path.exists(ifproc):
         try:
