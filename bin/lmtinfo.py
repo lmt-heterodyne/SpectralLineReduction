@@ -88,7 +88,7 @@ def build():
     search a predefined $DATA_LMT/data_lmt.log file for terms
     @todo check if the log file exists
     """
-    cmd = "cd $DATA_LMT; make new"
+    cmd = "cd $DATA_LMT; make -f $LMTOY/data_lmt/Makefile new"
     os.system(cmd)
 
 def alist(x):
@@ -351,7 +351,7 @@ arguments = docopt(__doc__,options_first=True, version='0.1')
 if len(sys.argv) == 2:
 
     if sys.argv[1] == "build":
-        print("Special rebuild of a new")
+        print("Special rebuild of a new data_lmt.log")
         build()
         sys.exit(0)        
 
@@ -370,7 +370,7 @@ if len(sys.argv) == 2:
     if len(fn) > 0:
         ifproc = fn[0]
     else:
-        # must be an ifproc filename
+        # must be an ifproc filename then
         ifproc = sys.argv[1]
 
     if os.path.isdir(ifproc):
