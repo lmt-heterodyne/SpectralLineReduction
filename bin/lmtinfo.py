@@ -1,8 +1,6 @@
 #! /usr/bin/env python
 #
-#    lmtinfo:    provide some info, in terms of a list of "keyword=value", that could be used
-#                by an external pipeline that needs input.
-#                This list is both bash and python friendly: we only allow integer/float/string
+#  lmtinfo.py:    provide some info on the RAW data
 #
 #  To run for all the RSR and SLR in Feb 2021 took 9 mins on "cln"
 #
@@ -25,11 +23,13 @@ Usage: lmtinfo.py OBSNUM
 -h --help  This help
 
 
-This routine grabs some useful summary information from the ifproc file, ignoring
-the roach files. If one unique OBSNUM is given, it will show this information
-in a "rc" style for the pipeline. If more OBSNUM are possible, for example by only
-giving a PATH, all possible OBSNUMs are listed with a short summary, one OBSNUM
-per line. Example of early output:
+This routine grabs some useful summary information for LMT raw data.
+For SLR they are taken from the ifproc file, ignoring the roach files.
+
+If an OBSNUM (5 or 6 digits) is given, it will show this information
+in a "rc" style for the pipeline. All OBSNUM summaries are given in
+tabular format.
+Example of early output:
 
 
       #     DATE  OBSNUM   OBSPGM SOURCE      RESTFRQ VLSR INTTIME
@@ -42,55 +42,68 @@ per line. Example of early output:
 
 OBSNUM for early SLR (testing?) are 99nnnnn,
 but after 2018-04-14 back to the normal nnnnnn, where 074686
-seems to be the first.
+seems to be the first data here.
 
-grep:     search in database, terms are logically AND-ed
-build:    rebuild the database
 data:     show the database, no sorting and culling
+build:    rebuild the sorted database (needs write permission in $DATA_LMT)
+grep:     search in database, terms are logically AND-ed
 
 """
 
+import os
 import sys
 import math
-import numpy as np		
-import matplotlib.pyplot as pl
-import datetime
-
-import sys, os
 import glob
+import numpy as np		
+import datetime
 import netCDF4
-
 from docopt import docopt
 
-version="28-jan-2022"
+version="29-jan-2022"
+
+if "DATA_LMT" in os.environ:
+    data_lmt = os.environ["DATA_LMT"]
+else:
+    data_lmt = "/data_lmt/"
+
+arguments = docopt(__doc__,options_first=True, version='0.2')
+
+header = "# Y-M-D   T H:M:S     ObsNum ObsPgm SourceName                     RestFreq  VLSR   TINT     RA        DEC          AZ    EL"
 
 def grep(terms):
     """
-    search a predefined $DATA_LMT/data_lmt.log file for terms
-    @todo check if the log file exists
+    search a predefined $DATA_LMT/data_lmt.log file for matching terms
     """
+    logfile = "%s/%s" % (data_lmt, "data_lmt.log")
+    if not os.path.exists(logfile):
+        print("Logfile %s does not exist, use the build option to create it" % logfile)
+        sys.exit(1)
 
     if len(terms) == 1:
-        cmd = "grep -i %s $DATA_LMT/data_lmt.log" % (terms[0])
+        cmd = "grep -i %s %s" % (terms[0],logfile)
     elif len(terms) == 2:
-        cmd = "grep -i %s $DATA_LMT/data_lmt.log | grep -i %s" % (terms[0],terms[1])
+        cmd = "grep -i %s %s | grep -i %s" % (terms[0],logfile,terms[1])
     elif len(terms) == 3:
-        cmd = "grep -i %s $DATA_LMT/data_lmt.log | grep -i %s | grep -i %s" % (terms[0],terms[1],terms[2])
+        cmd = "grep -i %s %s | grep -i %s | grep -i %s" % (terms[0],logfile,terms[1],terms[2])
     elif len(terms) == 4:
-        cmd = "grep -i %s $DATA_LMT/data_lmt.log | grep -i %s | grep -i %s | grep -i %s" % (terms[0],terms[1],terms[2],terms[3])
+        cmd = "grep -i %s %s | grep -i %s | grep -i %s | grep -i %s" % (terms[0],logfile,terms[1],terms[2],terms[3])
+    else:
+        print("too many arguments")
+        sys.exit(1)        
     os.system(cmd)
 
 
 def build():
     """
-    search a predefined $DATA_LMT/data_lmt.log file for terms
+    build the greppable database $DATA_LMT/data_lmt.log 
     """
     cmd = "cd $DATA_LMT; make -f $LMTOY/data_lmt/Makefile new"
     os.system(cmd)
 
 def alist(x):
     """
-    print an array as a comma separated list
+    print a python array or list as a comma separated string of values
+    [1,2,3] -> "1,2,3"
     """
     n = len(x)
     s = repr(x[0])
@@ -102,14 +115,14 @@ def alist(x):
     return s
 
 
+#  Examples:
 #  ifproc/ifproc_2018-06-29_078085_00_0001.nc
-#  ??? weird one ???
-#         ifproc_2018-02-26_9901395_00_0001.nc
+#         ifproc_2018-02-26_9901395_00_0001.nc        (older)
 #  spectrometer/roach0/roach0_78085_0_1_CHI-Cyg_2018-06-29_041713.nc
 #  RedshiftChassis0/RedshiftChassis0_2015-01-22_033551_00_0001.nc
 
 def slr_summary(ifproc, rc=False):
-    """   summary a procnum in a single line
+    """   summary of a procnum in a single line, or rc format
     """
     #   e.g.  M51_data/ifproc/ifproc_2020-02-20_091111_00_0001.nc
     fn  = ifproc.split("/")[-1].replace('.nc','').split('_')
@@ -232,11 +245,15 @@ def slr_summary(ifproc, rc=False):
         print('instrument="%s"' % instrument)
         print("# </lmtinfo>")
     else:
-        print("%-22s  %7s  %-5s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" % (date_obs, obsnum, obspgm, src, restfreq[0], vlsr, tint, ra, dec, az, el, az1,el1))
+        print("%-22s  %7s  %-5s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %
+              (date_obs, obsnum, obspgm, src, restfreq[0], vlsr, tint, ra, dec, az, el, az1, el1))
 
     # -end slr_summary() 
 
 def rsr_summary(rsr_file, rc=False):
+    """
+    summary of a RSR in a single line, or rc formatted
+    """
     def new_date_obs(date):
         """
         date_obs from RSR have a few common non-ISO formats:
@@ -330,7 +347,8 @@ def rsr_summary(rsr_file, rc=False):
         print("# </lmtinfo>")
 
     else:     # one line summary
-        print("%-20s %7d  %-5s %-30s     RSR      0    %6.1f  %10.6f %10.6f  %5.1f %5.1f" %   (date_obs, obsnum, obspgm, src, tint, ra, dec, az, el))
+        print("%-20s %7d  %-5s %-30s     RSR      0    %6.1f  %10.6f %10.6f  %5.1f %5.1f" %
+              (date_obs, obsnum, obspgm, src,           tint,   ra,    dec,   az,   el))
 
     # -end  rsr_summary()
     
@@ -342,20 +360,12 @@ def rsr_summary(rsr_file, rc=False):
 #  used in the way most scripts use them. Below there is a hardcoded
 #  parsing of arguments based on how many there are, which are files, and
 #  which are directories.
-arguments = docopt(__doc__,options_first=True, version='0.1')
-
-header = "# Y-M-D   T H:M:S     ObsNum ObsPgm SourceName                     RestFreq  VLSR   TINT     RA        DEC          AZ    EL"
-
-if "DATA_LMT" in os.environ:
-    data_lmt = os.environ["DATA_LMT"]
-else:
-    data_lmt = "/data_lmt/"
 
 if len(sys.argv) == 2:
 
     # build
     if sys.argv[1] == "build":
-        print("Special rebuild of a new data_lmt.log")
+        print("Rebuilding $DATA_LMT/data_lmt.log for grep")
         build()
         sys.exit(0)
 
