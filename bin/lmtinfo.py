@@ -59,7 +59,7 @@ import datetime
 import netCDF4
 from docopt import docopt
 
-version="29-jan-2022"
+version="2-feb-2022"
 
 if "DATA_LMT" in os.environ:
     data_lmt = os.environ["DATA_LMT"]
@@ -162,7 +162,9 @@ def slr_summary(ifproc, rc=False):
     except:
         calobsnum = -1
         
-    obspgm = b''.join(nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
+    obspgm  = b''.join(nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
+    #  ObsGoal is in Dcs as well as IfProc
+    obsgoal = b''.join(nc.variables['Header.Dcs.ObsGoal'][:]).decode().strip()    
     try:
         pid = b''.join(nc.variables['Header.Dcs.ProjectId'][:]).decode().strip()
     except:
@@ -223,6 +225,7 @@ def slr_summary(ifproc, rc=False):
         print('obsnum="%s"' % obsnum)
         print('calobsnum="%s"' % calobsnum)
         print('obspgm="%s"' % obspgm)
+        print('obsgoal="%s"' % obsgoal)
         print('ProjectId="%s"' % pid)
         print('# SkyOff=%g %g' % (az1,el1))
         #print('# bufpos=%s' % str(ubufpos))
