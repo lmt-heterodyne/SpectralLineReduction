@@ -1,8 +1,6 @@
 #! /usr/bin/env python
 #
-#    lmtinfo:    provide some info, in terms of a list of "keyword=value", that could be used
-#                by an external pipeline that needs input.
-#                This list is both bash and python friendly: we only allow integer/float/string
+#  lmtinfo.py:    provide some info on the RAW data
 #
 #  To run for all the RSR and SLR in Feb 2021 took 9 mins on "cln"
 #
@@ -18,20 +16,20 @@
 #
 """
 Usage: lmtinfo.py OBSNUM
-       lmtinfo.py IFPROCFILE
-       lmtinfo.py PATH OBSNUM
-       lmtinfo.py PATH
-       lmtinfo.py grep TERM1 [TERM2 ...]
+       lmtinfo.py data
        lmtinfo.py build
+       lmtinfo.py grep TERM1 [TERM2 ...]
 
 -h --help  This help
 
 
-This routine grabs some useful summary information from the ifproc file, ignoring
-the roach files. If one unique OBSNUM is given, it will show this information
-in a "rc" style for the pipeline. If more OBSNUM are possible, for example by only
-giving a PATH, all possible OBSNUMs are listed with a short summary, one OBSNUM
-per line. Example of early output:
+This routine grabs some useful summary information for LMT raw data.
+For SLR they are taken from the ifproc file, ignoring the roach files.
+
+If an OBSNUM (5 or 6 digits) is given, it will show this information
+in a "rc" style for the pipeline. All OBSNUM summaries are given in
+tabular format.
+Example of early output:
 
 
       #     DATE  OBSNUM   OBSPGM SOURCE      RESTFRQ VLSR INTTIME
@@ -44,93 +42,129 @@ per line. Example of early output:
 
 OBSNUM for early SLR (testing?) are 99nnnnn,
 but after 2018-04-14 back to the normal nnnnnn, where 074686
-seems to be the first.
+seems to be the first data here.
 
+data:     show the database, no sorting and culling
+build:    rebuild the sorted database (needs write permission in $DATA_LMT)
 grep:     search in database, terms are logically AND-ed
-
-build:    rebuild the database
 
 """
 
+import os
 import sys
 import math
-import numpy as np		
-import matplotlib.pyplot as pl
-import datetime
-
-import sys, os
 import glob
+import numpy as np		
+import datetime
 import netCDF4
-
 from docopt import docopt
 
-version="21-dec-2021"
+version="2-feb-2022"
+
+if "DATA_LMT" in os.environ:
+    data_lmt = os.environ["DATA_LMT"]
+else:
+    data_lmt = "/data_lmt/"
+
+arguments = docopt(__doc__,options_first=True, version='0.2')
+
+header = "# Y-M-D   T H:M:S     ObsNum ObsPgm SourceName                     RestFreq  VLSR   TINT     RA        DEC          AZ    EL"
 
 def grep(terms):
     """
-    search a predefined $DATA_LMT/data_lmt.log file for terms
-    @todo check if the log file exists
+    search a predefined $DATA_LMT/data_lmt.log file for matching terms
     """
+    logfile = "%s/%s" % (data_lmt, "data_lmt.log")
+    if not os.path.exists(logfile):
+        print("Logfile %s does not exist, use the build option to create it" % logfile)
+        sys.exit(1)
 
     if len(terms) == 1:
-        cmd = "grep -i %s $DATA_LMT/data_lmt.log" % (terms[0])
+        cmd = "grep -i %s %s" % (terms[0],logfile)
     elif len(terms) == 2:
-        cmd = "grep -i %s $DATA_LMT/data_lmt.log | grep -i %s" % (terms[0],terms[1])
+        cmd = "grep -i %s %s | grep -i %s" % (terms[0],logfile,terms[1])
     elif len(terms) == 3:
-        cmd = "grep -i %s $DATA_LMT/data_lmt.log | grep -i %s | grep -i %s" % (terms[0],terms[1],terms[2])
+        cmd = "grep -i %s %s | grep -i %s | grep -i %s" % (terms[0],logfile,terms[1],terms[2])
     elif len(terms) == 4:
-        cmd = "grep -i %s $DATA_LMT/data_lmt.log | grep -i %s | grep -i %s | grep -i %s" % (terms[0],terms[1],terms[2],terms[3])
+        cmd = "grep -i %s %s | grep -i %s | grep -i %s | grep -i %s" % (terms[0],logfile,terms[1],terms[2],terms[3])
+    else:
+        print("too many arguments")
+        sys.exit(1)        
     os.system(cmd)
 
 
 def build():
     """
-    search a predefined $DATA_LMT/data_lmt.log file for terms
-    @todo check if the log file exists
+    build the greppable database $DATA_LMT/data_lmt.log 
     """
-    cmd = "cd $DATA_LMT; make new"
+    cmd = "cd $DATA_LMT; make -f $LMTOY/data_lmt/Makefile new"
     os.system(cmd)
 
+def alist(x):
+    """
+    print a python array or list as a comma separated string of values
+    [1,2,3] -> "1,2,3"
+    """
+    n = len(x)
+    s = repr(x[0])
+    if n==1:
+        return s
+    
+    for i in range(1,n):
+        s = s + ",%s" % repr(x[i])
+    return s
 
+
+#  Examples:
 #  ifproc/ifproc_2018-06-29_078085_00_0001.nc
+#         ifproc_2018-02-26_9901395_00_0001.nc        (older)
 #  spectrometer/roach0/roach0_78085_0_1_CHI-Cyg_2018-06-29_041713.nc
 #  RedshiftChassis0/RedshiftChassis0_2015-01-22_033551_00_0001.nc
 
 def slr_summary(ifproc, rc=False):
-    """   summary a procnum in a single line
+    """   summary of a procnum in a single line, or rc format
     """
     #   e.g.  M51_data/ifproc/ifproc_2020-02-20_091111_00_0001.nc
     fn  = ifproc.split("/")[-1].replace('.nc','').split('_')
     #   e.g. ['ifproc', '2020-02-20', '091111', '00', '0001']
     
     nc = netCDF4.Dataset(ifproc)
+    obsnum = nc.variables['Header.Dcs.ObsNum'][0]
+    receiver = b''.join(nc.variables['Header.Dcs.Receiver'][:]).decode().strip()
+    
     vlsr = nc.variables['Header.Source.Velocity'][0]
     src = b''.join(nc.variables['Header.Source.SourceName'][:]).decode().strip()
-    if 'Header.Sequoia.SkyFreq' in nc.variables:
-        skyfreq  = nc.variables['Header.Sequoia.SkyFreq'][0]
-        restfreq = nc.variables['Header.Sequoia.LineFreq'][0]
+    if receiver == 'Sequoia':
         instrument = 'SEQ'
+        numbands = nc.variables['Header.Sequoia.NumBands'][0]        
+        skyfreq  = nc.variables['Header.Sequoia.SkyFreq'][:numbands]
+        restfreq = nc.variables['Header.Sequoia.LineFreq'][:numbands]
         bbtime = nc.variables['Data.IfProc.BasebandTime'][:]
-    else:
-        skyfreq  = nc.variables['Header.Msip1mm.SkyFreq'][0]
-        restfreq = nc.variables['Header.Msip1mm.LineFreq'][0]
+    elif receiver == 'Msip1mm':
         instrument = '1MM'        
+        numbands = nc.variables['Header.Msip1mm.NumBands'][0]
+        skyfreq  = nc.variables['Header.Msip1mm.SkyFreq'][:numbands]
+        restfreq = nc.variables['Header.Msip1mm.LineFreq'][:numbands]
         bbtime = nc.variables['Data.IfProc.BasebandTime'][:]
         if len(bbtime.shape) > 1:
-            print('Warning: PJT1',bbtime,'pjt2',bbtime[0],'pjt3',bbtime.shape)
+            # For the 1mm receiver, some signals are sampled 5 times faster to better sample the chopped beam.
+            # print('# Warning: PJT bbtime',bbtime.shape,'for obsnum',obsnum)
             bbtime = bbtime[:,0]
-        
+    else:
+        print('receiver %s not supported yet' % receiver)
+        sys.exit(1)
+
     bufpos = nc.variables['Data.TelescopeBackend.BufPos'][:]
     ubufpos = np.unique(bufpos)
-    # Header.Dcs.ObsNum
 
-    obsnum = nc.variables['Header.Dcs.ObsNum'][0]
     try:
         calobsnum = nc.variables['Header.IfProc.CalObsNum'][0]
     except:
         calobsnum = -1
         
-    obspgm = b''.join(nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
+    obspgm  = b''.join(nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
+    #  ObsGoal is in Dcs as well as IfProc
+    obsgoal = b''.join(nc.variables['Header.Dcs.ObsGoal'][:]).decode().strip()    
     try:
         pid = b''.join(nc.variables['Header.Dcs.ProjectId'][:]).decode().strip()
     except:
@@ -191,6 +225,7 @@ def slr_summary(ifproc, rc=False):
         print('obsnum="%s"' % obsnum)
         print('calobsnum="%s"' % calobsnum)
         print('obspgm="%s"' % obspgm)
+        print('obsgoal="%s"' % obsgoal)
         print('ProjectId="%s"' % pid)
         print('# SkyOff=%g %g' % (az1,el1))
         #print('# bufpos=%s' % str(ubufpos))
@@ -199,11 +234,12 @@ def slr_summary(ifproc, rc=False):
         print('# XYRamp=%g %g arcsec' % (xram,yram))
         print('# XYoff=%g %g arcsec' % (xoff,yoff))
         print('# XYstep=%g %g' % (xstep,ystep))
+        print('numbands=%d' % numbands)
         print('vlsr=%g        # km/s' % vlsr)
-        print('skyfreq=%g     # GHz' % skyfreq)
-        print('restfreq=%g    # Ghz' % restfreq)
+        print('skyfreq=%s     # GHz' % alist(skyfreq))
+        print('restfreq=%s    # Ghz' % alist(restfreq))
         print('src="%s"' % src)
-        resolution = math.ceil(1.0 * 299792458 / skyfreq / 1e9 / 50.0 * 206264.806)
+        resolution = math.ceil(1.0 * 299792458 / skyfreq[0] / 1e9 / 50.0 * 206264.806)
         print('resolution=%g  # arcsec' % resolution)
         print('cell=%g   # arcsec' % (resolution/2.0))
         # @todo https://github.com/astroumd/lmtoy/issues/9     xlen needs to be equal to ylen
@@ -212,13 +248,15 @@ def slr_summary(ifproc, rc=False):
         print('instrument="%s"' % instrument)
         print("# </lmtinfo>")
     else:
-        print("%-20s %7s  %-5s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" % (date_obs, obsnum, obspgm, src, restfreq, vlsr, tint, ra, dec, az, el, az1,el1))
-
-#       print("%-20s %7d  %-5s %-30s RSR  0      %5.1f  %10.6f %10.6f  %5.1f %5.1f" %   (date_obs, obsnum, obspgm, src, tint, ra, dec, az, el))
+        print("%-22s  %7s  %-5s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %
+              (date_obs, obsnum, obspgm, src, restfreq[0], vlsr, tint, ra, dec, az, el, az1, el1))
 
     # -end slr_summary() 
 
 def rsr_summary(rsr_file, rc=False):
+    """
+    summary of a RSR in a single line, or rc formatted
+    """
     def new_date_obs(date):
         """
         date_obs from RSR have a few common non-ISO formats:
@@ -312,7 +350,8 @@ def rsr_summary(rsr_file, rc=False):
         print("# </lmtinfo>")
 
     else:     # one line summary
-        print("%-20s %7d  %-5s %-30s     RSR      0    %6.1f  %10.6f %10.6f  %5.1f %5.1f" %   (date_obs, obsnum, obspgm, src, tint, ra, dec, az, el))
+        print("%-20s %7d  %-5s %-30s     RSR      0    %6.1f  %10.6f %10.6f  %5.1f %5.1f" %
+              (date_obs, obsnum, obspgm, src,           tint,   ra,    dec,   az,   el))
 
     # -end  rsr_summary()
     
@@ -321,31 +360,59 @@ def rsr_summary(rsr_file, rc=False):
 #   print("%-20s %7s  %-5s %-30s %g %g %g" % (date_obs, fn[2], obspgm, src, restfreq, vlsr, dt))
 
 #  although we grab the command line arguments here, they are actually not
-#  used in the way most scripts use them. Below there is a more hardcoded
+#  used in the way most scripts use them. Below there is a hardcoded
 #  parsing of arguments based on how many there are, which are files, and
 #  which are directories.
-arguments = docopt(__doc__,options_first=True, version='0.1')
-#print(arguments)
 
 if len(sys.argv) == 2:
 
+    # build
     if sys.argv[1] == "build":
-        print("Special rebuild of a new")
+        print("Rebuilding $DATA_LMT/data_lmt.log for grep")
         build()
-        sys.exit(0)        
+        sys.exit(0)
 
-    print("# Y-M-D   T H:M:S     ObsNum ObsPgm SourceName                     RestFreq  VLSR   TINT     RA        DEC          AZ    EL")
-    
-                                                     # mode 1: obsnum or nc_file or path
+    # single obsnum (for SLR or RSR)
     obsnum = sys.argv[1]
-    fn = glob.glob('*/ifproc/ifproc_*%s*.nc' % obsnum)
-    if len(fn) > 0:
-        ifproc = fn[0]
-    else:
-        ifproc = sys.argv[1]
+    if obsnum.isnumeric():
+        # obsnum=int(obsnum)
+        # globs = '%s/ifproc/ifproc_*_%06d_*.nc' % (data_lmt,obsnum)
+        globs = '%s/ifproc/ifproc_*_*%s_*.nc' % (data_lmt,obsnum)
+        #print("# GLOBS slr:",globs)
+        fn = glob.glob(globs)
+        if len(fn) == 1:
+            slr_summary(fn[0],rc=True)
+            sys.exit(0)
+        elif len(fn) > 0:
+            print("Multiple ifproc? ",fn)
+            sys.exit(0)
 
-    if os.path.isdir(ifproc):
-        path = ifproc
+        # since no SLR found, try RSR
+        globs = '%s/RedshiftChassis?/RedshiftChassis?_*%s*.nc'  % (data_lmt,obsnum)
+        # print("# GLOBS rsr:" % globs)
+        fn = glob.glob(globs)
+        if len(fn) > 0 and len(fn) < 5:
+            rsr_summary(fn[0], rc=True)
+            sys.exit(0)
+        elif len(fn) > 4:
+            print("Multiple RSR ",fn)
+            sys.exit(0)
+
+        # since no RSR found, give up
+        print("# No matching OBSNUM %s" % obsnum)
+        sys.exit(0)
+
+    # replacement for $DATA_LMT
+    if sys.argv[1] == 'data':
+        print(header)
+    elif os.path.isdir(sys.argv[1]):
+        data_lmt = sys.argv[1]
+        print(header)
+    else:
+        print("no more valid options")
+        sys.exit(0)
+
+    if True:
 
         # pick one, but they all seem to have different # data, 1 has the most
         #RedshiftChassis0_2011-05-08_001809_00_0001.nc - RedshiftChassis0_2020-03-05_092087_00_0001.nc
@@ -355,10 +422,11 @@ if len(sys.argv) == 2:
 
         chassis = 1
         if chassis < 0:
-            globs = '%s/RedshiftChassis?/RedshiftChassis?_*.nc'  % (path)
+            globs = '%s/RedshiftChassis?/RedshiftChassis?_*.nc'  % (data_lmt)
         else:
-            globs = '%s/RedshiftChassis%d/RedshiftChassis%d_*.nc'  % (path,chassis,chassis)            
+            globs = '%s/RedshiftChassis%d/RedshiftChassis%d_*.nc'  % (data_lmt,chassis,chassis)            
         fn = glob.glob(globs)
+        print("# Found %d RSR with %s" % (len(fn),globs))        
         for f in fn:
             # print('RSR',f)
             try:
@@ -371,10 +439,11 @@ if len(sys.argv) == 2:
                 except:
                     yyyymmdd = "1900-00-00"
                     obsnum   = " "
-                print("%-20s %7s  failed for %s" % (yyyymmdd,obsnum,f))                    
+                print("%-20s %7s  failed for rsr %s" % (yyyymmdd,obsnum,f))                    
 
-        globs = '%s/ifproc/ifproc*.nc' % path
+        globs = '%s/ifproc/ifproc*.nc' % data_lmt
         fn = glob.glob(globs)
+        print("# Found %d SLR with %s" % (len(fn),globs))
         for f in fn:
             try:
                 slr_summary(f)
@@ -385,43 +454,29 @@ if len(sys.argv) == 2:
                 except:
                     yyyymmdd = "1900-00-00"
                     obsnum   = " "
-                print("%-20s %7s  failed for %s" % (yyyymmdd,obsnum,f))
+                print("%-20s %7s  failed for slr %s" % (yyyymmdd,obsnum,f))
         sys.exit(0)
-    elif os.path.exists(ifproc):
-        try:
-            slr_summary(ifproc,rc=True)
-        except:
-            print("%s: failed" % ifproc)
                
 elif len(sys.argv) == 3:
 
     # special case:
     if sys.argv[1] == "grep":
+        print(header)
         grep(sys.argv[2:])
         sys.exit(0)
 
-                                                     # mode 2: path and obsnum : differentiate between SLR and RSR
-    path = sys.argv[1]
-    obsnum = sys.argv[2]
-    globs = '%s/ifproc/ifproc*%s*.nc' % (path,obsnum)
-    fn = glob.glob(globs)
-    if len(fn) > 0:
-        ifproc = fn[0]
-        slr_summary(ifproc,True)
-    else:
-        globs = '%s/RedshiftChassis?/RedshiftChassis?_*%s*.nc'  % (path,obsnum)
-        # print("Trying RSR %s" % globs)
-        fn = glob.glob(globs)
-        if len(fn) > 0:
-            rsr_summary(fn[0], rc=True)
-        else:
-            print("# Warning - no RSR files found, possibly unknown obsnum")
-            print("obsnum=0")
+    # there should be no more options now
+    print("Illegal option ",sys.argv[1])
+
+
 else:
-    # special case:
+    # grep allows more terms
     if sys.argv[1] == "grep":
+        print(header)
         grep(sys.argv[2:])
         sys.exit(0)
+
+    # otherwise illegal options, so give help
     
                                                      # no other modes
     print("Usage : %s [path] obsnum" % sys.argv[0])

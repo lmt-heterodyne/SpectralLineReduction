@@ -115,9 +115,11 @@ class SpecFile():
 
         # PJT new DATE-OBS
         nc_do = self.ncout.createVariable('Header.Obs.DateObs', 'c', ('nlabel',))
-        #self.ncout.variables['Header.Source.DateObs'][0] = self.specbank.date_obs
         nc_do[0:len(self.specbank.date_obs)] = self.specbank.date_obs[0:len(self.specbank.date_obs)]
-        # this made me mad, is that friendly python programming?
+
+        # PJT new RECEIVER
+        nc_rc = self.ncout.createVariable('Header.Obs.Receiver', 'c', ('nlabel',))
+        nc_rc[0:len(self.specbank.receiver)] = self.specbank.receiver[0:len(self.specbank.receiver)]
          
         # using line header information derived from spec bank
 

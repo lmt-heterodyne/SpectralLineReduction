@@ -12,6 +12,7 @@ typedef struct
   int obsnum[MAXOBS];
   int nobsnum;
   char source[40];
+  char receiver[40];   // FITS 'INSTRUME'
   float x_position, y_position;
   float *cube;
   float *caxis[3];
@@ -23,7 +24,7 @@ typedef struct
   double restfreq;
   float vlsr;
   float zsource;
-  char date_obs[40];
+  char date_obs[40];        // eg 2021-09-14T07:25:23.370   = 23 chars
   float resolution_size;
   char history1[MAXHIST];
   char history2[MAXHIST];

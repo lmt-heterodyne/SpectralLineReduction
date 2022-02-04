@@ -282,8 +282,8 @@ void write_fits_cube(Cube *C, char *filename)
       print_fits_error(status);
     }
   // INSTRUME is not in https://heasarc.gsfc.nasa.gov/docs/fcg/common_dict.html
-  strcpy(comment,"or WARES ?");  
-  if((retval=fits_update_key(fptr, TSTRING, "INSTRUME", "SEQUOIA", comment, &status)) != 0)
+  strcpy(comment,"SEQUOIA, 1MM, or OMAYA");  
+  if((retval=fits_update_key(fptr, TSTRING, "INSTRUME", C->receiver, comment, &status)) != 0)  
     {
       printf("INSTRUME\n");
       print_fits_error(status);

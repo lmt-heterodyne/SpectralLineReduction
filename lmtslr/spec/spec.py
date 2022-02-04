@@ -729,7 +729,7 @@ class SpecBank():
         else:
             self.dfdc = +self.bandwidth*np.float64(1e6) / self.nchan
         self.dvdc = -self.dfdc / (self.line_rest_frequency * np.float64(1e9)) \
-                    * np.float64(2.99792458e5)
+                    * np.float64(299792.458)
 
         self.cal_flag = False
         self.save_tsys = save_tsys
@@ -1367,6 +1367,7 @@ class SpecBankCal(SpecBank):
         Returns:
             none
         """
+        # @todo no bank?
         SpecBank.__init__(self, roach_files, ifproc_data, 
                           pixel_list=pixel_list)
     
