@@ -5,6 +5,7 @@
 #define N_INPUT_FILES        2000
 #define MAXPIXEL               16
 #define MAXSEGMENT            512
+#define MAXSTRLEN            1024
 typedef struct
 {
   // also set via command line options
