@@ -440,6 +440,9 @@ class IFProcData(IFProc):
         self.npix = npix
         IFProc.__init__(self, filename)
 
+        if not hasattr(self, "obspgm"):
+            return
+
         # identify the obspgm
         self.map_coord = 0 # set this up to be nominal for all cases
 
