@@ -106,6 +106,12 @@ class IFProc():
                                          ][0] * 180 / np.pi
             self.m1ZernikeC0 = self.nc.variables['Header.M1.ZernikeC'][0]
 
+            key = 'Header.M1.ReqPos'
+            if key in self.nc.variables:
+                self.m1ReqPos = self.nc.variables[key][:]
+            else:
+                self.m1ReqPos = np.zeros(720)
+
             self.m2x = self.nc.variables['Header.M2.XReq'][0]
             self.m2y = self.nc.variables['Header.M2.YReq'][0]
             self.m2z = self.nc.variables['Header.M2.ZReq'][0]
