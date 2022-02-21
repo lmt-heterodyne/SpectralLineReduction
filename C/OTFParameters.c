@@ -56,7 +56,7 @@ char** str_split(char* a_str, const char a_delim)
 void decode_pix_list(OTFParameters *OTF, char *the_list)
 {
     int pixel,i,len;
-    char p[40];
+    char p[MAXSTRLEN];
     char** tokens;
 
     len = strlen(the_list);
@@ -91,7 +91,7 @@ void decode_pix_list(OTFParameters *OTF, char *the_list)
 void decode_sample_list(OTFParameters *OTF, char *the_list)
 {
     int id,i,len,nsam;
-    char p[40];
+    char p[MAXSTRLEN];
     char** tokens;
     
     len = strlen(the_list);
