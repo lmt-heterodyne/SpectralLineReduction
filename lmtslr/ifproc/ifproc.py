@@ -139,6 +139,12 @@ class IFProc():
                                          ][0] * 180 / np.pi
             self.m1ZernikeC0 = self.nc.variables['Header.M1.ZernikeC'][0]
 
+            key = 'Header.M1.ReqPos'
+            if key in self.nc.variables:
+                self.m1ReqPos = self.nc.variables[key][:]
+            else:
+                self.m1ReqPos = np.zeros(720)
+
             self.m2x = self.nc.variables['Header.M2.XReq'][0]
             self.m2y = self.nc.variables['Header.M2.YReq'][0]
             self.m2z = self.nc.variables['Header.M2.ZReq'][0]
@@ -304,10 +310,10 @@ class IFProc():
         self.nc.close()
 
     def process_chopped_encoder(self, chop, chan,
-                                thresholds=[[[15,45,181],[110,135]],
-                                            [[15,45,181],[110,135]],
-                                            [[15,45,181],[110,135]],
-                                            [[15,45,181],[110,135]],
+                                thresholds=[[[15,45,181],[105,135]],
+                                            [[15,45,181],[105,135]],
+                                            [[15,45,181],[105,135]],
+                                            [[15,45,181],[105,135]],
                                             [[0,45,155],[65,135]],
                                             [[0,45,155],[65,135]]]):
         # create array of indices for main and ref based on chop array
@@ -318,10 +324,10 @@ class IFProc():
         return midx, ridx
 
     def process_chopped_signal(self, bb_level, chop, chop_option, ww=25,
-                               thresholds=[[[15,45,181],[110,135]],
-                                           [[15,45,181],[110,135]],
-                                           [[15,45,181],[110,135]],
-                                           [[15,45,181],[110,135]],
+                               thresholds=[[[15,45,181],[105,135]],
+                                           [[15,45,181],[105,135]],
+                                           [[15,45,181],[105,135]],
+                                           [[15,45,181],[105,135]],
                                            [[0,45,155],[65,135]],
                                            [[0,45,155],[65,135]]]):
 
@@ -426,6 +432,9 @@ class IFProcData(IFProc):
         """
         self.npix = npix
         IFProc.__init__(self, filename)
+
+        if not hasattr(self, "obspgm"):
+            return
 
         # identify the obspgm
         self.map_coord = 0 # set this up to be nominal for all cases
