@@ -718,6 +718,7 @@ class SpecBank():
         self.bandwidth = self.roach[0].bandwidth
         self.channel_0 = (self.nchan - 1) / 2
         self.velocity_0 = self.ifproc.velocity
+        self.frequency_offset = self.ifproc.frequency_offset[bank]
         self.line_rest_frequency = self.ifproc.line_rest_frequency[bank]
         self.receiver = self.ifproc.receiver
         self.sideband = self.ifproc.sideband[bank]
@@ -730,6 +731,8 @@ class SpecBank():
             self.dfdc = +self.bandwidth*np.float64(1e6) / self.nchan
         self.dvdc = -self.dfdc / (self.line_rest_frequency * np.float64(1e9)) \
                     * np.float64(299792.458)
+        self.dvdf = -self.dvdc/self.dfdc
+        self.velocity_offset = self.dvdf * (self.frequency_offset * np.float64(1e9))
 
         self.cal_flag = False
         self.save_tsys = save_tsys
@@ -825,7 +828,7 @@ class SpecBank():
             c (array): array of channel numbers corresponding to 
                 velocity
         """
-        c = np.array(np.round((v - self.velocity_0) / self.dvdc 
+        c = np.array(np.round((v - (self.velocity_0 - self.velocity_offset)) / self.dvdc 
                               + self.channel_0), dtype=int)
         return(c)
     
@@ -838,7 +841,7 @@ class SpecBank():
             v (float or array): velocity(ies) corresponding to channel 
                 in units of 
         """
-        v = (c - self.channel_0) * self.dvdc + self.velocity_0
+        v = (c - self.channel_0) * self.dvdc + (self.velocity_0 - self.velocity_offset)
         return(v)
 
     def create_velocity_scale(self):
