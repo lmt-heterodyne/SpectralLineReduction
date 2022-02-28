@@ -172,6 +172,7 @@ def slr_summary(ifproc, rc=False):
     
     # the following Map only if obspgm=='Map'
     if obspgm=='Map':
+        map_coord = b''.join(nc.variables['Header.Map.MapCoord'][:]).decode().strip()
         xlen = nc.variables['Header.Map.XLength'][0] * 206264.806
         ylen = nc.variables['Header.Map.YLength'][0] * 206264.806
         xoff = nc.variables['Header.Map.XOffset'][0] * 206264.806
@@ -249,7 +250,7 @@ def slr_summary(ifproc, rc=False):
         print("# </lmtinfo>")
     else:
         print("%-22s  %7s  %-5s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %
-              (date_obs, obsnum, obspgm, src, restfreq[0], vlsr, tint, ra, dec, az, el, az1, el1))
+              (date_obs, obsnum, obspgm +(('('+map_coord+')') if obspgm=='Map' else ''), src, restfreq[0], vlsr, tint, ra, dec, az, el, az1, el1))
 
     # -end slr_summary() 
 
@@ -380,6 +381,7 @@ if len(sys.argv) == 2:
         globs = '%s/ifproc/ifproc_*_*%s_*.nc' % (data_lmt,obsnum)
         #print("# GLOBS slr:",globs)
         fn = glob.glob(globs)
+        fn.sort(key=os.path.getmtime)
         if len(fn) == 1:
             slr_summary(fn[0],rc=True)
             sys.exit(0)
@@ -391,6 +393,7 @@ if len(sys.argv) == 2:
         globs = '%s/RedshiftChassis?/RedshiftChassis?_*%s*.nc'  % (data_lmt,obsnum)
         # print("# GLOBS rsr:" % globs)
         fn = glob.glob(globs)
+        fn.sort(key=os.path.getmtime)
         if len(fn) > 0 and len(fn) < 5:
             rsr_summary(fn[0], rc=True)
             sys.exit(0)
@@ -426,6 +429,7 @@ if len(sys.argv) == 2:
         else:
             globs = '%s/RedshiftChassis%d/RedshiftChassis%d_*.nc'  % (data_lmt,chassis,chassis)            
         fn = glob.glob(globs)
+        fn.sort(key=os.path.getmtime)
         print("# Found %d RSR with %s" % (len(fn),globs))        
         for f in fn:
             # print('RSR',f)
@@ -443,6 +447,7 @@ if len(sys.argv) == 2:
 
         globs = '%s/ifproc/ifproc*.nc' % data_lmt
         fn = glob.glob(globs)
+        fn.sort(key=os.path.getmtime)
         print("# Found %d SLR with %s" % (len(fn),globs))
         for f in fn:
             try:
