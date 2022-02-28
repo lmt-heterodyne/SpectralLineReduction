@@ -249,8 +249,8 @@ def slr_summary(ifproc, rc=False):
         print('instrument="%s"' % instrument)
         print("# </lmtinfo>")
     else:
-        print("%-22s  %7s  %-5s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %
-              (date_obs, obsnum, obspgm +(('('+map_coord+')') if obspgm=='Map' else ''), src, restfreq[0], vlsr, tint, ra, dec, az, el, az1, el1))
+        print("%-22s  %7s  %-12s %-9s%-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %
+              (date_obs, obsnum, obsgoal, obspgm +(('('+map_coord+')') if obspgm=='Map' else ''), src, restfreq[0], vlsr, tint, ra, dec, az, el, az1, el1))
 
     # -end slr_summary() 
 
