@@ -308,8 +308,11 @@ def rsr_summary(rsr_file, rc=False):
     obspgm = b''.join(nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
 
     # Header.Radiometer.UpdateDate = "21/01/2015 23:12:07
-    date_obs = b''.join(nc.variables['Header.Radiometer.UpdateDate'][:]).decode().strip()
-    date_obs = new_date_obs(date_obs)
+    #date_obs = b''.join(nc.variables['Header.Radiometer.UpdateDate'][:]).decode().strip()
+    #date_obs = new_date_obs(date_obs)
+    date_obs = nc.variables['Data.Sky.Time'][0].tolist()
+    print(date_obs)
+    date_obs = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%dT%H:%M:%S')
     
     # Header.Weather.UpdateDate = "22/01/15 0:39:48
     # Header.Source.Ra
@@ -321,7 +324,14 @@ def rsr_summary(rsr_file, rc=False):
     el  = nc.variables['Header.Sky.ElReq'][0] * 57.2957795131
 
     t = nc.variables['Data.Sky.Time'][:].tolist()
-    tint = t[-1]-t[0] + (t[-1]-t[-2])
+    if len(t) > 2:
+        tint = t[-1]-t[0] + (t[-1]-t[-2])
+    elif len(t) > 1:
+        tint = t[-1]-t[0]
+    elif len(t) > 0:
+        tint = 1
+    else:
+        tint = 0
 
     nc.close()
 
