@@ -25,6 +25,8 @@ for gui in gui_env:
 import numpy as np
 import math
 
+import scipy.interpolate as interp
+
 from lmtslr.ifproc.ifproc import IFProc
 from lmtslr.spec.spec import SpecBank
 from lmtslr.grid.grid import Grid
@@ -319,8 +321,13 @@ class SpecBankViewer(SpecViewer):
         zi_sum = np.zeros((nx, ny))
         for pixel in pixel_list:
             index = S.find_map_pixel_index(pixel)
-            zi = mlab.griddata(S.map_x[index], S.map_y[index], 
-                               S.map_data[index], xi, yi, interp='linear')
+            try :
+                zi = interp.griddata((S.map_x[index], S.map_y[index]), 
+                                     S.map_data[index], (xi, yi), method='linear')
+            except:
+                zi = mlab.griddata(S.map_x[index], S.map_y[index], 
+                                   S.map_data[index], xi, yi, interp='linear')
+                
             zi_sum = zi_sum + zi
         pl.imshow(zi_sum, clim=plot_range, interpolation='bicubic', 
                   cmap=pl.cm.jet, origin='lower', extent=map_region)
@@ -345,6 +352,9 @@ class SpecBankViewer(SpecViewer):
         """
         g = Grid(S.receiver)
         gx, gy = g.azel(S.elev / 180 * np.pi, S.tracking_beam)
+        print('azel', gx, gy)
+        gx, gy = g.radec(S.elev / 180 * np.pi, np.mean(S.map_p), S.tracking_beam)
+        print('radec', gx, gy)
         nx = int((map_region[1] - map_region[0]) / grid_spacing + 1)
         ny = int((map_region[3] - map_region[2]) / grid_spacing + 1)
         xi = np.linspace(map_region[0], map_region[1], nx)
@@ -354,12 +364,20 @@ class SpecBankViewer(SpecViewer):
         for pixel in pixel_list:
             index = S.find_map_pixel_index(pixel)
             wdata = np.ones(len(S.map_data[index]))
-            zi = mlab.griddata(S.map_x[index] - gx[pixel], 
-                               S.map_y[index] - gy[pixel], S.map_data[index], 
-                               xi, yi, interp='linear')
-            wi = mlab.griddata(S.map_x[index] - gx[pixel], 
-                               S.map_y[index] - gy[pixel], wdata, xi, yi, 
-                               interp='linear')
+            try :
+                zi = interp.griddata((S.map_x[index]-gx[pixel],
+                                      S.map_y[index]-gy[pixel]), 
+                                     S.map_data[index], (xi, yi), method='linear')
+                wi = interp.griddata((S.map_x[index]-gx[pixel],
+                                      S.map_y[index]-gy[pixel]), 
+                                     wdata, (xi, yi), method='linear')
+            except:
+                zi = mlab.griddata(S.map_x[index] - gx[pixel], 
+                                   S.map_y[index] - gy[pixel], S.map_data[index], 
+                                   xi, yi, interp='linear')
+                wi = mlab.griddata(S.map_x[index] - gx[pixel], 
+                                   S.map_y[index] - gy[pixel], wdata, xi, yi, 
+                                   interp='linear')
             zi_sum = zi_sum + zi
             wi_sum = wi_sum + wi
         pl.imshow(zi_sum / wi_sum, clim=plot_range, interpolation='bicubic', 
@@ -390,8 +408,14 @@ class SpecBankViewer(SpecViewer):
         ny = int((map_region[3] - map_region[2]) / grid_spacing + 1)
         xi = np.linspace(map_region[0], map_region[1], nx)
         yi = np.linspace(map_region[2], map_region[3], ny)
-        zi = mlab.griddata(S.map_x[index], S.map_y[index], S.map_data[index], 
-                           xi, yi, interp='linear')
+        try :
+            zi = interp.griddata((S.map_x[index],
+                                  S.map_y[index]), 
+                                 S.map_data[index], (xi, yi), method='linear')
+        except:
+            zi = mlab.griddata(S.map_x[index], 
+                               S.map_y[index], S.map_data[index], 
+                               xi, yi, interp='linear')
         pl.imshow(zi, interpolation='bicubic', cmap=pl.cm.jet, origin='lower',
                   extent=map_region)
         pl.xlabel('X (")')
