@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-Processes a set of PS spectra
+Processes a set of BS spectra
 '''
 
 # Python Imports
@@ -24,7 +24,7 @@ from lmtslr.utils.argparser import HandlePSProcessOptions
 def main(argv):
     
     Opts = HandlePSProcessOptions()
-    result = Opts.parse_options(argv, 'process_ps', 1, True)
+    result = Opts.parse_options(argv, 'process_bs', 1, True)
     #if result == 0:
     # this will be a list of processed spectral lines
     LineList = []
@@ -53,8 +53,7 @@ def main(argv):
     for i in range(len(LineList)):
         pl.plot(LineList[i].xarray,LineList[i].yarray)
         #pl.axis([-20,20,-1,1])
-        #pl.xlabel('VSRC')
-        pl.xlabel(Opts.x_axis)
+        pl.xlabel('VSRC')
     pl.show()
 
 

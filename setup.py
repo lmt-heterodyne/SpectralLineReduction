@@ -14,5 +14,6 @@ setup(
     scripts = ['bin/grid_data.py', 'bin/multiprocess_otf_map.py', 'bin/process_map.py',
                'bin/process_otf_map.py', 'bin/process_otf_map2.py',
                'bin/process_ps.py', 'bin/view_cube.py',
-               'bin/view_spec_file.py']
+               'bin/lmtinfo.py', 'bin/make_spec_fits.py',
+               'bin/view_spec_file.py',  'bin/view_spec_point.py']
     )

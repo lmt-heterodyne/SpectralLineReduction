@@ -23,7 +23,7 @@ from lmtslr.utils.argparser import HandleOTFProcessOptions
 import time
 
 def main(argv):
-    print(time.time(), time.clock())
+    print(time.time(), time.process_time())
     Opts = HandleOTFProcessOptions()
     Opts.parse_options(argv, 'process_otf_map', 1, True)
 
@@ -130,7 +130,7 @@ def main(argv):
 
     nc.close()        
     print('netCDF %s Done'%(Opts.output_file_name))
-    print(time.time(), time.clock())
+    print(time.time(), time.process_time())    
 
 if __name__ == '__main__':
     main(sys.argv[1:])

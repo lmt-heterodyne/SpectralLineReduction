@@ -2,9 +2,10 @@
 #define _CONVOLVE_H_
 
 #define CONVOLVE_UNDEFINED -1
-#define CONVOLVE_BOX 0
-#define CONVOLVE_JINC 1
-#define CONVOLVE_GAUSS 2
+#define CONVOLVE_BOX        0
+#define CONVOLVE_JINC       1
+#define CONVOLVE_GAUSS      2
+#define CONVOLVE_TRIANGLE   3
 
 typedef struct
 {
@@ -21,5 +22,6 @@ float get_weight(ConvolveFunction *CF, float r);
 void initialize_box_filter(ConvolveFunction *CF, float a);
 void initialize_gauss_filter(ConvolveFunction *CF, float hpw);
 void initialize_jinc_filter(ConvolveFunction *CF, float a, float b, float c);
+void initialize_triangle_filter(ConvolveFunction *CF, float a);
 
 #endif

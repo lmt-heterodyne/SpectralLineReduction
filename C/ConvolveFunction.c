@@ -9,10 +9,10 @@ double jinc(double r);
 void initialize_convolve_function(ConvolveFunction *CF, float resolution_size, float cell_size, float rmax, int npts)
 {
   CF->type = CONVOLVE_UNDEFINED;
-  CF->resolution_size = resolution_size;   // this is lambda/D
-  CF->cell_size = cell_size;                // actual cell size
-  CF->rmax = rmax;                         // this is number of lambda/D's to cut off
-  CF->npts = npts;
+  CF->resolution_size = resolution_size;     // this is lambda/D  (PJT: or should it be 1.15 lambda/D ?)
+  CF->cell_size = cell_size;                 // actual cell size
+  CF->rmax = rmax;                           // this is number of lambda/D's to cut off
+  CF->npts = npts;                           // OTF.nsamples (usually 256)
   CF->delta = rmax*resolution_size/(npts-1); // in units of arcsec
   CF->n_cells = (int) floor(rmax*CF->resolution_size/CF->cell_size) + 1;
   CF->array = (float*)malloc(CF->npts*sizeof(float));
@@ -45,18 +45,33 @@ void initialize_box_filter(ConvolveFunction *CF, float a)
     }
 }
 
+void initialize_triangle_filter(ConvolveFunction *CF, float a)
+{
+  int i;
+  float x;
+  CF->type = CONVOLVE_BOX;
+  for(i=0;i<CF->npts;i++)
+    {
+      x = (i * CF->delta);
+      if(x<=a)
+	CF->array[i] = 1.0 - x/a;
+      else
+	CF->array[i] = 0.0;
+    }
+}
+
 void initialize_gauss_filter(ConvolveFunction *CF, float a)
 {
   int i;
   float x;
 
   CF->type = CONVOLVE_GAUSS;
-  CF->gauss_b = a;
+  CF->gauss_b = a;  // at gauss_b=1 this follows exactly the FWHM 
   for(i=0;i<CF->npts;i++)
     {
       // i*delta is distance in arcsec, so we must normalize by lambda/D
       x = (i * CF->delta)/CF->resolution_size / CF->gauss_b;
-      CF->array[i] = exp(-2.77258872*x*x);
+      CF->array[i] = exp(-2.77258872*x*x);   //  2.77.. = 4*ln(2)
     }
 }
 

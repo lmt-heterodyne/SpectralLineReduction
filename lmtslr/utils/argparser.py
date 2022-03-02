@@ -296,6 +296,8 @@ class HandleGridOptions(HandleOptions):
                             help="set input spec filename")
         self.parser.add_argument("-o", "--output", dest="output",
                             help="name of output fits file")        
+        self.parser.add_argument("-w", "--weight", dest="weight",
+                            help="name of output weight fits file")        
         self.parser.add_argument("--resolution", dest="resolution", type=float,
                                  default=14.0,
                                  help="resolution (arcsec)")
@@ -348,6 +350,9 @@ class HandleGridOptions(HandleOptions):
         if args.output:
             self.output_file_name = args.output
             self.attrs.add('output_file_name')
+        if args.weight:
+            self.weight_file_name = args.weight
+            self.attrs.add('weight_file_name')
         if 'config' in args.__dict__ and args.config is not None:
             self.read_config_file(args.config, grid_config_text)
         if hasattr(self, 'pix_list'):

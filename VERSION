@@ -1,0 +1,15 @@
+31-dec-2020
+  - view_spec_point.py with the new --plots interface to control batch/interactive
+  - view_spec_point.py also used the new docopt commandline parsing
+  - slowly moving rms_cut to allowing negative value for MAD style 
+29-dec-2020
+  - more stats reporting for each pixel
+  - Added a -w option to get a weight (.wt.fits) map out
+  - fixed some memory overwrites in gridder, but still see some
+  - abandoned mdarray access, too slow
+20-dec-2020	
+  - Version addead as "Header.Version" to SpecFile
+  - passing RESTFREQ, VLSR (VSOURCE), DATE-OBS to Cube FITS file
+  - reading RAW data converts Double to Float in memory
+  - SpecFile now writes spectrum as Float instead of Double
+  - some more reporting of ifproc and roach data

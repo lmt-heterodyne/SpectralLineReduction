@@ -1,0 +1,10 @@
+The python scripts here will be added to your python's bin directory in the virtual
+environment as long as:
+   - they contain the usual        if __name__ == '__main__':
+   - they are added to the root setup.py file
+
+If you want any hacking,
+   - add the bin directory to your PATH
+   - make '#!/usr/bin/env python' the starting line
+   - chmod +x your script 
+

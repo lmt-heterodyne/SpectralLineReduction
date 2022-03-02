@@ -29,7 +29,7 @@ class Line(object):
     assume a common format with arrays of data for the x axis and y 
     axis of the spectrum.
     """
-    def __init__(self, iarray, xarray, yarray, xlabel):
+    def __init__(self, iarray, xarray, yarray, tarray, xlabel):
         """
         Constructor for Line class.
         Args:
@@ -38,14 +38,19 @@ class Line(object):
                 velocity, frequency, etc.
             yarray (np array): spectral line data values corresponding 
                 to xarray/iarray.
+            tarray (np array or None): array of tsys
             xlabel (string): label for the x axis; used in plots
         """
         self.nchan = len(xarray)
         self.iarray = iarray
         self.xarray = xarray
         self.yarray = yarray
+        self.tarray = tarray
         self.dxdc = self.xarray[1]-self.xarray[0]
         self.xname = xlabel
+
+    def __len__(self):
+        return self.nchan
 
     def eliminate(self, list):
         """
@@ -552,7 +557,7 @@ class LineData(LineDataHeader):
     units of velocity: km/s
     units of frequency: Hertz
     """
-    def __init__(self, ifproc, bank, nchan, bandwidth, data):
+    def __init__(self, ifproc, bank, nchan, bandwidth, data, tsys=None):
         """
         Constructor for LineData class.
         Args:
@@ -562,6 +567,7 @@ class LineData(LineDataHeader):
             nchan (int): number of channels in the spectrum
             bandwidth (float): bandwidth of the spectrum (MHz)
             data (array): the spectral line data
+            tsys (array): [optional] tsys array
         Returns:
             none
         """
@@ -569,6 +575,14 @@ class LineData(LineDataHeader):
         self.data  = data
         # yarray is the working spectrum - initialized as copy of data
         self.yarray = data.copy()
+        if type(tsys) == np.ndarray:
+            self.tarray = tsys.copy()
+        else:
+            #self.tarray = data * 0 + 1
+            self.tarray = None
+
+    def __len__(self):
+        return len(self.data)
 
     def line(self):
         """
@@ -579,7 +593,7 @@ class LineData(LineDataHeader):
             Line(...) (object): Line object generated from data in 
                 iarray, xarray, yarray, and xname.
         """
-        return Line(self.iarray, self.xarray, self.yarray, self.xname)
+        return Line(self.iarray, self.xarray, self.yarray, self.tarray, self.xname)
 
     def revert(self):
         """
@@ -607,7 +621,12 @@ class LineData(LineDataHeader):
         fy = interp1d(self.iarray, self.yarray)
         new_xarray = fx(new_iarray)
         new_yarray = fy(new_iarray)
-        result = Line(new_iarray, new_xarray, new_yarray, self.xname)
+        if type(self.tarray) == np.ndarray:
+            ft = interp1d(self.iarray, self.tarray)
+            new_tarray = ft(new_iarray)
+        else:
+            new_tarray = None
+        result = Line(new_iarray, new_xarray, new_yarray, new_tarray, self.xname)
         return result
 
     def xgen(self, x0, x1, dx):
@@ -626,7 +645,13 @@ class LineData(LineDataHeader):
         fy = interp1d(self.xarray, self.yarray)
         new_iarray = fi(new_xarray)
         new_yarray = fy(new_xarray)
-        result = Line(new_iarray, new_xarray, new_yarray, self.xname)
+        if type(self.tarray) == np.ndarray:
+            ft = interp1d(self.xarray, self.tarray)
+            new_tarray = ft(new_xarray)
+        else:
+            new_tarray = None
+
+        result = Line(new_iarray, new_xarray, new_yarray, new_tarray, self.xname)
         return result
 
     def cslice(self, c0, c1):
@@ -634,19 +659,20 @@ class LineData(LineDataHeader):
         Generate a Line object by taking a slice from original array.
         Args:
             c0 (int): starting channel number of slice
-            c1 (int): ending channel number of slice
+            c1 (int): ending channel number of slice   @todo  +1 ???
         Returns:
             result (Line object): Line object with the slice
         """
-        if c0<c1:
-            new_iarray = np.arange(c0, c1)
-            new_xarray = self.xarray[c0:c1]
-            new_yarray = self.yarray[c0:c1]
+        if c0>c1:
+            c0,c1 = c1,c0
+        new_iarray = np.arange(c0, c1)
+        new_xarray = self.xarray[c0:c1]
+        new_yarray = self.yarray[c0:c1]
+        if type(self.tarray) == np.ndarray:
+            new_tarray = self.tarray[c0:c1]
         else:
-            new_iarray = np.arange(c1, c0, -1)
-            new_xarray = self.xarray[c1:c0]
-            new_yarray = self.yarray[c1:c0]
-        result = Line(new_iarray, new_xarray, new_yarray, self.xname)
+            new_tarray = None
+        result = Line(new_iarray, new_xarray, new_yarray, new_tarray, self.xname)
         return result
 
     def vslice(self, v0, v1):
@@ -661,16 +687,17 @@ class LineData(LineDataHeader):
         """
         c0 = self.v2c(v0)
         c1 = self.v2c(v1)
-        if c0<c1:
-            new_iarray = self.iarray[c0:c1]
-            new_xarray = self.xarray[c0:c1]
-            new_yarray = self.yarray[c0:c1]
+        if c0>c1:
+            c0,c1 = c1,c0 
+        new_iarray = self.iarray[c0:c1]
+        new_xarray = self.xarray[c0:c1]
+        new_yarray = self.yarray[c0:c1]
+        if type(self.tarray) == np.ndarray:
+            new_tarray = self.tarray[c0:c1]
         else:
-            new_iarray = self.iarray[c1:c0]
-            new_xarray = self.xarray[c1:c0]
-            new_yarray = self.yarray[c1:c0]
+            new_tarray = None
 
-        result = Line(new_iarray, new_xarray, new_yarray, self.xname)
+        result = Line(new_iarray, new_xarray, new_yarray, new_tarray, self.xname)
         return result
 
     def fslice(self, f0, f1):
@@ -685,16 +712,17 @@ class LineData(LineDataHeader):
         """
         c0 = self.f2c(f0)
         c1 = self.f2c(f1)
-        if c0<c1:
-            new_iarray = self.iarray[c0:c1]
-            new_xarray = self.xarray[c0:c1]
-            new_yarray = self.yarray[c0:c1]
+        if c0>c1:
+            c0,c1 = c1,c0
+        new_iarray = self.iarray[c0:c1]
+        new_xarray = self.xarray[c0:c1]
+        new_yarray = self.yarray[c0:c1]
+        if type(self.tarray) == np.ndarray:
+            new_tarray = self.tarray[c0:c1]
         else:
-            new_iarray = self.iarray[c1:c0]
-            new_xarray = self.xarray[c1:c0]
-            new_yarray = self.yarray[c1:c0]
+            new_tarray = None
 
-        result = Line(new_iarray, new_xarray, new_yarray, self.xname)
+        result = Line(new_iarray, new_xarray, new_yarray, new_tarray, self.xname)
         return result
 
     
@@ -775,7 +803,7 @@ class NetCDFLineHeader():
         """
         Writes creates line header variables for a NetCDF file.
         Args:
-            L (object): Line object
+            L (object): LineData object
         Returns:
             none
         """
@@ -877,10 +905,16 @@ class NetCDFLineHeader():
         self.nc.variables['Header.LineData.XType'][0] = L.xtype
         t.long_name = 'Axis Type'
 
-        iarray = self.nc.createVariable('Header.LineData.ChannelNumber', 'i4',
+        if False:
+            # already written in:    Header.Line.ChannelNumbe
+            iarray = self.nc.createVariable('Header.LineData.ChannelNumber', 'i4',
                                         ('nchan',))
-        iarray[0:L.nchan] = L.iarray[0:L.nchan]
-        iarray.long_name = 'Channel Number'
+            iarray[0:L.nchan] = L.iarray[0:L.nchan]
+            iarray.long_name = 'Channel Number'
+
+        if True:
+            # what's below was done elsewhere
+            return
 
         # the following are the generic spectrum axis parameters
 
@@ -922,7 +956,7 @@ class NetCDFLineHeader():
         """
         Reads the header data from a NetCDF file.
         Args:
-            L (object): Line object
+            L (object): LineData object
         Returns:
             none
         """

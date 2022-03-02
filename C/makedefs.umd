@@ -1,0 +1,7 @@
+#  UMD doesn't have a clean setup, this will "fix" it
+
+# within NEMO the command "mknemo cfitsio" might help
+CFITSIO_PATH = $(NEMO)/opt
+
+# theoretically should also work, but has not been confirmed
+# NETCDF_PATH  = $(NEMO)/opt

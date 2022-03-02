@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <netcdf.h>
 
+#include "OTFParameters.h"
 #include "SpecFile.h"
 
 int read_spec_file(SpecFile *S, char *filename)
@@ -14,15 +15,15 @@ int read_spec_file(SpecFile *S, char *filename)
   /* dimensions and varid's */
   size_t nspec, nchan;
   int nspec_id, nchan_id, data_id, x_id, y_id, pix_id, seq_id, rms_id;
+  char version[20];
+  char history[512];
 
-  //printf("about to open file %s\n",filename);
+  printf("Opening SpecFile file %s\n",filename);
 
   /* Open the file. NC_NOWRITE tells netCDF we want read-only access
      to the file.*/
   if ((retval = nc_open(filename, NC_NOWRITE, &ncid)))
     ERR(retval);
-
-  printf("file %s opened\n",filename);
 
   /* Get the dimensions */
   if ((retval = nc_inq_dimid(ncid, "nspec", &nspec_id)))
@@ -37,6 +38,7 @@ int read_spec_file(SpecFile *S, char *filename)
   //printf("Dimensions complete %zu %zu\n",nspec,nchan);
 
   int obsnum_id, source_id,source_x,source_y,crval_id,crpix_id,cdelt_id,ctype_id,caxis_id;
+  int rf_id, vlsr_id, do_id, do_rc, do_version, do_history;
   /* Get the varids of the observation header */
   if ((retval = nc_inq_varid(ncid, "Header.Obs.ObsNum", &obsnum_id)))
     ERR(retval);
@@ -46,6 +48,22 @@ int read_spec_file(SpecFile *S, char *filename)
     ERR(retval);
   if ((retval = nc_inq_varid(ncid, "Header.Obs.YPosition", &source_y)))
     ERR(retval);
+  // PJT hack
+  if ((retval = nc_inq_varid(ncid, "Header.LineData.LineRestFrequency", &rf_id)))
+    ERR(retval);
+  if ((retval = nc_inq_varid(ncid, "Header.LineData.VSource", &vlsr_id)))
+    ERR(retval);
+  // Header.LineData.ZSource = 0
+  
+  if ((retval = nc_inq_varid(ncid, "Header.Obs.DateObs", &do_id)))
+    ERR(retval);
+  if ((retval = nc_inq_varid(ncid, "Header.Obs.Receiver", &do_rc)))
+    ERR(retval);
+  if ((retval = nc_inq_varid(ncid, "Header.Version", &do_version)))
+    ERR(retval);
+  if ((retval = nc_inq_varid(ncid, "Header.History", &do_history)))
+    ERR(retval);
+  
 
   //printf("Header.Obs complete\n");
 
@@ -100,6 +118,20 @@ int read_spec_file(SpecFile *S, char *filename)
     ERR(retval);
   if((retval = nc_get_var_double(ncid, source_y, &S->y_position)) != NC_NOERR)
     ERR(retval);
+  if((retval = nc_get_var_double(ncid, rf_id, &S->restfreq)) != NC_NOERR)
+    ERR(retval);
+  if((retval = nc_get_var_float(ncid, vlsr_id, &S->vlsr)) != NC_NOERR)
+    ERR(retval);
+  if((retval = nc_get_var(ncid,do_id, S->date_obs)) != NC_NOERR)
+    ERR(retval);
+  if((retval = nc_get_var(ncid,do_rc, S->receiver)) != NC_NOERR)
+    ERR(retval);
+  if((retval = nc_get_var(ncid,do_version, version)) != NC_NOERR)
+    ERR(retval);
+  if((retval = nc_get_var(ncid,do_history, S->history)) != NC_NOERR)
+    ERR(retval);
+  printf("SpecFile version %s\n",version);
+  
 
   if((retval = nc_get_var_double(ncid, crval_id, &S->CRVAL)) != NC_NOERR)
     ERR(retval);
@@ -113,20 +145,18 @@ int read_spec_file(SpecFile *S, char *filename)
   if((retval = nc_get_var(ncid, caxis_id, S->CAXIS)) != NC_NOERR)
     ERR(retval);
 
-
-
   S->theData = (float *)malloc(nspec*nchan*sizeof(float));
-  if(S->theData == NULL)
+  if(S->theData == NULL) {
     fprintf(stderr,"SpecFile: Error allocating data array\n");
-  else
-    printf("allocated theData\n");
-
+    exit(1);
+  } 
   S->XPos = (float *)malloc(nspec*sizeof(float));
   S->YPos = (float *)malloc(nspec*sizeof(float));
   S->RMS = (float *)malloc(nspec*sizeof(float));
-
   S->Pixel = (int *)malloc(nspec*sizeof(int));
   S->Sequence = (int *)malloc(nspec*sizeof(int));
+  S->RMS_cut = (float *)malloc(MAXPIXEL*sizeof(float));   // MAXPIXEL
+  S->use = (int *)malloc(nspec*sizeof(int));
 
   if ((retval = nc_get_var_float(ncid, data_id, S->theData)))
     ERR(retval);
@@ -140,6 +170,27 @@ int read_spec_file(SpecFile *S, char *filename)
     ERR(retval);
   if ((retval = nc_get_var_int(ncid, seq_id, S->Sequence)))
     ERR(retval);
+
+  for (i=0; i<nspec; i++)
+    S->use[i] = 1;
+
+  // compute and report on the extreme positions the array has seen
+
+  double xmin = S->XPos[0],
+         xmax = S->XPos[0],
+         ymin = S->YPos[0],
+         ymax = S->YPos[0];
+  double bs = 27.8;      // spacings between beams in the 4x4 grid
+         
+  for (i=1; i<nspec; i++) {
+    if (S->XPos[i] < xmin) xmin = S->XPos[i];
+    if (S->XPos[i] > xmax) xmax = S->XPos[i];
+    if (S->YPos[i] < ymin) ymin = S->YPos[i];
+    if (S->YPos[i] > ymax) ymax = S->YPos[i];
+  }
+  printf("X-range: %g %g   Y-range: %g %g arcsec\n",xmin,xmax,ymin,ymax);
+  printf("X-ramp:  %g %g   Y-ramp:  %g %g arcsec\n",xmin+3*bs,xmax-3*bs,ymin+3*bs,ymax-3*bs);
+  printf("MapSize: %g x %g arcsec\n", xmax-xmin, ymax-ymin);
 
   /* Close the file, freeing all resources. */
   if ((retval = nc_close(ncid)))

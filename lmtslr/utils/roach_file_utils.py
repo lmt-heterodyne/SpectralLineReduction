@@ -6,7 +6,7 @@ roach_pixels_all = [[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15]]
 
 def lookup_roach_files(obsnum,
                        roach_list=['roach0', 'roach1', 'roach2', 'roach3'],
-                       path='/data_lmt/spectrometer/',
+                       path=None,
                        debug=False):
     """
     Returns a tuple of the roach files which match a particular obsnum 
@@ -14,18 +14,27 @@ def lookup_roach_files(obsnum,
     Args:
         obsnum (int): target obvservation number
         roach_list (list): list of the directories of roach files
-        path (str): path to the roach directories
+        path (str): path to the where roach sub-directories are
         debug (boolean): if debug True, tends to print out more information
     Returns:
         (filenames (list), result (int)) : list of file names, number 
         of files found
     """
+    if path == None:
+        if 'DATA_LMT' in os.environ:
+            path = os.environ['DATA_LMT'] + '/spectrometer'
+        else:
+            path = '/data_lmt/spectrometer/'
+        
+    if not os.path.isdir(path):
+        print("Warning: path=%s does not exist" % path)
     nroach = len(roach_list)
     filenames = []
     result = 0
     for roach in roach_list:
-        spec_filenames = glob.glob(os.path.join(path, roach, 
-                                   '%s_%d_*.nc' % (roach, obsnum)))
+        globs = os.path.join(path, roach, '%s_%d_*.nc' % (roach, obsnum))
+        spec_filenames = glob.glob(globs)
+                                   
         for filename in spec_filenames:
             if debug:
                 print('found %s' % (filename))
@@ -37,6 +46,11 @@ def lookup_roach_files(obsnum,
     if filenames == []:
         if debug:
             print('lookup_roach_files: no files for obsnum', obsnum)
+    else:
+        if len(filenames) != len(roach_list):
+            print('Warning: %d/%d missing roach files for obsnum=%d in %s' %
+                  (len(roach_list)-len(filenames),len(roach_list),obsnum,path))
+        
     return (filenames, result)
 
 

@@ -1,3 +1,8 @@
+//
+//  lmtgridder:  gridder that uses SDFITS as input
+//
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,6 +14,7 @@
 #include "ConvolveFunction.h"
 #include "OTFParameters.h"
 #include "SpecFile.h"
+#include "SDfits.h"
 #include "Stats.h"
 
 
@@ -29,9 +35,11 @@ int main(int argc, char *argv[])
   int ngood=0;
   float x,y,X,Y,distance,weight,rmsweight; 
   float xpos, ypos, cosp, sinp, rot_angle = 0.0;   // future support? - grid rot_angle in degrees
-  int fuzzy_edge = 1;    //  1:  fuzzy edge      0: good sharp edge where M (mask) > 0 [should be default]
+  //int fuzzy_edge = 0;    //  1:  fuzzy edge      0: good sharp edge where M (mask) > 0 [should be default]
+  // @todo  fuzzy_edge=1 is flawed.   the weight file is the same, the image has NaN's
   int n[3];
   int hlen;
+  int Qfits = 1;   // select SDFITS or SpecFile input
 
   printf("%s %s\n", argv[0], LMTSLR_VERSION);
   if (argc == 1) exit(0);
@@ -56,9 +64,12 @@ int main(int argc, char *argv[])
   // initialize
   initialize_otf_parameters(&OTF, argc, argv);
 
-  printf("Processing %d SpecFiles:\n",OTF.nfiles);
-  // read the first SpecFile 
-  read_spec_file(&S, OTF.i_filename[0]);
+  printf("Processing %d SDfits files:\n",OTF.nfiles);
+  // read the first SDFITS/SpecFile
+  if (Qfits)
+    read_sdfits_file(&S, OTF.i_filename[0]);
+  else
+    read_spec_file(&S, OTF.i_filename[0]);  
   // copy over obs header variables
   C.nobsnum = 1;
   C.obsnum[0] = S.obsnum;
@@ -66,7 +77,7 @@ int main(int argc, char *argv[])
   //printf("%s\n",S.source);
   strncpy(C.source,S.source,18);  // @todo 18, seriously?   - there's 20, 32 and now 18?
   printf("%s\n",C.source);
-  strncpy(C.date_obs,S.date_obs,20); // or 40 ???
+  strncpy(C.date_obs,S.date_obs,20);
   strncpy(C.receiver,S.receiver,20);
   strncpy(C.history1,S.history,MAXHIST);   
   printf("DATE-OBS %s\n",C.date_obs);  
@@ -101,7 +112,7 @@ int main(int argc, char *argv[])
 
   // prints the convolution function ; n_cells denotes how much we will use?
   // @todo the scaling of delta is wrong, but irrelevant
-  printf("CF.n_cells= %d delta=%g  cell=%g resol=%g oft_select=%d\n",
+  printf("CF.n_cells=%d delta=%g  cell=%g resol=%g otf_select=%d\n",
 	 CF.n_cells,CF.delta,CF.cell_size,CF.resolution_size,OTF.otf_select);
 #if 0
   printf("r(arcsec)  conv.array\n");
@@ -132,9 +143,7 @@ int main(int argc, char *argv[])
   initialize_plane_axis(&M, Y_AXIS, 0.0, (n[1]-1.)/2.+1., OTF.cell_size, "Y", "arcsec");
 
   if (OTF.model)
-    read_fits_plane(&A, OTF.a_filename);
-
-  fuzzy_edge = OTF.fuzzy_edge;
+    read_fits_plane(&A, OTF.a_filename);  
 
   // rot_angle is the counter clock wise angle over which the image is rotated.
   //rot_angle = 30.0;   // PJT test
@@ -144,7 +153,7 @@ int main(int argc, char *argv[])
     cosp = cos(rot_angle/57.29577951308);
     sinp = sin(rot_angle/57.29577951308);
   }
-  printf("WARNING fuzzy_edge=%d\n",fuzzy_edge);
+  printf("WARNING fuzzy_edge=%d\n",OTF.fuzzy_edge);
 
   //free_spec_file(&S);     keep first one open
   //printf("axes initialized\n");
@@ -164,9 +173,12 @@ int main(int argc, char *argv[])
 
   for(ifile=0;ifile<OTF.nfiles;ifile++)
     {
-      // read the new specfile for gridding, keep track of OBSNUM's
+      // read the new sdfits for gridding, keep track of OBSNUM's
       if (ifile > 0) {
-	read_spec_file(&S, OTF.i_filename[ifile]);
+	if (Qfits)
+	  read_sdfits_file(&S, OTF.i_filename[ifile]);
+	else
+	  read_spec_file(&S, OTF.i_filename[ifile]);
 	C.obsnum[C.nobsnum] = S.obsnum;
 	C.nobsnum += 1;
       }
@@ -276,7 +288,7 @@ int main(int argc, char *argv[])
 	  if(M.plane[izp] > 0.0 && W.plane[izp] > 0.0 )         // M
 	    for(k=0;k<C.n[Z_AXIS];k++)
 	      C.cube[iz+k] = C.cube[iz+k] / W.plane[izp];	
-	  else if(fuzzy_edge && W.plane[izp] > 0.0)             // W
+	  else if(OTF.fuzzy_edge && W.plane[izp] > 0.0)         // W
 	    for(k=0;k<C.n[Z_AXIS];k++)
 	      C.cube[iz+k] = C.cube[iz+k] / W.plane[izp];
 	  else                                                  // nothing
@@ -297,7 +309,7 @@ int main(int argc, char *argv[])
 	}//j
     }//i
 
-  printf("Weighting Completed, fuzzy_edge=%d\n",fuzzy_edge);
+  printf("Weighting Completed, fuzzy_edge=%d\n",OTF.fuzzy_edge);
 
   // dumping the spectrum at 0,0 for fun... 
   izp = plane_index(&W, 0.0, 0.0);

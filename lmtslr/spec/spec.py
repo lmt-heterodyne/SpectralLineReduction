@@ -3,10 +3,10 @@ Module to read a set of spectra from the spectrometer
 
 classes: RoachSpec, SpecBank, SpecBankData, SpecBankCal
 methods: lookup_roach_files, find_roach_from_pixel, create_roach_list
-uses: IFProc, Grid
-author: FPS
-date: May 2018
-changes:
+uses:    IFProc, Grid
+author:  FPS
+date:    May 2018
+changes:  
 python 3
 """
 import numpy as np
@@ -63,11 +63,27 @@ class RoachSpec():
         self.ymap = ymap
         self.pmap = pmap
         self.bufpos = bufpos
+        self.tsys_aver = False
+        self.tsyscal = None
+        self.ncal = 0
 
+        self.ons,  self.on_ranges,  self.nons  = self.get_ranges(0)
         self.refs, self.ref_ranges, self.nrefs = self.get_ranges(1)
-        self.ons, self.on_ranges, self.nons = self.get_ranges(0)
-        self.hots, self.hot_ranges, self.nhots = self.get_ranges(3)
         self.skys, self.sky_ranges, self.nskys = self.get_ranges(2)
+        self.hots, self.hot_ranges, self.nhots = self.get_ranges(3)
+
+        if False:
+            # some debugging on times when bufpos changed and how many
+            nt = len(spec_time)
+            print("RoachSpec: %d %d - %d %d %d %d" % (roach_id,nt,self.nons,self.nrefs,self.nskys,self.nhots))
+            time0 = spec_time[0]
+            print("TB",0,time0,bufpos[0],"first")
+            for i in range(1,nt):
+                if bufpos[i] != bufpos[i-1]:
+                    print("TB",i,spec_time[i]-time0,bufpos[i])
+            i = nt-1
+            print("TB",i,spec_time[i]-time0,bufpos[i],"last")
+            
 
     def get_ranges(self, value=1):
         """
@@ -81,7 +97,7 @@ class RoachSpec():
                          3 is hot
         Returns:
             (idx (list), ranges (list), len(ranges) (int)): idx is the 
-                indices, ranges is the list of , len(ranges) is the 
+                indices, ranges is the list of (begin,end), len(ranges) is the 
                 length of ranges.
         """
         if value == 0:
@@ -156,12 +172,73 @@ class RoachSpec():
             none
         """
         self.main_spectrum = np.mean(self.raw_spec[self.ons, :], axis=0)
+
+    def compute_tsys_spectra(self, bdrop=100, edrop=100):
+        """
+        Computes the TSYS, typically for an otf_cal=1
+        """
+        self.tsys_spectra = np.zeros((self.nhots, self.nchan))
+        tsys = np.zeros(self.nhots)
+        for ihot in range(self.nhots):
+            hot_spectrum = np.median(self.raw_spec[self.hot_ranges[ihot][0]:self.hot_ranges[ihot][1], :], axis=0)
+            sky_spectrum = np.median(self.raw_spec[self.sky_ranges[ihot][0]:self.sky_ranges[ihot][1], :], axis=0)
+            # @todo why 280, and not a measured ambient?            
+            tsys_spec = 280.0 * sky_spectrum/(hot_spectrum - sky_spectrum)
+            # find the index where tsys_spec is finite
+            indx_fin = np.where(np.isfinite(tsys_spec))
+            # compute tsys as mean of tsys_spec
+            tsys[ihot] = np.mean(tsys_spec[indx_fin][bdrop:self.nchan-edrop])
+            # find index where tsys_spec is infinte
+            indx_inf = np.where(np.isinf(tsys_spec))
+            # replace with mean
+            tsys_spec[indx_inf] = tsys[ihot]
+            if self.tsys_aver:
+                self.tsys_spectra[ihot, :] = tsys[ihot]
+            else:
+                self.tsys_spectra[ihot, :] = tsys_spec
+            #print("TSYS: ",self.tsys_spectra[ihot, :],tsys[ihot])
+        # can we use pixel= this way?
+        pixel = 4*self.roach_id + self.roach_input
+        print("TSYS[%d] otf_cal %s" % (pixel,repr(tsys)))
+            
         
+    def get_nearest_reference(self, index, left=True):
+        """
+        Given a dump index and if it is to the left of ONs (default)
+        or right of ONs returns the correct reference index
+        """
+        if left:
+            arr = [abs(index-r[1]) for r in self.ref_ranges]
+            return arr.index(min(arr))
+        else:
+            arr = [abs(index-r[0]) for r in self.ref_ranges]
+            return arr.index(min(arr))            
+
+    def get_previous_hot(self, index, nearest=False):
+        """
+        Given a dump index finds the previous HOT
+        and returns the correct hot index
+        
+        Using nearest=True an older version of the code
+        where "accidentally?" the nearest was used, can be returned.
+        """
+        if nearest:
+            # nearest_hot (original code, arguably wrong)
+            arr = [abs(index-r[1]) for r in self.hot_ranges]
+            return arr.index(min(arr))
+        else:            
+            # true previous_hot (after Heyer)
+            arr = [(index-r[1]) for r in self.hot_ranges]
+            arr=np.array(arr)
+            idx=np.where(arr > 0)
+            return np.argmin(arr[idx])
+
+    
     def reduce_on_spectrum(self, calibrate=False, tsys_spectrum=0,
                            tsys_no_cal=1):
         """
         Creates a ON spectrum returned as self.on_spectrum. Reduction 
-        procedure depends on the type parameter.
+        procedure depends on the stype parameter.
         Args:
             calibrate (bool): True when we want to calibrate the 
                 ps_spectrum (default is False)
@@ -212,7 +289,7 @@ class RoachSpec():
             else:
                 self.ps_spectrum = (self.reference_spectrum - 
                                     self.main_spectrum) / self.main_spectrum
-        else: # stype == 2:
+        else: # type == 2:
             self.compute_main_spectra()
             self.compute_reference_spectra()
             if self.nons == self.nrefs:
@@ -239,10 +316,11 @@ class RoachSpec():
             self.ps_spectrum = self.ps_spectrum * tsys_no_cal
 
     def reduce_spectra(self, stype=0, calibrate=False,
-                       tsys_spectrum=0, tsys_no_cal=1):
+                       tsys_spectrum=0, tsys_no_cal=1,
+                       use_otf_cal=False):
         """
         Creates a list of all the "on" spectra in the file. The on 
-        spectra are reduced according to the value of "stype".
+        spectra are reduced according to the value of "type".
         Args:
             stype (int): type of reduction to run (default is 0)
                         0: use the median spectrum for the whole thing
@@ -250,25 +328,35 @@ class RoachSpec():
                            average of all refs
                         2: use the average of refs which bracket the 
                            ons
+                        3: use weighted average of refs which bracket the
+                           ons
             calibrate (bool): option to calibrate ps_spectrum (default 
                 is False)
             tsys_spectrum (float): tsys value for calibration when 
                 calibrate=True
             tsys_no_cal (float): tsys value for calibration when 
                 calibrate=False
+            use_otf_cal (bool): option to use in-scan hot and sky to derive cals
+                (default is False)
         Returns:
             none
         """
         spectra = []
 
         if self.nrefs == 0:
-            stype = 0
+            type = 0
 
+        if use_otf_cal:
+            self.compute_tsys_spectra()
+            
         if stype == 0:
             self.compute_median_spectrum()
             for i in self.ons:
                 spectra.append((self.raw_spec[i,:] - self.median_spectrum[:]) 
                                 / self.median_spectrum[:])
+            #if use_otf_cal:
+            #    self.compute_tsys_spectrum()
+            #    self.reduced_spectra = np.array(spectra) * self.tsys_spectrum
         elif stype == 1:
             if self.nrefs != 0:
                 self.compute_reference_spectrum()
@@ -279,27 +367,71 @@ class RoachSpec():
             else:
                 for i in self.ons:
                     spectra.append((self.raw_spec[i,:]))
-        else: # stype == 2:
+            #if use_otf_cal:
+            #    self.compute_tsys_spectrun()
+            #    self.reduced_spectra = np.array(spectra) * self.tsys_spectrum
+        elif stype == 2: # type == 2:
             if self.nrefs != 0:
                 self.compute_reference_spectra()
-                nbins = self.nrefs - 1
+                #nbins = self.nrefs - 1
+                nbins = self.nons
                 for ibin in range(nbins):
                     istart = self.on_ranges[ibin][0]
+                    start_ref_bin = self.get_nearest_reference(istart-1, left=True)
                     istop = self.on_ranges[ibin][1]
+                    stop_ref_bin = self.get_nearest_reference(istop+1, left=False)
+                    if use_otf_cal:
+                        tsys_bin = self.get_previous_hot(istart-1)
+                        # print("OTF_CAL %d %d %d %d %d -> %d" % (ibin,istart,istop,start_ref_bin,stop_ref_bin,tsys_bin))
                     for i in range(istart, istop + 1):
-                        ref = (self.reference_spectra[ibin] + 
-                               self.reference_spectra[ibin + 1]) / 2
-                        spectra.append((self.raw_spec[i,:] - ref) / ref)
+                        ref = (self.reference_spectra[start_ref_bin] + 
+                               self.reference_spectra[stop_ref_bin]) / 2
+                        if use_otf_cal:
+                            spectra.append( ((self.raw_spec[i, :] - ref) / ref) * self.tsys_spectra[tsys_bin] )
+                        else:
+                            spectra.append((self.raw_spec[i,:] - ref) / ref)
+            else:
+                for i in self.ons:
+                    spectra.append((self.raw_spec[i,:]))
+        elif stype == 3: # type == 3:
+            if self.nrefs != 0:
+                self.compute_reference_spectra()
+                #nbins = self.nrefs - 1
+                nbins = self.nons
+                for ibin in range(nbins):
+                    istart = self.on_ranges[ibin][0]
+                    start_ref_bin = self.get_nearest_reference(istart-1, left=True)                    
+                    istop = self.on_ranges[ibin][1]
+                    stop_ref_bin = self.get_nearest_reference(istop+1, left=False)                    
+                    mapwidth = istop - istart
+                    if use_otf_cal:
+                        tsys_bin = self.get_previous_hot(istart-1)                    
+                    for i in range(istart, istop + 1):
+                        wt1 = float(mapwidth - (i - istart))/float(mapwidth)
+                        wt2 = 1 - wt1
+                        ref = (wt1 * self.reference_spectra[start_ref_bin] + 
+                               wt2 * self.reference_spectra[stop_ref_bin])
+                        if use_otf_cal:
+                            spectra.append( ((self.raw_spec[i,:] - ref) / ref) * self.tsys_spectra[tsys_bin] )
+                        else:
+                            spectra.append((self.raw_spec[i,:] - ref) / ref)
             else:
                 for i in self.ons:
                     spectra.append((self.raw_spec[i,:]))
                         
         # save reduced spectra as a 2D numpy array
-        # calibrate it if requested 
-        if calibrate == False:
-            self.reduced_spectra = np.array(spectra) * tsys_no_cal
+        # calibrate it if requested
+        # do special things if use_otf_cal is True
+        if use_otf_cal:
+            if stype in (0, 1):
+                self.reduced_spectra = np.array(spectra) * self.tsys_spectrum
+            else:
+                self.reduced_spectra = np.array(spectra)
         else:
-            self.reduced_spectra = np.array(spectra) * tsys_spectrum
+            if calibrate == False:
+                self.reduced_spectra = np.array(spectra) * tsys_no_cal
+            else:
+                self.reduced_spectra = np.array(spectra) * tsys_spectrum
 
     def baseline(self, spectrum, baseline_list, n_baseline_list,
                  baseline_order=0):
@@ -328,7 +460,7 @@ class RoachSpec():
         return(baseline, rms)
 
     def integrate_spectra(self, channel_list, n_channel_list, baseline_list, 
-                          n_baseline_list, baseline_order=0, stype=0):
+                          n_baseline_list, baseline_order=0, type=0):
         """
         Computes the integral of the spectrum over some range of 
         channels (channel_list) with baseline removed using 
@@ -340,7 +472,7 @@ class RoachSpec():
             n_baseline_list (int): number of baselines to use
             baseline_order (int): order of fitting function (default is
                 0)
-            stype (int): type of integration to use. 0 is YINT and 1 is
+            type (int): type of integration to use. 0 is YINT and 1 is
                 YMAX.
         Returns:
             np.array(spectra) (array): array of integrated spectra 
@@ -352,7 +484,7 @@ class RoachSpec():
                                          baseline_list, n_baseline_list, 
                                          baseline_order)
             baselined_spectrum = self.reduced_spectra[i] - baseline
-            if stype == 0:
+            if type == 0:
                 spectra.append(np.sum(baselined_spectrum[channel_list]))
             else:
                 spectra.append(np.max(baselined_spectrum[channel_list]))
@@ -361,7 +493,7 @@ class RoachSpec():
 
     def integrate_spectrum(self, on_list, channel_list, n_channel_list,
                            baseline_list, n_baseline_list, baseline_order=0, 
-                           stype=0):
+                           type=0):
         """
         Averages reduced spectra over list of indices (on_list) and 
         then computes the integral of the spectrum over some range of 
@@ -375,7 +507,7 @@ class RoachSpec():
             n_baseline_list (int): number of baselines to use
             baseline_order (int): order of fitting function (default is
                 0)
-            stype (int): type of integration to use. 0 is YINT and 1 is
+            type (int): type of integration to use. 0 is YINT and 1 is
                 YMAX.
         Returns:
             (baselined_spectrum (array), result (float)): 
@@ -389,7 +521,7 @@ class RoachSpec():
         baseline,rms = self.baseline(spectrum, baseline_list, n_baseline_list,
                                      baseline_order)
         baselined_spectrum = spectrum - baseline 
-        if stype == 0:
+        if type == 0:
             result = np.sum(baselined_spectrum[channel_list]) # YINT
         else:
             result = np.max(baselined_spectrum[channel_list]) # YMAX
@@ -410,18 +542,26 @@ class RoachSpec():
         """
         if ((self.nhots>0) and (self.nskys>0)):
             hot_spectrum = np.median(self.raw_spec[self.hots,:], axis=0)
-            sky_spectrum = np.median(self.raw_spec[self.skys, :],  axis=0)
+            sky_spectrum = np.median(self.raw_spec[self.skys,:], axis=0)
+            # @todo why 280, and not a measured ambient?
             self.tsys_spectrum = 280 * sky_spectrum / (hot_spectrum - 
                                                        sky_spectrum)
             # find the index where tsys_spectrum in finite
             indx_fin = np.where(np.isfinite(self.tsys_spectrum))
             # compute tsys as the mean of finite tsys_spectrum
-            self.tsys = np.mean(self.tsys_spectrum[indx_fin][bdrop:self.nchan 
-                                                             - edrop])
+            self.tsys = np.mean(self.tsys_spectrum[indx_fin][bdrop:self.nchan - edrop])
+            tsysstd = np.std(self.tsys_spectrum[indx_fin][bdrop:self.nchan - edrop])
             # find the index where tsys_spectrum in infinite
             indx_inf = np.where(np.isinf(self.tsys_spectrum))
             # replace infinite tsys_spectrum with the mean
             self.tsys_spectrum[indx_inf] = self.tsys
+            if self.tsys_aver:
+                self.tsys_spectrum[:] = self.tsys
+                
+            #print("TSYS: ",self.tsys_spectrum[:])
+            # @todo can we use pixel= this way?
+            pixel = 4*self.roach_id + self.roach_input
+            print("TSYS[%d] = %g +/- %g (%d channels)" % (pixel,self.tsys, tsysstd, len(self.tsys_spectrum)))
         else:
             print('ObsNum %d Roach %d does not have calibration data'%(
                 self.obsnum, self.roach_id))
@@ -513,7 +653,7 @@ class SpecBank():
                  pixel_list=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], 
                  time_offset=[-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,
                               -0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03], 
-                 bank=0):
+                 bank=0, save_tsys=False):
         """
         Constructor for SpecBank class.
         Args: 
@@ -536,11 +676,15 @@ class SpecBank():
         self.elev = self.ifproc.elev
         self.obspgm = self.ifproc.obspgm
         self.source = self.ifproc.source
+        self.vlsr = self.ifproc.vlsr              # PJT
+        self.date_obs = self.ifproc.date_obs      # PJT
         self.map_coord = self.ifproc.map_coord
 
         # timing offsets for each roach board
         self.time_offset = time_offset
 
+        self.bank = bank
+        
         self.x_interpolation_function = interpolate.interp1d(self.ifproc.time,
             self.ifproc.azmap, bounds_error=False)
         self.y_interpolation_function = interpolate.interp1d(self.ifproc.time,
@@ -558,6 +702,9 @@ class SpecBank():
                                      [self.ifproc.time[-1]])
 
         self.nroach = len(roach_files)
+        # No need to report here.
+        # if self.nroach != len(roach_pixels_all):
+        #    print("Warning: only %d/%d roach files found" % (self.nroach,len(roach_pixels_all)))
 
         self.roach_pixel_ids = []
         self.roach = []
@@ -571,6 +718,7 @@ class SpecBank():
         self.bandwidth = self.roach[0].bandwidth
         self.channel_0 = (self.nchan - 1) / 2
         self.velocity_0 = self.ifproc.velocity
+        self.frequency_offset = self.ifproc.frequency_offset[bank]
         self.line_rest_frequency = self.ifproc.line_rest_frequency[bank]
         self.receiver = self.ifproc.receiver
         self.sideband = self.ifproc.sideband[bank]
@@ -582,9 +730,12 @@ class SpecBank():
         else:
             self.dfdc = +self.bandwidth*np.float64(1e6) / self.nchan
         self.dvdc = -self.dfdc / (self.line_rest_frequency * np.float64(1e9)) \
-                    * np.float64(2.99792458e5)
+                    * np.float64(299792.458)
+        self.dvdf = -self.dvdc/self.dfdc
+        self.velocity_offset = self.dvdf * (self.frequency_offset * np.float64(1e9))
 
         self.cal_flag = False
+        self.save_tsys = save_tsys
         
         # define the windows for line integrations and baseline fits
         self.nc = 0
@@ -677,7 +828,7 @@ class SpecBank():
             c (array): array of channel numbers corresponding to 
                 velocity
         """
-        c = np.array(np.round((v - self.velocity_0) / self.dvdc 
+        c = np.array(np.round((v - (self.velocity_0 - self.velocity_offset)) / self.dvdc 
                               + self.channel_0), dtype=int)
         return(c)
     
@@ -690,7 +841,7 @@ class SpecBank():
             v (float or array): velocity(ies) corresponding to channel 
                 in units of 
         """
-        v = (c - self.channel_0) * self.dvdc + self.velocity_0
+        v = (c - self.channel_0) * self.dvdc + (self.velocity_0 - self.velocity_offset)
         return(v)
 
     def create_velocity_scale(self):
@@ -731,7 +882,7 @@ class SpecBank():
         index = np.where(self.map_pixel_list == ipixel)
         return (int(index[0])) if len(index[0]) else 0
 
-    def read_roach(self, filename, roach_id, pixel_list):
+    def read_roach(self, filename, roach_id, pixel_list, as_float=True):
         """
         Reads a roach file and creates spectrum (roach class) for each 
         input.
@@ -739,11 +890,12 @@ class SpecBank():
             filename (str): name of the roach file
             roach_id (int): number of the roach. e.g. roach0 would be 0
             pixel_list (list): list of pixels we want to process
+            as_float (bool): if True, uses float instead of double.
         """
         pixel_ids = []
         if os.path.isfile(filename):
             nc = netCDF4.Dataset(filename)
-            print('read_roach', filename)
+
             # header information
             obsnum = nc.variables['Header.Telescope.ObsNum'][0]
             nchan = nc.variables['Header.Mode.numchannels'][0]
@@ -751,13 +903,19 @@ class SpecBank():
             ninputs = 4
 
             datatime = nc.variables['Data.Integrate.time'][:]
-            rawdata = nc.variables['Data.Integrate.Data'][:]
+            if as_float:
+                rawdata = np.asarray(nc.variables['Data.Integrate.Data'][:],np.float32)
+            else:
+                rawdata = nc.variables['Data.Integrate.Data'][:]
             input_list = nc.variables['Data.Integrate.Inputs'][:]
 
             acc_n = nc.variables['Data.Integrate.acc_n'][:]
             sync_time = nc.variables['Data.Integrate.sync_time'][:]
             read_time = nc.variables['Data.Integrate.read_time'][:]
             datatime = datatime - read_time
+
+            print('read_roach %s     nspec,nchan=%d,%d' %
+                  (filename, rawdata.shape[0], rawdata.shape[1]))
             
             # get roach index
             roach_index = roach_id
@@ -779,7 +937,7 @@ class SpecBank():
                 ilist0  = np.where(input_list == 0)
                 raw_spec = rawdata[ilist,:][0]
 
-                print('r:%d inp:%d pix:%d to:%f'%(roach_index, input_chan, 
+                print('r:%d inp:%d pix:%d time_offset:%f'%(roach_index, input_chan, 
                     roach_pixels_all[roach_index][input_chan], 
                     self.time_offset[roach_pixels_all[roach_index][input_chan]]))
 
@@ -838,7 +996,7 @@ class SpecBankData(SpecBank):
                  pixel_list=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
                  time_offset=[-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,
                               -0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03],
-                 bank=0):
+                 bank=0, save_tsys=False):
         """
         Constructor for SpecBankData class.
         Args:
@@ -853,12 +1011,12 @@ class SpecBankData(SpecBank):
         """
         SpecBank.__init__(self, roach_files, ifproc_data, 
                           pixel_list=pixel_list, time_offset=time_offset, 
-                          bank=bank)
+                          bank=bank, save_tsys=save_tsys)
     
     def create_map_data(self, channel_list, n_channel_list, baseline_list, 
                         n_baseline_list, baseline_order=0, 
                         pixel_list=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], 
-                        stype=0):
+                        type=0):
         """
         Processes a list of pixel ids to make a set of integrated 
         spectra for mapping (and fitting).
@@ -871,7 +1029,7 @@ class SpecBankData(SpecBank):
                 0)
             pixel_list (list): list of pixels to process (default is 
                 all)
-            stype (int): type of integration to use. 0 is YINT and 1 is
+            type (int): type of integration to use. 0 is YINT and 1 is
                 YMAX.
         Returns:
             none
@@ -893,7 +1051,7 @@ class SpecBankData(SpecBank):
             n_list.append(len(self.roach[i].xmap[self.roach[i].ons]))
             data_list.append(self.roach[i].integrate_spectra(channel_list, 
                 n_channel_list, baseline_list, n_baseline_list, 
-                baseline_order, stype=stype))
+                baseline_order, type=type))
         self.map_pixel_list = np.array(mp_list)
         self.map_t = np.array(t_list)
         self.map_x = np.array(x_list)
@@ -909,7 +1067,7 @@ class SpecBankData(SpecBank):
                                          baseline_order=0, 
                                          pixel_list=[0,1,2,3,4,5,6,7,8,9,10,
                                                      11,12,13,14,15], 
-                                         stype=0):
+                                         type=0):
         """
         Processes a list of pixel ids to make a set of bufpos grids for
         mapping (and fitting).
@@ -925,7 +1083,7 @@ class SpecBankData(SpecBank):
                 0)
             pixel_list (list): list of pixels to process (default is 
                 all)
-            stype (int): type of integration to use. 0 is YINT and 1 is
+            type (int): type of integration to use. 0 is YINT and 1 is
                 YMAX.
         Returns:
             none
@@ -955,7 +1113,7 @@ class SpecBankData(SpecBank):
                                        n_baseline_list, baseline_order=0, 
                                        pixel_list=[0,1,2,3,4,5,6,7,8,9,10,11,
                                                    12,13,14,15],
-                                       stype=0):
+                                       type=0):
         """
         Processes a list of pixel ids to make a set of grid data for 
         mapping (and fitting).
@@ -971,7 +1129,7 @@ class SpecBankData(SpecBank):
                 0)
             pixel_list (list): list of pixels to process (default is 
                 all)
-            stype (int): type of integration to use. 0 is YINT and 1 is
+            type (int): type of integration to use. 0 is YINT and 1 is
                 YMAX.
         Returns:
             none
@@ -1032,7 +1190,7 @@ class SpecBankData(SpecBank):
                     # z is the integrated intensity value for the averaged spectrum
                     zspec,z = self.roach[i].integrate_spectrum(grid_list, 
                         channel_list, n_channel_list, baseline_list, 
-                        n_baseline_list, baseline_order, stype)
+                        n_baseline_list, baseline_order, type)
                     pdata_list.append(z)
                     pspectrum_list.append(zspec)
 
@@ -1062,7 +1220,7 @@ class SpecBankData(SpecBank):
     def create_map_grid_data(self, channel_list, n_channel_list, 
                              baseline_list, n_baseline_list, baseline_order, 
                              pixel_list=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
-                             stype=0):
+                             type=0):
         """
         Processes a list of pixel ids to make a set of grid data for 
         mapping (and fitting).
@@ -1075,7 +1233,7 @@ class SpecBankData(SpecBank):
                 0)
             pixel_list (list): list of pixels to process (default is 
                 all)
-            stype (int): type of integration to use. 0 is YINT and 1 is
+            type (int): type of integration to use. 0 is YINT and 1 is
                 YMAX.
         Returns:
             none
@@ -1120,7 +1278,7 @@ class SpecBankData(SpecBank):
                 # z is the integrated intensity value for the averaged spectrum
                 zspec,z = self.roach[i].integrate_spectrum(grid_list, 
                     channel_list, n_channel_list, baseline_list, 
-                    n_baseline_list, baseline_order, stype)
+                    n_baseline_list, baseline_order, type)
                 pdata_list.append(z)
                 pspectrum_list.append(zspec)
 
@@ -1212,6 +1370,7 @@ class SpecBankCal(SpecBank):
         Returns:
             none
         """
+        # @todo no bank?
         SpecBank.__init__(self, roach_files, ifproc_data, 
                           pixel_list=pixel_list)
     

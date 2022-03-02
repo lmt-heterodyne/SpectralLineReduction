@@ -19,7 +19,11 @@ from lmtslr.grid.grid import *
 # set up the grid geometry
 theGrid = Grid()
 
-from  pipeline_controller import *
+try:
+    from  pipeline_controller import *
+except:
+    print("Warning: no pipeline_controller")
+    
 
 
 def main(argv):

@@ -4,10 +4,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <math.h>
 #include <netcdf.h>
 #include "Cube.h"
 #include "SpecFile.h"
+#include "Version.h"
 #include "fitsio.h"
 
 /*************************  CUBE METHODS ***********************************/
@@ -23,7 +25,10 @@ void initialize_cube(Cube* C, int *n)
   C->nplane = n[0]*n[1];
   C->cube = (float*)malloc(C->ncube*sizeof(float));
   if(C->cube == NULL)
-    fprintf(stderr,"Cube: Failed to Allocate Cube\n");
+    {
+      fprintf(stderr,"Cube: Failed to Allocate Cube\n");
+      exit(1);
+    }
   else
     for(i=0;i<C->ncube;i++)
       C->cube[i] = 0.0;
@@ -48,10 +53,15 @@ void initialize_cube_axis(Cube *C, int axis, float crval, float crpix, float cde
 
   C->caxis[axis] = (float*)malloc(C->n[axis]*sizeof(float));
   if(C->caxis[axis] == NULL)
-    fprintf(stderr,"Cube: Failed to allocate axis %d\n",axis);
+    {
+      fprintf(stderr,"Cube: Failed to allocate axis %d\n",axis);
+      exit(1);
+    }
 
   for(i=0;i<C->n[axis];i++)
-      C->caxis[axis][i] = (i-C->crpix[axis])*C->cdelt[axis]+C->crval[axis];
+      C->caxis[axis][i] = (i+1-C->crpix[axis])*C->cdelt[axis]+C->crval[axis];
+  
+  printf("C-AXIS %d starts at %g\n",axis,  C->caxis[axis][0]);
 }
 
 /** axis_index - finds the index in an axis array given a value
@@ -60,12 +70,13 @@ int cube_axis_index(Cube *C, int axis, float value)
 {
   float result_f;
   int result_i;
-  
-  result_f = (value-(C->crval[axis]-C->cdelt[axis]/2.))/C->cdelt[axis] + C->crpix[axis];
+
+  result_f = (value - C->crval[axis])/C->cdelt[axis] + C->crpix[axis] - 0.5;
   result_i = (int)floor(result_f);
-  if((result_i<0) || (result_i>=C->n[axis]))
-    result_i = -1;
-  return(result_i);
+  
+  if((result_i<0) || (result_i>=C->n[axis])) return -1;
+
+  return result_i;
 }
 
 /** cube_z_index - finds the index of the first element of z array in cube
@@ -80,7 +91,7 @@ int cube_z_index(Cube *C, float x, float y)
   iy = cube_axis_index(C, Y_AXIS, y);
 
   result = iy*C->n[X_AXIS]*C->n[Z_AXIS] + ix*C->n[Z_AXIS];
-  return(result);
+  return result;
 }
 
 /** write netcdf data cube 
@@ -167,7 +178,7 @@ void write_netcdf_cube(Cube *C, char *filename)
   if((retval = nc_enddef(ncid)) != NC_NOERR)
     ERR(retval);
 
-  if((retval = nc_put_var_int(ncid, varid_obsnum, &C->obsnum)) != NC_NOERR)
+  if((retval = nc_put_var_int(ncid, varid_obsnum, &C->obsnum[0])) != NC_NOERR)
     ERR(retval);
   if((retval = nc_put_var(ncid, varid_source, C->source)) != NC_NOERR)
     ERR(retval);
@@ -224,14 +235,14 @@ void write_fits_cube(Cube *C, char *filename)
   int i,j,k,ii,ic;
   int retval, status;
   int naxis;
-  long naxes[3], obsnum;
+  long naxes[3]; // obsnum;
   float equinox;
   char radesys[20];
   float *buffer;
   fitsfile *fptr;
 
-  char ctype[20], cunit[20];
-  float crval, cdelt, crpix;
+  char ctype[20], cunit[20], comment[60];
+  float crval, cdelt, crpix, bmaj, bpa;
   
   naxis = 3;
   naxes[0] = C->n[X_AXIS];
@@ -240,13 +251,18 @@ void write_fits_cube(Cube *C, char *filename)
 
   // create the buffer to reorder the cube to FITS standard
   buffer = (float*)malloc(C->ncube*sizeof(float));
-
+  if(buffer == NULL)
+    {
+      fprintf(stderr,"write_fits_cube: Failed to allocate buffer\n");
+      exit(1);
+    }
+  
   ic = 0;
   for(i=0;i<C->n[Z_AXIS];i++)
       for(j=0;j<C->n[Y_AXIS];j++)
 	  for(k=0;k<C->n[X_AXIS];k++)
 	    {
-	      ii = i + j*C->n[Y_AXIS]*C->n[Z_AXIS] + (C->n[X_AXIS]-k-1)*C->n[Z_AXIS];
+	      ii = i + j*C->n[X_AXIS]*C->n[Z_AXIS] + (C->n[X_AXIS]-k-1)*C->n[Z_AXIS];
 	      buffer[ic] = C->cube[ii];
 	      ic++;
 	    }
@@ -265,15 +281,31 @@ void write_fits_cube(Cube *C, char *filename)
       printf("TELESCOP\n");
       print_fits_error(status);
     }
+  // INSTRUME is not in https://heasarc.gsfc.nasa.gov/docs/fcg/common_dict.html
+  strcpy(comment,"SEQUOIA, 1MM, or OMAYA");  
+  if((retval=fits_update_key(fptr, TSTRING, "INSTRUME", C->receiver, comment, &status)) != 0)  
+    {
+      printf("INSTRUME\n");
+      print_fits_error(status);
+    }
+  
+  // @todo OBSERVER (the PI ?)
+  
   if((retval=fits_update_key(fptr, TSTRING, "OBJECT  ", C->source, " ", &status)) != 0)
     {
       printf("OBJECT\n");
       print_fits_error(status);
     }
-  obsnum = (long)C->obsnum;
-  if((retval=fits_update_key(fptr, TLONG,   "OBSNUM  ", &obsnum, " ", &status)) != 0)
+  strcpy(comment,"Data.TelescopeBackend.TelTime");
+  if((retval=fits_update_key(fptr, TSTRING, "DATE-OBS", C->date_obs, comment, &status)) != 0)
     {
-      printf("OBSNUM\n");
+      printf("DATE-OBS\n");
+      print_fits_error(status);
+    }
+  strcpy(comment,"LMTSLR Software version");
+  if((retval=fits_update_key(fptr, TSTRING, "ORIGIN  ", LMTSLR_VERSION, comment, &status)) != 0)
+    {
+      printf("ORIGIN\n");
       print_fits_error(status);
     }
 
@@ -296,7 +328,8 @@ void write_fits_cube(Cube *C, char *filename)
       printf("CTYPE1 %s\n",ctype);
       print_fits_error(status);
     }
-  if((retval=fits_update_key(fptr, TFLOAT,  "CRVAL1  ", &crval, cunit, &status)) != 0)
+  strcpy(comment,"deg Header.Obs.XPosition");
+  if((retval=fits_update_key(fptr, TFLOAT,  "CRVAL1  ", &crval, comment, &status)) != 0)
     {
       printf("CRVAL1 %f\n",crval);
       print_fits_error(status);
@@ -327,7 +360,8 @@ void write_fits_cube(Cube *C, char *filename)
       printf("CTYPE2 %s\n",ctype);
       print_fits_error(status);
     }
-  if((retval=fits_update_key(fptr, TFLOAT,  "CRVAL2  ", &crval, cunit, &status)) != 0)
+  strcpy(comment,"deg Header.Obs.YPosition");  
+  if((retval=fits_update_key(fptr, TFLOAT,  "CRVAL2  ", &crval, comment, &status)) != 0)
     {
       printf("CRVAL2 %f\n",crval);
       print_fits_error(status);
@@ -348,7 +382,11 @@ void write_fits_cube(Cube *C, char *filename)
       print_fits_error(status);
     }
 
-  strcpy(ctype,"VELO_LSR");          // nominal projection
+  // MIRIAD says the VELO is an AIPS convention
+  // CASA wants VRAD
+  // strcpy(ctype,"VELO-LSR");        // this becomes VOPT in CASA, unless you add VELREF=257 ,then it's ok
+  // VELO-F2V (but VELO-V2F fails) should be same, but is not 
+  strcpy(ctype,"VRAD");       
   crval = C->crval[Z_AXIS]*1000.;    // m/s
   cdelt = C->cdelt[Z_AXIS]*1000.;    // m/s
   crpix = C->crpix[Z_AXIS];
@@ -379,8 +417,35 @@ void write_fits_cube(Cube *C, char *filename)
       printf("CUNIT3 %s\n",cunit);
       print_fits_error(status);
     }
-      
 
+  // Alternate CTYPE3F = 'FREQ' could be made here
+  // SPECSYSF = 'LSRK'
+  // SSYSOBSF = 'TOPOCENT'
+  // CDELT3F,CRPIX3F,CRVAL3F
+
+  // The original spectral axis is lost in the current workflow
+  // the --slide keyword in the HISTORY does not record the original channel numbers
+
+
+  sprintf(comment,"deg   (%g arcsec)  ", C->resolution_size);
+  bmaj = C->resolution_size / 3600.;
+  if((retval=fits_update_key(fptr, TFLOAT,  "BMAJ    ", &bmaj, comment, &status)) != 0)
+    {
+      printf("BMAJ %f\n",bmaj);
+      print_fits_error(status);
+    }
+  if((retval=fits_update_key(fptr, TFLOAT,  "BMIN    ", &bmaj, comment, &status)) != 0)
+    {
+      printf("BMIN %f\n",bmaj);
+      print_fits_error(status);
+    }
+  bpa = 0.0;
+  if((retval=fits_update_key(fptr, TFLOAT,  "BPA     ", &bpa, cunit, &status)) != 0)
+    {
+      printf("BPA %f\n",bmaj);
+      print_fits_error(status);
+    }
+      
   strcpy(radesys,"FK5     ");
   equinox = 2000.;
   if((retval=fits_update_key(fptr, TFLOAT,  "EQUINOX ", &equinox, " ", &status)) != 0)
@@ -394,6 +459,99 @@ void write_fits_cube(Cube *C, char *filename)
       print_fits_error(status);
     }
 
+
+  // Might be nice if these are needed for any back-tracking in the future:
+  // Header.Sky.ObsVel
+  // Header.Sky.BaryVel
+  
+  strcpy(comment,"VLSR, VSOURCE and ZSOURCE need to be properly looked at ");
+  fits_write_comment(fptr, comment, &status);
+
+  strcpy(comment, "Header.LineData.VSource");
+  if((retval=fits_update_key(fptr, TFLOAT,  "VLSR", &C->vlsr, comment, &status)) != 0)
+    {
+      printf("VLSR %f\n", C->vlsr);
+      print_fits_error(status);
+    }
+  if((retval=fits_update_key(fptr, TFLOAT,  "VSOURCE", &C->vlsr, comment, &status)) != 0)
+    {
+      printf("VSOURCE %f\n", C->vlsr);
+      print_fits_error(status);
+    }
+  // alma: ZSOURCE  (even astropy claims this is the preferred one)
+  // alma: LINTRN
+
+  strcpy(comment, "Header.LineData.LineRestFrequency");
+  if((retval=fits_update_key(fptr, TDOUBLE,  "RESTFRQ", &C->restfreq, comment, &status)) != 0)
+    {
+      printf("RESTFRQ %f\n", C->restfreq);
+      print_fits_error(status);
+    }
+
+  int velref = 257;
+  strcpy(comment,"greisen?");
+  if((retval=fits_update_key(fptr, TINT,  "VELREF", &velref, comment, &status)) != 0)
+    {
+      printf("VELREF %d\n", velref);
+      print_fits_error(status);
+    }
+  
+
+  // @todo this is assumed here, but should be fixed if upstream not VELO-LSR was choosen
+  // LSRK vs. LSRD
+  strcpy(cunit,"LSRK");
+  strcpy(comment,"depends on --x_axis ?");
+  if((retval=fits_update_key(fptr, TSTRING,  "SPECSYS", cunit, comment, &status)) != 0)
+    {
+      printf("SPECSYS %s\n", cunit);
+      print_fits_error(status);
+    }
+
+  // can't hurt, right?
+  strcpy(cunit,"TOPOCENT");
+  strcpy(comment,"[Greisen 2009]");
+  if((retval=fits_update_key(fptr, TSTRING,  "SSYSOBS", cunit, comment, &status)) != 0)
+    {
+      printf("SSYSOBS %s\n", cunit);
+      print_fits_error(status);
+    }
+
+  if (1)
+    {
+      char toutstr[200];
+      time_t t;
+      struct tm *tmp;
+      const char *fmt = "%Y-%m-%dT%H:%M:%S";
+
+      t = time(NULL);
+      tmp = localtime(&t);
+      // if (tmp==NULL) error("localtime failed");
+      strftime(toutstr, sizeof(toutstr), fmt, tmp);
+      // error("strftime returned 0");
+      strcpy(comment,"Date of file written");
+      if((retval=fits_update_key(fptr, TSTRING,  "DATE", toutstr, comment, &status)) != 0)
+	{
+	  printf("DATE\n");
+	  print_fits_error(status);
+	}
+    }
+
+  strcpy(comment,"LMT observing numbers in this data: (Header.Obs.ObsNum)");
+  fits_write_comment(fptr, comment, &status);
+  for (i=0; i<C->nobsnum; i++)
+    {
+      sprintf(comment,"OBSNUM %d", C->obsnum[i]);   // or should this be %06d
+      fits_write_comment(fptr, comment, &status);
+    }
+
+  strcpy(comment,"Convert RAW to SpecFile");
+  fits_write_comment(fptr, comment, &status);
+  fits_write_history(fptr, C->history1, &status);
+
+  strcpy(comment,"Convert SpecFile to FITS");
+  fits_write_comment(fptr, comment, &status);
+  fits_write_history(fptr, C->history2, &status);
+
   // write the data cube
   if((retval=fits_write_img(fptr, TFLOAT, 1, C->ncube, buffer, &status)) != 0)
     print_fits_error(status);
@@ -401,6 +559,7 @@ void write_fits_cube(Cube *C, char *filename)
   // close the file
   if((retval=fits_close_file(fptr, &status)) != 0)
     print_fits_error(status);
+
 } 
 
 void print_fits_error(int status)
@@ -410,7 +569,6 @@ void print_fits_error(int status)
     {
       fits_get_errstatus(status, e);
       fprintf(stderr, "%s\n",e);
-      //exit(status);
+      exit(status);
     }
-  return;
 }

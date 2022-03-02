@@ -1,0 +1,51 @@
+#! /bin/bash
+#
+#    List contents on DATA_LMT based on matching one or more words in series
+#
+# data_lmt/
+# |----ifproc/
+# |----spectrometer/
+#      |-----roach0/
+#      |-----roach1/
+#      |-----roach2/
+#      |-----roach3/
+# |----RedshiftChassis0/
+# |----RedshiftChassis1/
+# |----RedshiftChassis2/
+# |----RedshiftChassis3/
+#
+#   Example filenames:
+#    ifproc_2020-02-18_090910_00_0001.nc
+#    roach0_90910_0_1_NGC5194_2020-02-18_060822.nc
+#    RedshiftChassis0_2020-03-05_092083_00_0001.nc
+#
+# warning:  ifproc has 6 digits with leading 0, roach has just 5
+
+log=$DATA_LMT/data_lmt.log
+
+
+if [ $# = 0  ]; then
+    echo Usage: lmtar tarfile OBSNUM [OBSNUM ...]
+    echo Find all RAW data with given OBSNUM in the tarfile
+    exit 0
+fi
+
+tar=$1
+
+touch $tar
+tarfile=$(realpath $tar)
+
+# echo $tarfile
+
+shift
+
+
+cd $DATA_LMT
+
+ls -l  $(lmtar.py $*)
+
+tar cvf $tarfile $(lmtar.py $*)
+
+echo Written $tar :
+ls -l $tarfile
+

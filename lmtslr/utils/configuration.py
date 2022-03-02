@@ -135,6 +135,8 @@ program_path = string(max=500, default='/usr/local/env/specenv/bin/spec_driver_f
 input = string(max=50000, default='./input.nc')
 # output FITS filename
 output = string(max=500, default='./output.fits')
+# output weight FITS filename
+weight = string(max=500, default='./weight.fits')
 
 [cube]
 # angular resolution to use for gridding (in arcsec)

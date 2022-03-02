@@ -5,16 +5,29 @@
 #define Y_AXIS 0
 #define Z_AXIS 2
 
+#include "Version.h"
+
 typedef struct 
 {
-  int obsnum;
-  char source[32];
+  int obsnum[MAXOBS];
+  int nobsnum;
+  char source[40];
+  char receiver[40];   // FITS 'INSTRUME'
   float x_position, y_position;
   float *cube;
   float *caxis[3];
   float crval[3], crpix[3], cdelt[3];
   char ctype[3][16], units[3][16];
   int n[3],ncube,nplane;
+  // new for provenance    ; or use a OTF pointer
+  // still todo: HISTORY
+  double restfreq;
+  float vlsr;
+  float zsource;
+  char date_obs[40];        // eg 2021-09-14T07:25:23.370   = 23 chars
+  float resolution_size;
+  char history1[MAXHIST];
+  char history2[MAXHIST];
 } Cube;
 
 void initialize_cube(Cube* C, int *n);
