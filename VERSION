@@ -1,3 +1,6 @@
+1-mar-2022
+  - we never maintained this; but this is now a merged version in the teuben2 branch 
+    before testing and merging back in the main branch
 31-dec-2020
   - view_spec_point.py with the new --plots interface to control batch/interactive
   - view_spec_point.py also used the new docopt commandline parsing
