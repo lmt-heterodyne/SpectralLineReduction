@@ -1,7 +1,20 @@
 # SpectralLineReduction
+
 Spectral Line Reduction software for SEQUOIA OTF mapping.
 
+# LMTOY
+
+Working within the LMTOY environment is the preferred method of using
+"lmtslr", together with "dreampy3" and other LMT spectral line
+reduction tools.  This module can of course be used standalone, but
+tools like the pipeline and common tools are maintained in
+LMTOY. There are also installation instructions that incoorporate
+those listed below here.
+
+See https://github.com/astroumd/lmtoy where we also maintain all [issues](https://github.com/astroumd/lmtoy/issues)
+
 # Normal startup after cloning the distribution
+
 $ virtualenv -p python3 venv
 $ source venv/bin/activate
 $ pip install -r requirements.txt
@@ -41,16 +54,4 @@ Change directory to venv/Scripts and run activate.bat.
 Return to the original SpectralLineReduction directory and run the command "pip install -r requirements.txt"
 
 To test that setup was successful, run the test PS reduction above.
-
-
-
-
-
-
-
-
-
-
-
-
 
