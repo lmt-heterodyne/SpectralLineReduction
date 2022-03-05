@@ -8,6 +8,7 @@ author: FPS
 date: September 2019 (documented)
 changes:
 python 3
+PJT:     handle AE/RD/LL coordinates
 """
 
 import numpy as np
@@ -88,5 +89,16 @@ class Grid():
         decmap = + azmap * np.sin(parang) + elmap * np.cos(parang)
 
         return(ramap, decmap)
+
+    def latlon(self, elev, parang, galang, tracking_beam):
+        """
+        Handle galactic Lat Long
+        """
+        azmap, elmap = self.azel(elev, tracking_beam)
+        ramap = - azmap * np.cos(parang) + elmap * np.sin(parang)
+        decmap = + azmap * np.sin(parang) + elmap * np.cos(parang)
+
+        lonmap = ramap;   # PJT rotate this using galang
+        latmap = decmap;  # PJT rotate this using galang
 
 
