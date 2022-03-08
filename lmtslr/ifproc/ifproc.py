@@ -497,8 +497,7 @@ class IFProcData(IFProc):
             print('WARNING: %d is an On observation'%(self.obsnum))
 
         else:
-            print('WARNING: ObsPgm type %s for Obsum %d is not identified'%(
-                self.obspgm, self.obsnum))
+            print('WARNING: ObsPgm type %s for Obsum %d is not identified'%(self.obspgm, self.obsnum))
 
         # data arrays
         self.time = self.nc.variables['Data.TelescopeBackend.TelTime'][:]
@@ -517,6 +516,7 @@ class IFProcData(IFProc):
             self.azmap = (self.nc.variables['Data.TelescopeBackend.SourceRaAct'][:] - self.source_RA) * np.cos(self.source_Dec) * 206264.8
             self.elmap = (self.nc.variables['Data.TelescopeBackend.SourceDecAct'][:] - self.source_Dec) * 206264.8
             self.parang = self.nc.variables['Data.TelescopeBackend.ActParAng'][:]
+            self.galang = self.nc.variables['Data.TelescopeBackend.ActGalAng'][:]            
         else:
             self.azmap = self.nc.variables['Data.TelescopeBackend.TelAzMap'][:] * 206264.8
             self.elmap = self.nc.variables['Data.TelescopeBackend.TelElMap'][:] * 206264.8
