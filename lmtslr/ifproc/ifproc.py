@@ -227,6 +227,7 @@ class IFProc():
                 elif test_map_coord[0] == 'L': # LatLon
                     self.map_coord = 2
                 else:
+                    print("Warning: unknown map_coord ",test_map_coord)
                     self.map_coord = 0
                 # PJT  map_coords 
 
@@ -507,7 +508,7 @@ class IFProcData(IFProc):
             self.azmap = self.nc.variables['Data.TelescopeBackend.TelAzMap'][:]* 206264.8
             self.elmap = self.nc.variables['Data.TelescopeBackend.TelElMap'][:]* 206264.8
             self.parang = self.nc.variables['Data.TelescopeBackend.ActParAng'][:]
-            self.parang = np.zeros(len(self.azmap))  # @todo
+            self.galang = np.zeros(len(self.azmap))  # @todo
         elif self.map_coord == 1:
             # RaDec map
             self.azmap = (self.nc.variables['Data.TelescopeBackend.SourceRaAct'][:] - self.source_RA) * np.cos(self.source_Dec) * 206264.8
