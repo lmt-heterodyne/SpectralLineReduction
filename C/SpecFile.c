@@ -37,10 +37,12 @@ int read_spec_file(SpecFile *S, char *filename)
 
   //printf("Dimensions complete %zu %zu\n",nspec,nchan);
 
-  int obsnum_id, source_id,source_x,source_y,crval_id,crpix_id,cdelt_id,ctype_id,caxis_id;
+  int obsnum_id, mapcoord_id, source_id,source_x,source_y,crval_id,crpix_id,cdelt_id,ctype_id,caxis_id;
   int rf_id, vlsr_id, do_id, do_rc, do_version, do_history;
   /* Get the varids of the observation header */
   if ((retval = nc_inq_varid(ncid, "Header.Obs.ObsNum", &obsnum_id)))
+    ERR(retval);
+  if ((retval = nc_inq_varid(ncid, "Header.Obs.MapCoord", &mapcoord_id)))
     ERR(retval);
   if ((retval = nc_inq_varid(ncid, "Header.Obs.SourceName", &source_id)))
     ERR(retval);
@@ -111,6 +113,8 @@ int read_spec_file(SpecFile *S, char *filename)
   S->nchan = nchan;
 
   if((retval = nc_get_var_int(ncid,obsnum_id, &S->obsnum)) != NC_NOERR)
+    ERR(retval);
+  if((retval = nc_get_var_int(ncid,mapcoord_id, &S->map_coord)) != NC_NOERR)
     ERR(retval);
   if((retval = nc_get_var(ncid,source_id, S->source)) != NC_NOERR)
     ERR(retval);

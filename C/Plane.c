@@ -122,7 +122,10 @@ void write_fits_plane(Plane *P, char *filename)
     print_fits_error(status);
 
   // scale axes to standards
-  strcpy(ctype,"RA---SFL");          // nominal projection Sanson-Flamsteed
+  if (P->map_coord == 2)
+    strcpy(ctype,"GLON-SFL");          // nominal projection Sanson-Flamsteed
+  else
+    strcpy(ctype,"RA---SFL");          // nominal projection Sanson-Flamsteed
   crval = P->x_position;             // degrees
   cdelt = -P->cdelt[PLANE_X_AXIS] / 3600.;  // degrees - we flipped the RA axis
   crpix = P->crpix[PLANE_X_AXIS];
@@ -153,7 +156,10 @@ void write_fits_plane(Plane *P, char *filename)
       print_fits_error(status);
     }
 
-  strcpy(ctype,"DEC--SFL");          // nominal projection Sanson-Flamsteed
+  if (P->map_coord == 2)
+    strcpy(ctype,"GLAT-SFL");          // nominal projection Sanson-Flamsteed
+  else
+    strcpy(ctype,"DEC--SFL");          // nominal projection Sanson-Flamsteed
   crval = P->y_position;             // degrees  
   cdelt = P->cdelt[PLANE_Y_AXIS] / 3600.;  // degrees 
   crpix = P->crpix[PLANE_Y_AXIS];
