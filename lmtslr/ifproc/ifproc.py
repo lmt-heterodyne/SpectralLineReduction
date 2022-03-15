@@ -218,7 +218,7 @@ class IFProc():
                 self.xstep = self.nc.variables['Header.Map.XStep'][0]
                 self.ystep = self.nc.variables['Header.Map.YStep'][0]
                 self.rows = self.nc.variables['Header.Map.RowsPerScan'][0]
-                # check the coordinate system Az = 0; Ra = 1; default =0
+                # check the coordinate system AzEl = 0; RaDec = 1; LatLon = 2; default =0
                 test_map_coord = b''.join(self.nc.variables['Header.Map.MapCoord'][:]).decode().strip()
                 if   test_map_coord[0] == 'A': # AzEl
                     self.map_coord = 0
@@ -228,7 +228,7 @@ class IFProc():
                     self.map_coord = 2
                 else:
                     self.map_coord = 0
-                # PJT  map coords 
+                # PJT  map_coords 
 
                 self.map_motion = b''.join(self.nc.variables['Header.Map.MapMotion'][:]).decode().strip()
                 print('Map Parameters: %s %s'%(test_map_coord, self.map_motion))
@@ -501,26 +501,32 @@ class IFProcData(IFProc):
 
         # data arrays
         self.time = self.nc.variables['Data.TelescopeBackend.TelTime'][:]
+        print('PJT map_coord',self.map_coord)
         if self.map_coord == 0:
+            # AzEl map
             self.azmap = self.nc.variables['Data.TelescopeBackend.TelAzMap'][:]* 206264.8
             self.elmap = self.nc.variables['Data.TelescopeBackend.TelElMap'][:]* 206264.8
             self.parang = self.nc.variables['Data.TelescopeBackend.ActParAng'][:]
-#            self.parang = np.zeros(len(self.azmap))
+            self.parang = np.zeros(len(self.azmap))  # @todo
         elif self.map_coord == 1:
-            # OK it is not really azmap and elmap
+            # RaDec map
             self.azmap = (self.nc.variables['Data.TelescopeBackend.SourceRaAct'][:] - self.source_RA) * np.cos(self.source_Dec) * 206264.8
             self.elmap = (self.nc.variables['Data.TelescopeBackend.SourceDecAct'][:] - self.source_Dec) * 206264.8
             self.parang = self.nc.variables['Data.TelescopeBackend.ActParAng'][:]
+            self.galang = np.zeros(len(self.azmap))   # @todo            
         elif self.map_coord == 2:
-            # PJT: this should become LatLon map
+            # LatLon map   PJT
             self.azmap = (self.nc.variables['Data.TelescopeBackend.SourceRaAct'][:] - self.source_RA) * np.cos(self.source_Dec) * 206264.8
             self.elmap = (self.nc.variables['Data.TelescopeBackend.SourceDecAct'][:] - self.source_Dec) * 206264.8
             self.parang = self.nc.variables['Data.TelescopeBackend.ActParAng'][:]
-            self.galang = self.nc.variables['Data.TelescopeBackend.ActGalAng'][:]            
+            self.galang = self.nc.variables['Data.TelescopeBackend.ActGalAng'][:]
+            print('PJT parang,galang',self.parang.mean()*180/np.pi, self.galang.mean()*180/np.pi,'deg')
         else:
+            # should never happen....
             self.azmap = self.nc.variables['Data.TelescopeBackend.TelAzMap'][:] * 206264.8
             self.elmap = self.nc.variables['Data.TelescopeBackend.TelElMap'][:] * 206264.8
             self.parang = np.zeros(len(self.azmap))
+            self.galang = np.zeros(len(self.azmap))
             
         self.bufpos = self.nc.variables['Data.TelescopeBackend.BufPos'][:]
         self.chop_option = 0
@@ -651,6 +657,7 @@ class IFProcCal(IFProc):
         self.azmap = self.nc.variables['Data.TelescopeBackend.TelAzMap'][:]
         self.elmap = self.nc.variables['Data.TelescopeBackend.TelElMap'][:]
         self.parang = np.zeros(len(self.azmap))
+        self.galang = np.zeros(len(self.azmap))
         self.bufpos = self.nc.variables['Data.TelescopeBackend.BufPos'][:]
         self.chop_option = 0
         if 'ifproc' in filename:

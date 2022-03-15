@@ -97,6 +97,10 @@ class SpecFile():
         nc_obsnum = self.ncout.createVariable('Header.Obs.ObsNum', 'i4')
         self.ncout.variables['Header.Obs.ObsNum'][0] = self.specbank.obsnum
 
+        # the MapCoord Header
+        nc_mapcoord = self.ncout.createVariable('Header.Obs.MapCoord', 'i4')
+        self.ncout.variables['Header.Obs.MapCoord'][0] = self.specbank.map_coord
+
         # copy the source name into netCDF header
         nc_source = self.ncout.createVariable('Header.Obs.SourceName', 'c', ('nlabel',))
         if len(self.specbank.source) > 19:
@@ -106,13 +110,13 @@ class SpecFile():
 
         nc_x_position = self.ncout.createVariable('Header.Obs.XPosition', 'f4')
         nc_y_position = self.ncout.createVariable('Header.Obs.YPosition', 'f4')
-        # PJT:  handle LatLon
+        # PJT:  1=RA/DEC   2=Lat/Lon 
         if self.specbank.map_coord == 1:
             self.ncout.variables['Header.Obs.XPosition'][0] = self.specbank.ifproc.source_RA/np.pi*180.0
             self.ncout.variables['Header.Obs.YPosition'][0] = self.specbank.ifproc.source_Dec/np.pi*180.0
         else:
-            self.ncout.variables['Header.Obs.XPosition'][0] = 0.0
-            self.ncout.variables['Header.Obs.YPosition'][0] = 0.0
+            self.ncout.variables['Header.Obs.XPosition'][0] = self.specbank.ifproc.source_L/np.pi*180.0
+            self.ncout.variables['Header.Obs.YPosition'][0] = self.specbank.ifproc.source_B/np.pi*180.0
 
         # PJT new DATE-OBS
         nc_do = self.ncout.createVariable('Header.Obs.DateObs', 'c', ('nlabel',))
@@ -201,8 +205,14 @@ class SpecFile():
                 parang = np.mean(self.specbank.roach[i].pmap[self.specbank.roach[i].ons]) # average parang
                 gx,gy = theGrid.radec(self.specbank.elev/180. * np.pi, parang,
                                       self.ifproc.tracking_beam)
+            elif self.ifproc.map_coord == 2:
+                parang = np.mean(self.specbank.roach[i].pmap[self.specbank.roach[i].ons]) # average parang
+                galang = np.mean(self.specbank.roach[i].gmap[self.specbank.roach[i].ons]) # average galang
+                gx,gy = theGrid.latlon(self.specbank.elev/180. * np.pi, parang, galang,
+                                       self.ifproc.tracking_beam)
             else:
-                print("PJT LatLon")
+                print("Illegal value self.ifproc.map_coord =",self.ifproc.map_coord)
+                
             for j in range(n_spectra):
                 # process each spectrum
                 if j < ncal:
@@ -267,6 +277,7 @@ class SpecFile():
             else:
                 prms  = nc_rms[count0:count]
                 pdata = nc_data[count0:count,:]
+            # Attempt to flag data that mis-behave
             s1 = pdata.mean()
             s2 = pdata.std()
             s3 = mad_std(pdata)
@@ -284,7 +295,7 @@ class SpecFile():
                   (ipix,count-count0,s1,s2,s3,s4,s5,s6,s7,msg))
 
         if fast_nc:
-            # another braindead netcdf feature, can't use without []
+            # another braindead netcdf feature? can't use without []
             print("CPU TIME: %g sec" % (time.time()-time0))
             nc_rms[:]      = tmp_rms[:]
             nc_pix[:]      = tmp_pix[:]
