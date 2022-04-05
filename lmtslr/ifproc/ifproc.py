@@ -40,6 +40,19 @@ def lookup_ifproc_file(obsnum,path='/data_lmt/ifproc/'):
     return(filename)
 """
 
+def MapCoord(map_coord):
+    """   translate ascii MapCoord to an index  (0,1,2)
+    """
+    if "Az"  in map_coord: return 0
+    if "El"  in map_coord: return 0
+    if "Ra"  in map_coord: return 1
+    if "Dec" in map_coord: return 1
+    if "Lat" in map_coord: return 2
+    if "Lon" in map_coord: return 2
+    # illegal MapCoord
+    return -1
+    
+
 class IFProcQuick():
     """
     Base class for reading quick information from IFPROC
@@ -220,16 +233,10 @@ class IFProc():
                 self.rows = self.nc.variables['Header.Map.RowsPerScan'][0]
                 # check the coordinate system AzEl = 0; RaDec = 1; LatLon = 2; default =0
                 test_map_coord = b''.join(self.nc.variables['Header.Map.MapCoord'][:]).decode().strip()
-                if   test_map_coord[0] == 'A': # AzEl
-                    self.map_coord = 0
-                elif test_map_coord[0] == 'R': # RaDec
-                    self.map_coord = 1
-                elif test_map_coord[0] == 'L': # LatLon
-                    self.map_coord = 2
-                else:
+                self.map_coord = MapCoord(test_map_coord)
+                if self.map_coord < 0:
                     print("Warning: unknown map_coord ",test_map_coord)
                     self.map_coord = 0
-                # PJT  map_coords 
 
                 self.map_motion = b''.join(self.nc.variables['Header.Map.MapMotion'][:]).decode().strip()
                 print('Map Parameters: %s %s'%(test_map_coord, self.map_motion))
@@ -426,7 +433,7 @@ class IFProcData(IFProc):
             return
 
         # identify the obspgm
-        self.map_coord = 0 # set this up to be nominal for all cases
+        self.map_coord = -1
         # PJT  ->  'Az'
 
         if self.obspgm == 'Bs':
@@ -478,13 +485,9 @@ class IFProcData(IFProc):
                 self.rows = self.nc.variables['Header.Map.RowsPerScan'][0]
                 # check the coordinate system Az = 0; Ra = 1; default =0
                 test_map_coord = b''.join(self.nc.variables['Header.Map.MapCoord'][:]).decode().strip()
-                if   test_map_coord[0] == 'A':
-                    self.map_coord = 0
-                elif test_map_coord[0] == 'R':
-                    self.map_coord = 1
-                elif test_map_coord[0] == 'L':  # PJT
-                    self.map_coord = 2
-                else:
+                self.map_coord = MapCoord(test_map_coord)
+                if self.map_coord < 0:
+                    print("Warning: unknown map_coord ",test_map_coord)
                     self.map_coord = 0
 
                 self.map_motion = b''.join(self.nc.variables['Header.Map.MapMotion'][:]).decode().strip()
@@ -524,6 +527,8 @@ class IFProcData(IFProc):
             print('PJT parang,galang',self.parang.mean()*180/np.pi, self.galang.mean()*180/np.pi,'deg')
         else:
             # should never happen....
+            print("Unknown MapCoord", self.map_coord)
+            self.map_coord = 0
             self.azmap = self.nc.variables['Data.TelescopeBackend.TelAzMap'][:] * 206264.8
             self.elmap = self.nc.variables['Data.TelescopeBackend.TelElMap'][:] * 206264.8
             self.parang = np.zeros(len(self.azmap))
@@ -646,7 +651,7 @@ class IFProcCal(IFProc):
         IFProc.__init__(self,filename)
 
         # check observation program type
-        self.map_coord = 0 # set this up to be nominal for all cases
+        self.map_coord = -1
         if self.obspgm == 'Cal':
             print('%d is a Cal observation'%(self.obsnum))
         else:
