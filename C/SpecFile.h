@@ -14,6 +14,7 @@ typedef struct
   int nspec,nchan;
   // data from obs header
   int obsnum;
+  int map_coord;                       // 0=azel 1=radec 2=latlon
   char source[40];                     // what is enough?
   double x_position, y_position;       // degrees ?
   double restfreq;                     //

@@ -32,7 +32,7 @@ class RoachSpec():
     Base class to deal with a single time series of spectra.
     """
     def __init__(self, obsnum, roach_id, roach_input, nchan, bandwidth, nspec,
-                 raw_spec, spec_time, xmap, ymap, pmap, bufpos):
+                 raw_spec, spec_time, xmap, ymap, pmap, gmap, bufpos):
         """
         Constructor for RoachSpec class.
         Args:
@@ -47,6 +47,7 @@ class RoachSpec():
            xmap (array): not used
            ymap (array): not used
            pmap (array): not used
+           gmap (array): not used
            bufpos (int): type of observation
         Returns:
             none
@@ -62,6 +63,7 @@ class RoachSpec():
         self.xmap = xmap
         self.ymap = ymap
         self.pmap = pmap
+        self.gmap = gmap
         self.bufpos = bufpos
         self.tsys_aver = False
         self.tsyscal = None
@@ -691,15 +693,15 @@ class SpecBank():
             self.ifproc.elmap, bounds_error=False)
         self.p_interpolation_function = interpolate.interp1d(self.ifproc.time,
             self.ifproc.parang, bounds_error=False)
+        self.g_interpolation_function = interpolate.interp1d(self.ifproc.time,
+            self.ifproc.galang, bounds_error=False)
+#            self.ifproc.parang, bounds_error=False)                                                             
         self.b_interpolation_function = interpolate.interp1d(self.ifproc.time,
             self.ifproc.bufpos, kind='nearest', bounds_error=False)
 
-        self.gaps = np.where(self.ifproc.bufpos[:-1] != \
-                    self.ifproc.bufpos[1:])[0]
-        self.time_gaps_0 = np.append([self.ifproc.time[0]], \
-                           self.ifproc.time[self.gaps + 1])
-        self.time_gaps_1 = np.append(self.ifproc.time[self.gaps], 
-                                     [self.ifproc.time[-1]])
+        self.gaps = np.where(self.ifproc.bufpos[:-1] != self.ifproc.bufpos[1:])[0]
+        self.time_gaps_0 = np.append([self.ifproc.time[0]], self.ifproc.time[self.gaps + 1])
+        self.time_gaps_1 = np.append(self.ifproc.time[self.gaps], [self.ifproc.time[-1]])
 
         self.nroach = len(roach_files)
         # No need to report here.
@@ -945,7 +947,7 @@ class SpecBank():
                     self.time_offset[roach_pixels_all[roach_index][input_chan]]
                 nspec = len(spec_time)
                 # use the interpolation functions to find map positions,\
-                # paralactic angle, and bufpos
+                # paralactic angle, galactic angle, and bufpos
                 # in python 3 we must fix spec_time which was a masked \
                 # array
                 xmap = self.x_interpolation_function(
@@ -953,6 +955,8 @@ class SpecBank():
                 ymap = self.y_interpolation_function(
                     np.ma.getdata(spec_time, subok=False))
                 pmap = self.p_interpolation_function(
+                    np.ma.getdata(spec_time, subok=False))
+                gmap = self.g_interpolation_function(
                     np.ma.getdata(spec_time, subok=False))
                 bufpos = self.b_interpolation_function(
                     np.ma.getdata(spec_time, subok=False))
@@ -968,6 +972,7 @@ class SpecBank():
                 xmap = xmap[cond]
                 ymap = ymap[cond]
                 pmap = pmap[cond]
+                gmap = gmap[cond]
                 bufpos = bufpos[cond].astype(int)
                 raw_spec = raw_spec[cond]
                 
@@ -980,7 +985,7 @@ class SpecBank():
                 # our list
                 self.roach.append(RoachSpec(obsnum, roach_id, input_chan, 
                                             nchan, bandwidth, nspec, raw_spec,
-                                            spec_time, xmap, ymap, pmap, 
+                                            spec_time, xmap, ymap, pmap, gmap,
                                             bufpos))
             nc.close()
         else:
@@ -1048,6 +1053,7 @@ class SpecBankData(SpecBank):
             x_list.append(self.roach[i].xmap[self.roach[i].ons])
             y_list.append(self.roach[i].ymap[self.roach[i].ons])
             p_list.append(self.roach[i].pmap[self.roach[i].ons])
+            g_list.append(self.roach[i].gmap[self.roach[i].ons])            
             n_list.append(len(self.roach[i].xmap[self.roach[i].ons]))
             data_list.append(self.roach[i].integrate_spectra(channel_list, 
                 n_channel_list, baseline_list, n_baseline_list, 
@@ -1312,13 +1318,13 @@ class SpecBankData(SpecBank):
         xepsilon = self.ifproc.xlength * 0.001
         xstep = self.xstep * self.hpbw
         self.xgrid = np.arange(-self.ifproc.xlength / 2, 
-            self.ifproc.xlength / 2 + xepsilon, xstep)
+                               self.ifproc.xlength / 2 + xepsilon, xstep)
         self.nx = len(xgrid)
         # to allow arange to find the last point
         yepsilon = self.ifproc.ylength * 0.001
         ystep = self.ystep * self.hpbw
         self.ygrid = np.arange(-self.ifproc.ylength / 2, 
-            self.ifproc.ylength / 2 + yepsilon, ystep)
+                               self.ifproc.ylength / 2 + yepsilon, ystep)
         self.ny = len(ygrid)
         self.ngrid = self.nx * self.ny
 
@@ -1385,7 +1391,7 @@ class SpecBankCal(SpecBank):
             DATA_FILE (object): data file object
         Returns:
             result (float): value indicating number of parameters that 
-                do not correspond
+                do not correspond  @todo seems to be an (int)
         """
         result = 0
         if DATA_FILE.line_rest_frequency != self.line_rest_frequency:
@@ -1400,4 +1406,4 @@ class SpecBankCal(SpecBank):
             print('Warning: spectrometer bandwidth of Cal observation does \
                    not match map')
             result = result + 1
-        return(result)
+        return result

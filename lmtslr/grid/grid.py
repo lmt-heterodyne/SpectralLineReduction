@@ -8,6 +8,7 @@ author: FPS
 date: September 2019 (documented)
 changes:
 python 3
+PJT:     handle AE/RD/LL coordinates
 """
 
 import numpy as np
@@ -79,14 +80,32 @@ class Grid():
                 being tracked (set -1 for center of array)
         Returns:
             ramap (array): array with right ascension offset positions 
-                for each beam
-            decmap (array): array with declination offset positions for
-                 each beam
+                           for each beam
+            decmap (array): array with declination offset positions 
+                            for each beam
         """
         azmap, elmap = self.azel(elev, tracking_beam)
         ramap = - azmap * np.cos(parang) + elmap * np.sin(parang)
         decmap = + azmap * np.sin(parang) + elmap * np.cos(parang)
 
         return(ramap, decmap)
+
+    def latlon(self, elev, parang, galang, tracking_beam):
+        """
+        Handle galactic Lat Long
+        galang (float): angle between B and Dec measures clockwise. 
+                        B aligned with +RA = -90, B aligned with -RA = +90.
+        Returns:
+            lonmap (array): array with gal.longitude offset positions
+                            for each beam
+            latmap (array): array with gal.latitude offset positions
+                            for each beam
+        """
+        azmap, elmap = self.azel(elev, tracking_beam)
+        totang = parang + galang    # PJT @todo  + or -
+        lonmap = - azmap * np.cos(totang) + elmap * np.sin(totang)
+        latmap = + azmap * np.sin(totang) + elmap * np.cos(totang)
+
+        return(lonmap,latmap)
 
 

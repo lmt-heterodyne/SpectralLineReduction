@@ -4,8 +4,7 @@ import os
 from scipy.interpolate import interp1d
 from lmtslr.spec.spec import SpecBankCal, SpecBankData
 from lmtslr.ifproc.ifproc import IFProcData, IFProcCal
-from lmtslr.utils.roach_file_utils import create_roach_list, \
-    lookup_roach_files
+from lmtslr.utils.roach_file_utils import create_roach_list, lookup_roach_files
 from lmtslr.utils.ifproc_file_utils import lookup_ifproc_file
 import netCDF4
 
