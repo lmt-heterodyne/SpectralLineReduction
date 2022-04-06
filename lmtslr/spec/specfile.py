@@ -22,7 +22,7 @@ from lmtslr.grid.grid import Grid
 
 class SpecFile():
     def __init__(self, ifproc, specbank, pix_list):
-        self.version = "4-mar-2022 dev"     # modify this if anything in the output SpecFile has been changed
+        self.version = "6-apr-2022"         # modify this if anything in the output SpecFile has been changed
         self.ifproc = ifproc
         self.specbank = specbank
         self.pix_list = pix_list
@@ -138,7 +138,7 @@ class SpecFile():
 
     def _create_nc_data(self):
         # set up the grid geometry
-        theGrid = Grid()
+        theGrid = Grid(self.specbank.receiver)
 
         nc_pix = self.ncout.createVariable('Data.Pixel', 'i4', ('nspec',))
         nc_seq = self.ncout.createVariable('Data.Sequence', 'i4', ('nspec',))
