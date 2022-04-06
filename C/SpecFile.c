@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <netcdf.h>
 
 #include "OTFParameters.h"
@@ -18,8 +19,13 @@ int read_spec_file(SpecFile *S, char *filename)
   char version[20];
   char history[512];
 
-  printf("Opening SpecFile file \"%s\"\n",filename);
-
+  if (access( filename, F_OK ) == 0 ) {
+    printf("Opening SpecFile file \"%s\"\n",filename);
+  } else {
+    printf("SpecFile file \"%s\" does not exist\n",filename);    
+    return -1;
+  }
+ 
   /* Open the file. NC_NOWRITE tells netCDF we want read-only access
      to the file.*/
   if ((retval = nc_open(filename, NC_NOWRITE, &ncid)))
