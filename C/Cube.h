@@ -13,6 +13,7 @@ typedef struct
   int nobsnum;
   char source[40];
   char receiver[40];   // FITS 'INSTRUME'
+  int map_coord;       // 0=azel  1=radec  2=latlon
   float x_position, y_position;
   float *cube;
   float *caxis[3];
@@ -41,6 +42,7 @@ int cube_z_index(Cube* C, float x, float y);
 void write_netcdf_cube(Cube* C, char *filename); 
 
 void write_fits_cube(Cube *C, char *filename);
+
 void print_fits_error(int);
 
 #endif

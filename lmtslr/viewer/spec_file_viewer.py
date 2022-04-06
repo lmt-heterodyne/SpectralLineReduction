@@ -506,22 +506,27 @@ class SpecFileViewer():
         if True:
             # ds9 isn't able to display the WCS with this.carta
             hdr = fits.Header()
-            # Time (Sample)
+            # Sample (time)
             hdr['CRPIX1'] = 0.5 + 0.5/binning[0]
             hdr['CRVAL1'] = 1.0
             hdr['CDELT1'] = 1.0 * binning[0]
-            hdr['CTYPE1'] = 'T'
+            hdr['CTYPE1'] = 'Sample'
             # VLSR
             hdr['CRPIX2'] = 0.5 + 0.5/binning[1]
             hdr['CRVAL2'] = float(self.crval.data) 
             hdr['CDELT2'] = float(self.cdelt.data) * binning[1]  
             hdr['CTYPE2'] = 'VELO-LSR'
             hdr['CUNIT2'] = 'km/s'
-            # Pixel
+            # Beam
             hdr['CRPIX3'] = 1.0
             hdr['CRVAL3'] = 0.0
             hdr['CDELT3'] = 1.0
-            hdr['CTYPE3'] = 'P'
+            hdr['CTYPE3'] = 'Beam'
+            # List beams
+            hdr['COMMENT'] = 'Waterfall plot (Sample-Velocity-Beam)'
+            hdr['COMMENT'] = 'pix_list: %s' % str(pixel_list)
+            hdr['COMMENT'] = 'binning: %s' % str(binning)
+            hdr['COMMENT'] = 'lmtslr 15-mar-2022'
             
         fits.writeto(fits_file, hdu.data, hdr)
         print("Written waterfall cube to %s" % fits_file)
