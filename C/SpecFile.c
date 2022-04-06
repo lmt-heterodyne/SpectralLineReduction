@@ -18,7 +18,7 @@ int read_spec_file(SpecFile *S, char *filename)
   char version[20];
   char history[512];
 
-  printf("Opening SpecFile file %s\n",filename);
+  printf("Opening SpecFile file \"%s\"\n",filename);
 
   /* Open the file. NC_NOWRITE tells netCDF we want read-only access
      to the file.*/
