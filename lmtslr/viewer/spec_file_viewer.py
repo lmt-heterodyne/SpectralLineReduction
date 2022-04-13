@@ -108,8 +108,7 @@ class SpecFileViewer():
         pl.colorbar()
         Plots.savefig()
 
-    def sequoia_rms_plot(self, pixel_list, rms_cut, plot_range=[0,10], 
-                         figsize=8):
+    def sequoia_rms_plot(self, pixel_list, rms_cut, plot_range=[0,10], figsize=8):
         """
         Makes rms plots of spectra from pixels in pixel_list.
         Args:
@@ -134,8 +133,7 @@ class SpecFileViewer():
             else:
                 rindex = np.where(self.rms[pindex] < rms_cut)[0]
             
-            ax2[np.mod(the_pixel,4), the_pixel // 4].plot(
-                self.rms[pindex[rindex]], 'k.')
+            ax2[np.mod(the_pixel,4), the_pixel // 4].plot(self.rms[pindex[rindex]], 'k.')
             #ax2[np.mod(the_pixel,4), the_pixel//4].text(0.05*len(rindex),plot_range[0] + 0.9*(plot_range[-1]-plot_range[0]), '%d'%(the_pixel))
             #ax2[np.mod(the_pixel,4), the_pixel//4].ylim(plot_range)
         Plots.savefig()
@@ -270,7 +268,7 @@ class SpecFileViewer():
         pl.title('PIXEL: %d'%(the_pixel))
         Plots.savefig()        
         
-    def sequoia_tsys_spectra_plot(self, pixel_list, figsize=8):
+    def sequoia_tsys_spectra_plot(self, pixel_list, plot_range=[50,500], figsize=8):
         """
         Makes mean spectra plot of spectra from pixels in pixel_list.
         Args:
@@ -284,7 +282,9 @@ class SpecFileViewer():
         print("NEW TSYS PIC")
         Plots.figure()
         fig4, ax4 = pl.subplots(4, 4, sharex='col', sharey='row', 
-            gridspec_kw={'hspace': 0, 'wspace': 0}, figsize=(figsize,figsize))
+                                gridspec_kw={'hspace': 0, 'wspace': 0},
+                                figsize=(figsize,figsize))
+        fig4.text(0.02, 0.5, 'TSYS', va='center', rotation='vertical')
         fig4.text(0.5, -0.1, self.ctype, ha='center')
         idx = 0
         (ncal,npix,nchan) = self.tsys.shape
@@ -295,10 +295,12 @@ class SpecFileViewer():
             if len(pindex) == 0: continue
             for ical in range(ncal):
                 ax4[np.mod(the_pixel, 4), the_pixel // 4].plot(self.caxis,self.tsys[ical][idx])
+                ax4[np.mod(the_pixel, 4), the_pixel // 4].set_xlim([-300,300])
+                ax4[np.mod(the_pixel, 4), the_pixel // 4].set_ylim(plot_range)
             idx = idx + 1
         Plots.savefig()
 
-    def pixel_tsys_spectra_plot(self, the_pixel):
+    def pixel_tsys_spectra_plot(self, the_pixel, plot_range=[50,500]):
         """
         Makes mean spectra plot of spectra from pixel the_pixel.
         Args:
@@ -335,6 +337,7 @@ class SpecFileViewer():
         Plots.figure()
         fig4, ax4 = pl.subplots(4, 4, sharex='col', sharey='row', 
             gridspec_kw={'hspace': 0, 'wspace': 0}, figsize=(figsize,figsize))
+        fig4.text(0.02, 0.5, 'TA*', va='center', rotation='vertical')
         fig4.text(0.5, -0.1, self.ctype, ha='center')
         for the_pixel in pixel_list:
             pindex = np.where(self.pixel == the_pixel)[0]
@@ -503,22 +506,27 @@ class SpecFileViewer():
         if True:
             # ds9 isn't able to display the WCS with this.carta
             hdr = fits.Header()
-            # Time (Sample)
+            # Sample (time)
             hdr['CRPIX1'] = 0.5 + 0.5/binning[0]
             hdr['CRVAL1'] = 1.0
             hdr['CDELT1'] = 1.0 * binning[0]
-            hdr['CTYPE1'] = 'T'
+            hdr['CTYPE1'] = 'Sample'
             # VLSR
             hdr['CRPIX2'] = 0.5 + 0.5/binning[1]
             hdr['CRVAL2'] = float(self.crval.data) 
             hdr['CDELT2'] = float(self.cdelt.data) * binning[1]  
             hdr['CTYPE2'] = 'VELO-LSR'
             hdr['CUNIT2'] = 'km/s'
-            # Pixel
+            # Beam
             hdr['CRPIX3'] = 1.0
             hdr['CRVAL3'] = 0.0
             hdr['CDELT3'] = 1.0
-            hdr['CTYPE3'] = 'P'
+            hdr['CTYPE3'] = 'Beam'
+            # List beams
+            hdr['COMMENT'] = 'Waterfall plot (Sample-Velocity-Beam)'
+            hdr['COMMENT'] = 'pix_list: %s' % str(pixel_list)
+            hdr['COMMENT'] = 'binning: %s' % str(binning)
+            hdr['COMMENT'] = 'lmtslr 15-mar-2022'
             
         fits.writeto(fits_file, hdu.data, hdr)
         print("Written waterfall cube to %s" % fits_file)

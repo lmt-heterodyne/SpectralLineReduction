@@ -4,6 +4,8 @@ A class for intermediate Spectrometer Files
 classes: SpecFile
 author:  GN
 date:    Feb 2020
+
+- mods for writing AzEl/RaDec/LatLong style files
 """
 
 import os
@@ -20,7 +22,7 @@ from lmtslr.grid.grid import Grid
 
 class SpecFile():
     def __init__(self, ifproc, specbank, pix_list):
-        self.version = "6-mar-2021"     # modify this if anything in the output SpecFile has been changed
+        self.version = "6-apr-2022"         # modify this if anything in the output SpecFile has been changed
         self.ifproc = ifproc
         self.specbank = specbank
         self.pix_list = pix_list
@@ -95,6 +97,10 @@ class SpecFile():
         nc_obsnum = self.ncout.createVariable('Header.Obs.ObsNum', 'i4')
         self.ncout.variables['Header.Obs.ObsNum'][0] = self.specbank.obsnum
 
+        # the MapCoord Header
+        nc_mapcoord = self.ncout.createVariable('Header.Obs.MapCoord', 'i4')
+        self.ncout.variables['Header.Obs.MapCoord'][0] = self.specbank.map_coord
+
         # copy the source name into netCDF header
         nc_source = self.ncout.createVariable('Header.Obs.SourceName', 'c', ('nlabel',))
         if len(self.specbank.source) > 19:
@@ -104,14 +110,13 @@ class SpecFile():
 
         nc_x_position = self.ncout.createVariable('Header.Obs.XPosition', 'f4')
         nc_y_position = self.ncout.createVariable('Header.Obs.YPosition', 'f4')
+        # PJT:  1=RA/DEC   2=Lat/Lon 
         if self.specbank.map_coord == 1:
-            self.ncout.variables['Header.Obs.XPosition'][0] = \
-                                                              self.specbank.ifproc.source_RA/np.pi*180.0
-            self.ncout.variables['Header.Obs.YPosition'][0] = \
-                                                              self.specbank.ifproc.source_Dec/np.pi*180.0
+            self.ncout.variables['Header.Obs.XPosition'][0] = self.specbank.ifproc.source_RA/np.pi*180.0
+            self.ncout.variables['Header.Obs.YPosition'][0] = self.specbank.ifproc.source_Dec/np.pi*180.0
         else:
-            self.ncout.variables['Header.Obs.XPosition'][0] = 0.0
-            self.ncout.variables['Header.Obs.YPosition'][0] = 0.0
+            self.ncout.variables['Header.Obs.XPosition'][0] = self.specbank.ifproc.source_L/np.pi*180.0
+            self.ncout.variables['Header.Obs.YPosition'][0] = self.specbank.ifproc.source_B/np.pi*180.0
 
         # PJT new DATE-OBS
         nc_do = self.ncout.createVariable('Header.Obs.DateObs', 'c', ('nlabel',))
@@ -184,6 +189,8 @@ class SpecFile():
         print("Processing %d CAL's for Tsys" % ncal)
         print("Pix Nspec  Mean Std    MAD_std Min  Max      <RMS> RMS_max    Warnings")
 
+        # MH: calculate for all 3 coords: gx_ra,gy_ra, gx_az,gx_el, gx_glon,gy_glon or make gx,gy arrays with dim=3
+
         # @todo ensure the pix_list is sorted
         for ipix in self.pix_list:
             count0 = count
@@ -194,10 +201,18 @@ class SpecFile():
             if self.ifproc.map_coord == 0:
                 gx,gy = theGrid.azel(self.specbank.elev/180. * np.pi,
                                      self.ifproc.tracking_beam)
-            else:
+            elif self.ifproc.map_coord == 1:
                 parang = np.mean(self.specbank.roach[i].pmap[self.specbank.roach[i].ons]) # average parang
                 gx,gy = theGrid.radec(self.specbank.elev/180. * np.pi, parang,
                                       self.ifproc.tracking_beam)
+            elif self.ifproc.map_coord == 2:
+                parang = np.mean(self.specbank.roach[i].pmap[self.specbank.roach[i].ons]) # average parang
+                galang = np.mean(self.specbank.roach[i].gmap[self.specbank.roach[i].ons]) # average galang
+                gx,gy = theGrid.latlon(self.specbank.elev/180. * np.pi, parang, galang,
+                                       self.ifproc.tracking_beam)
+            else:
+                print("Illegal value self.ifproc.map_coord =",self.ifproc.map_coord)
+                
             for j in range(n_spectra):
                 # process each spectrum
                 if j < ncal:
@@ -238,6 +253,10 @@ class SpecFile():
                     #nc_tsys[j,ipix,:] = LL.tarray
                     t = LL.tarray
                     print("TSYS[%d] slice: %g (%g)  minmax: %g %g" % (ipix,t.mean(),t.std(),t.min(),t.max()))
+
+
+                # MH: calculate for all 3 coords: nc_x_az,nc_y_el,nc_x_ra,nc_y_dec,nc_x_glon, nc_y_glon or make nc_x,nc_y as arrays with dim=3
+                # PJT    - need 3 arrays for AE/RD/LB
                 if not fast_nc:
                     nc_rms[count]  = LL.rms
                     nc_pix[count]  = ipix
@@ -258,6 +277,7 @@ class SpecFile():
             else:
                 prms  = nc_rms[count0:count]
                 pdata = nc_data[count0:count,:]
+            # Attempt to flag data that mis-behave
             s1 = pdata.mean()
             s2 = pdata.std()
             s3 = mad_std(pdata)
@@ -275,7 +295,7 @@ class SpecFile():
                   (ipix,count-count0,s1,s2,s3,s4,s5,s6,s7,msg))
 
         if fast_nc:
-            # another braindead netcdf feature, can't use without []
+            # another braindead netcdf feature? can't use without []
             print("CPU TIME: %g sec" % (time.time()-time0))
             nc_rms[:]      = tmp_rms[:]
             nc_pix[:]      = tmp_pix[:]

@@ -72,10 +72,13 @@ int main(int argc, char *argv[])
   printf("DATE-OBS %s\n",C.date_obs);  
   C.x_position = S.x_position;
   C.y_position = S.y_position;
+  C.map_coord  = S.map_coord;
   W.x_position = S.x_position;
   W.y_position = S.y_position;
+  W.map_coord  = S.map_coord;
   M.x_position = S.x_position;
   M.y_position = S.y_position;
+  M.map_coord  = S.map_coord;
   // 
   C.restfreq = S.restfreq;
   C.vlsr = S.vlsr;

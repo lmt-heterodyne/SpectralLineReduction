@@ -94,7 +94,8 @@ int cube_z_index(Cube *C, float x, float y)
   return result;
 }
 
-/** write netcdf data cube 
+/** write netcdf data cube
+ *  not used anymore, we use fits cubes
  */
 void write_netcdf_cube(Cube *C, char *filename)
 {
@@ -318,12 +319,17 @@ void write_fits_cube(Cube *C, char *filename)
     }
 
   // scale axes to standards
-  strcpy(ctype,"RA---SFL");          // nominal projection Sanson-Flamsteed
-  crval = C->x_position;             // degrees
-  cdelt = -C->cdelt[X_AXIS] / 3600.;  // degrees - we flipped the RA axis
+  if (C->map_coord == 2)
+    strcpy(ctype,"GLON-SFL");          // nominal projection Sanson-Flamsteed
+  else
+    strcpy(ctype,"RA---SFL");          // nominal projection Sanson-Flamsteed
+  
+  crval = C->x_position;               // degrees
+  cdelt = -C->cdelt[X_AXIS] / 3600.;   // degrees - we flipped the RA axis
   crpix = C->crpix[X_AXIS];
   strcpy(cunit,"deg     ");
-  if((retval=fits_update_key(fptr, TSTRING, "CTYPE1  ", ctype, " ", &status)) != 0)
+  sprintf(comment,"map_coord=%d", C->map_coord);
+  if((retval=fits_update_key(fptr, TSTRING, "CTYPE1  ", ctype, comment, &status)) != 0)
     {
       printf("CTYPE1 %s\n",ctype);
       print_fits_error(status);
@@ -350,7 +356,10 @@ void write_fits_cube(Cube *C, char *filename)
       print_fits_error(status);
     }
 
-  strcpy(ctype,"DEC--SFL");          // nominal projection Sanson-Flamsteed
+  if (C->map_coord == 2)
+    strcpy(ctype,"GLAT-SFL");          // nominal projection Sanson-Flamsteed
+  else
+    strcpy(ctype,"DEC--SFL");          // nominal projection Sanson-Flamsteed
   crval = C->y_position;             // degrees
   cdelt = C->cdelt[Y_AXIS] / 3600.;  // degrees 
   crpix = C->crpix[Y_AXIS];

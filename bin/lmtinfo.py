@@ -131,6 +131,7 @@ def slr_summary(ifproc, rc=False):
     nc = netCDF4.Dataset(ifproc)
     obsnum = nc.variables['Header.Dcs.ObsNum'][0]
     receiver = b''.join(nc.variables['Header.Dcs.Receiver'][:]).decode().strip()
+    tau = nc.variables['Header.Radiometer.Tau'][0]
     
     vlsr = nc.variables['Header.Source.Velocity'][0]
     src = b''.join(nc.variables['Header.Source.SourceName'][:]).decode().strip()
@@ -221,8 +222,8 @@ def slr_summary(ifproc, rc=False):
         print('# version=%s' % version)
         print('# ifproc="%s"' % ifproc)
         print('date_obs="%s"' % date_obs)
-        print('# skytime=%g sec' % tsky)
-        print('# inttime=%g sec' % tint)
+        print('skytime=%g' % tsky)
+        print('inttime=%g' % tint)
         print('obsnum="%s"' % obsnum)
         print('calobsnum="%s"' % calobsnum)
         print('obspgm="%s"' % obspgm)
@@ -247,6 +248,7 @@ def slr_summary(ifproc, rc=False):
         print('x_extent=%g   # arcsec' % xlen)
         print('y_extent=%g   # arcsec' % ylen)
         print('instrument="%s"' % instrument)
+        print('tau=%g' % tau)
         print("# </lmtinfo>")
     else:
         print("%-20s %7s  %-12s %-9s %-25s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %

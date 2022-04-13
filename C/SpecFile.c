@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <netcdf.h>
 
 #include "OTFParameters.h"
@@ -18,8 +19,13 @@ int read_spec_file(SpecFile *S, char *filename)
   char version[20];
   char history[512];
 
-  printf("Opening SpecFile file %s\n",filename);
-
+  if (access( filename, F_OK ) == 0 ) {
+    printf("Opening SpecFile file \"%s\"\n",filename);
+  } else {
+    printf("SpecFile file \"%s\" does not exist\n",filename);    
+    return -1;
+  }
+ 
   /* Open the file. NC_NOWRITE tells netCDF we want read-only access
      to the file.*/
   if ((retval = nc_open(filename, NC_NOWRITE, &ncid)))
@@ -37,10 +43,12 @@ int read_spec_file(SpecFile *S, char *filename)
 
   //printf("Dimensions complete %zu %zu\n",nspec,nchan);
 
-  int obsnum_id, source_id,source_x,source_y,crval_id,crpix_id,cdelt_id,ctype_id,caxis_id;
+  int obsnum_id, mapcoord_id, source_id,source_x,source_y,crval_id,crpix_id,cdelt_id,ctype_id,caxis_id;
   int rf_id, vlsr_id, do_id, do_rc, do_version, do_history;
   /* Get the varids of the observation header */
   if ((retval = nc_inq_varid(ncid, "Header.Obs.ObsNum", &obsnum_id)))
+    ERR(retval);
+  if ((retval = nc_inq_varid(ncid, "Header.Obs.MapCoord", &mapcoord_id)))
     ERR(retval);
   if ((retval = nc_inq_varid(ncid, "Header.Obs.SourceName", &source_id)))
     ERR(retval);
@@ -111,6 +119,8 @@ int read_spec_file(SpecFile *S, char *filename)
   S->nchan = nchan;
 
   if((retval = nc_get_var_int(ncid,obsnum_id, &S->obsnum)) != NC_NOERR)
+    ERR(retval);
+  if((retval = nc_get_var_int(ncid,mapcoord_id, &S->map_coord)) != NC_NOERR)
     ERR(retval);
   if((retval = nc_get_var(ncid,source_id, S->source)) != NC_NOERR)
     ERR(retval);
