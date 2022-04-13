@@ -59,7 +59,7 @@ import datetime
 import netCDF4
 from docopt import docopt
 
-version="6-apr-2022"
+version="13-apr-2022"
 
 if "DATA_LMT" in os.environ:
     data_lmt = os.environ["DATA_LMT"]
@@ -68,7 +68,7 @@ else:
 
 arguments = docopt(__doc__,options_first=True, version='0.2')
 
-header = "# Y-M-D   T H:M:S     ObsNum ObsPgm SourceName                     RestFreq  VLSR   TINT     RA        DEC          AZ    EL"
+header = "# Y-M-D   T H:M:S     ObsNum ObsGoal       ObgPgm    SourceName                ProjectId                 RestFreq  VLSR   TINT     RA        DEC          AZ    EL"
 
 def grep(terms):
     """
@@ -251,8 +251,8 @@ def slr_summary(ifproc, rc=False):
         print('tau=%g' % tau)
         print("# </lmtinfo>")
     else:
-        print("%-22s  %7s  %-12s %-9s%-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %
-              (date_obs, obsnum, obsgoal, obspgm +(('('+map_coord+')') if obspgm=='Map' else ''), src, restfreq[0], vlsr, tint, ra, dec, az, el, az1, el1))
+        print("%-20s %7s  %-12s %-9s %-25s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %
+              (date_obs, obsnum, obsgoal, obspgm +(('('+map_coord+')') if obspgm=='Map' else ''), src, pid, restfreq[0], vlsr, tint, ra, dec, az, el, az1, el1))
 
     # -end slr_summary() 
 
@@ -336,6 +336,7 @@ def rsr_summary(rsr_file, rc=False):
 
     nc.close()
 
+    obsgoal = "N/A"
     if rc:
         print('# <lmtinfo>')
         print('# %s' % rsr_file)
@@ -345,6 +346,7 @@ def rsr_summary(rsr_file, rc=False):
         print('obsnum="%s"' % obsnum)
         print('calobsnum="%s"' % calobsnum)
         print('obspgm="%s"' % obspgm)
+        print('obsgoal="%s"' % obsgoal)
         print('ProjectId="%s"' % pid)
         #print('# SkyOff=%g %g' % (az1,el1))
         #print('# bufpos=%s' % str(ubufpos))
@@ -362,8 +364,11 @@ def rsr_summary(rsr_file, rc=False):
         print("# </lmtinfo>")
 
     else:     # one line summary
-        print("%-20s %7d  %-5s %-30s     RSR      0    %6.1f  %10.6f %10.6f  %5.1f %5.1f" %
-              (date_obs, obsnum, obspgm, src,           tint,   ra,    dec,   az,   el))
+        #import pdb; pdb.set_trace()
+        #print(date_obs, obsnum, obsgoal, obspgm, src,  pid,         tint,   ra,    dec,   az,   el)
+        if True:
+            print("%-20s %7d  %-12s %-9s %-25s %-30s RSR      0    %6.1f  %10.6f %10.6f  %5.1f %5.1f" %
+              (date_obs, obsnum, obsgoal, obspgm, src,  pid,         tint,   ra,    dec,   az,   el))
 
     # -end  rsr_summary()
     
