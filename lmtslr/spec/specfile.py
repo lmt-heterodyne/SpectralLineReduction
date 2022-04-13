@@ -133,7 +133,7 @@ class SpecFile():
 
     def _create_nc_data(self):
         # set up the grid geometry
-        theGrid = Grid()
+        theGrid = Grid(self.specbank.receiver)
 
         nc_pix = self.ncout.createVariable('Data.Pixel', 'i4', ('nspec',))
         nc_seq = self.ncout.createVariable('Data.Sequence', 'i4', ('nspec',))
