@@ -13,6 +13,7 @@ typedef struct
   int nfiles;
   char o_filename[OTF_FILE_NAME_LENGTH];
   char w_filename[OTF_FILE_NAME_LENGTH];
+  char t_filename[OTF_FILE_NAME_LENGTH];
   char a_filename[OTF_FILE_NAME_LENGTH];
   float resolution_size;
   float cell_size;

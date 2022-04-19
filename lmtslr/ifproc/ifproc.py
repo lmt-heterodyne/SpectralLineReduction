@@ -47,8 +47,8 @@ def MapCoord(map_coord):
     if "El"  in map_coord: return 0
     if "Ra"  in map_coord: return 1
     if "Dec" in map_coord: return 1
-    if "Lat" in map_coord: return 2
-    if "Lon" in map_coord: return 2
+    if "L"   in map_coord: return 2
+    if "B"   in map_coord: return 2
     # illegal MapCoord
     return -1
     

@@ -22,7 +22,7 @@ from lmtslr.grid.grid import Grid
 
 class SpecFile():
     def __init__(self, ifproc, specbank, pix_list):
-        self.version = "6-apr-2022"         # modify this if anything in the output SpecFile has been changed
+        self.version = "18-apr-2022"         # modify this if anything in the output SpecFile has been changed
         self.ifproc = ifproc
         self.specbank = specbank
         self.pix_list = pix_list
@@ -79,7 +79,8 @@ class SpecFile():
         nc_dimension_nhist = self.ncout.createDimension('nhist', 512)
 
         # number of pixels in this NC
-        nc_dimension_npix = self.ncout.createDimension('npix', len(self.pix_list))
+        #nc_dimension_npix = self.ncout.createDimension('npix', len(self.pix_list))
+        nc_dimension_npix = self.ncout.createDimension('npix', 16)
 
         # number of tsyscals
         nc_dimension_ncal = self.ncout.createDimension('ncal', self.specbank.ncal)
@@ -142,6 +143,7 @@ class SpecFile():
 
         nc_pix = self.ncout.createVariable('Data.Pixel', 'i4', ('nspec',))
         nc_seq = self.ncout.createVariable('Data.Sequence', 'i4', ('nspec',))
+        #nc_pix_list = self.ncout.createVariable('Data.PixelList', 'f4', ('npix'))
         nc_x = self.ncout.createVariable('Data.XPos', 'f4', ('nspec',))
         nc_x.units = 'arcsec'
         nc_y = self.ncout.createVariable('Data.YPos', 'f4', ('nspec',))
@@ -150,12 +152,12 @@ class SpecFile():
         nc_rms.units = 'K'
         nc_data = self.ncout.createVariable('Data.Spectra', 'f4', ('nspec','nchan'))
         nc_data.units = 'K'
-        nc_tsys = self.ncout.createVariable('Data.Tsys', 'f4', ('ncal','npix','nchan'))
+        nc_tsys = self.ncout.createVariable('Data.Tsys', 'f4', ('ncal','npix'))
         nc_tsys.units = 'K'
 
         ncal = self.specbank.ncal
         npix = 16
-
+        
         time0 = time.time()
 
         fast_nc = True
@@ -176,12 +178,14 @@ class SpecFile():
             print("NCHAN: %d" % nchan)
             tmp_pix = np.zeros(nspec, dtype=int)
             tmp_seq = np.zeros(nspec, dtype=int)
+            tmp_pixl= np.zeros(npix,  dtype=int)
             tmp_rms = np.zeros(nspec)
             tmp_x   = np.zeros(nspec)
             tmp_y   = np.zeros(nspec)
             tmp_data= np.zeros(nspec*nchan).reshape(nspec,nchan)
-            tmp_tsys= np.zeros(ncal*npix*nchan).reshape(ncal,npix,nchan)
+            tmp_tsys= np.zeros(ncal*npix).reshape(ncal,npix)
         print("FAST_NC:", fast_nc)
+        #nc_pix_list[:] = self.pix_list[:]
         
         count = 0
         
@@ -247,9 +251,9 @@ class SpecFile():
                 if type(LL.tarray) == np.ndarray:
                     idx = self.pix_list.index(ipix)
                     if fast_nc:
-                        tmp_tsys[j,idx,:] = LL.tarray
+                        tmp_tsys[j,ipix] = LL.tarray.mean()
                     else:
-                        nc_tsys[j,idx,:] = LL.tarray
+                        nc_tsys[j,ipix] = LL.tarray.mean()
                     #nc_tsys[j,ipix,:] = LL.tarray
                     t = LL.tarray
                     print("TSYS[%d] slice: %g (%g)  minmax: %g %g" % (ipix,t.mean(),t.std(),t.min(),t.max()))
@@ -303,7 +307,7 @@ class SpecFile():
             nc_x[:]        = tmp_x[:]
             nc_y[:]        = tmp_y[:]
             nc_data[:,:]   = tmp_data[:,:]
-            nc_tsys[:,:,:] = tmp_tsys[:,:,:]
+            nc_tsys[:,:]   = tmp_tsys[:,:]
         print("CPU TIME: %g sec" % (time.time()-time0))
         
         print("Warnings:")

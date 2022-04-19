@@ -182,7 +182,7 @@ void initialize_otf_parameters(OTFParameters *OTF, int argc, char *argv[])
   OTF->noise_sigma        = 0.0;     // -s=
   OTF->x_extent           = 160.0;   // -x=
   OTF->y_extent           = 160.0;   // -y=
-  OTF->otf_select         = 1;       // -f=        1=jinc other=gauss
+  OTF->otf_select         = 1;       // -f=        1=jinc 2=gauss 3=    4=
   OTF->rmax               = 3.0;     // -r=
   OTF->nsamples           = 256;               // error??? should this not be -n ???
   OTF->otf_jinc_a         = 1.1;     // -0=
@@ -270,6 +270,7 @@ void initialize_otf_parameters(OTFParameters *OTF, int argc, char *argv[])
 	  break;
 	case 'w':
 	  strcpy(OTF->w_filename,optarg);
+	  strcpy(OTF->t_filename,"radiometer.rms.fits"); // @todo i'm sick of how many changes are needed in so many files for one bloody new command line argument
 	  break;
 	case 'a':
 	  strcpy(OTF->a_filename,optarg);

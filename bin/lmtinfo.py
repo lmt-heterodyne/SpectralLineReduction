@@ -66,7 +66,7 @@ if "DATA_LMT" in os.environ:
 else:
     data_lmt = "/data_lmt/"
 
-arguments = docopt(__doc__,options_first=True, version='0.2')
+arguments = docopt(__doc__,options_first=True, version='0.3')
 
 header = "# Y-M-D   T H:M:S     ObsNum ObsGoal       ObgPgm    SourceName                ProjectId                 RestFreq  VLSR   TINT     RA        DEC          AZ    EL"
 
@@ -308,6 +308,8 @@ def rsr_summary(rsr_file, rc=False):
     
     # Bs, Cal
     obspgm = b''.join(nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
+    # ObsGoal
+    obsgoal = b''.join(nc.variables['Header.Dcs.ObsGoal'][:]).decode().strip()
 
     # Header.Radiometer.UpdateDate = "21/01/2015 23:12:07
     #date_obs = b''.join(nc.variables['Header.Radiometer.UpdateDate'][:]).decode().strip()
@@ -336,7 +338,6 @@ def rsr_summary(rsr_file, rc=False):
 
     nc.close()
 
-    obsgoal = "N/A"
     if rc:
         print('# <lmtinfo>')
         print('# %s' % rsr_file)
