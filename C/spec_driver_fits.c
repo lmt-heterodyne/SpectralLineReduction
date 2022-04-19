@@ -14,8 +14,8 @@
 
 int main(int argc, char *argv[])
 {
-  Cube C;
-  Plane W, M, A;
+  Cube C;                   // data cube
+  Plane W, M, T, A;            // W = weight   M = mask   T = tsys     A = experimental
   SpecFile S;
   ConvolveFunction CF;
   OTFParameters OTF;
@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
   int ix,iy,iz,ixp,iyp,izp;
   int p0, s0, s1, seq;
   int ngood=0;
-  float x,y,X,Y,distance,weight,rmsweight; 
+  float x,y,X,Y,distance,weight,rmsweight, tsys, trms, dfdt;
   float xpos, ypos, cosp, sinp, rot_angle = 0.0;   // future support? - grid rot_angle in degrees
   int fuzzy_edge = 1;    //  1:  fuzzy edge      0: good sharp edge where M (mask) > 0 [should be default]
   int n[3];
@@ -35,6 +35,9 @@ int main(int argc, char *argv[])
 
   printf("%s %s\n", argv[0], LMTSLR_VERSION);
   if (argc == 1) exit(0);
+
+  dfdt = 800e6 * 0.1 / 2048;   // @todo df.dt assumed constant during an observation
+  printf("HACK:  sqrt(dfdt) = %g\n", sqrt(dfdt));
 
   // @todo this failed despite the "ncpy"  https://github.com/astroumd/lmtoy/issues/13
   hlen = 0;
@@ -79,24 +82,32 @@ int main(int argc, char *argv[])
   M.x_position = S.x_position;
   M.y_position = S.y_position;
   M.map_coord  = S.map_coord;
+  T.x_position = S.x_position;
+  T.y_position = S.y_position;
+  T.map_coord  = S.map_coord;
   // 
   C.restfreq = S.restfreq;
   C.vlsr = S.vlsr;
   // set up convolution array for the gridding process.
   initialize_convolve_function(&CF, OTF.resolution_size, OTF.cell_size, OTF.rmax, OTF.nsamples);
   if(OTF.otf_select == 1) {
+    printf("jinc filter\n");
     initialize_jinc_filter(&CF, OTF.otf_jinc_a, OTF.otf_jinc_b, OTF.otf_jinc_c);
     C.resolution_size = 1.15 * OTF.resolution_size;
   } else if(OTF.otf_select == 2) {
+    printf("gauss filter\n");    
     initialize_gauss_filter(&CF, OTF.otf_jinc_b);
     C.resolution_size = 1.15 * OTF.resolution_size * OTF.otf_jinc_b;    
   } else if(OTF.otf_select == 3) {
+    printf("triangle filter\n");    
     initialize_triangle_filter(&CF, OTF.resolution_size);
     C.resolution_size = OTF.resolution_size;  
   } else if(OTF.otf_select == 4) {
+    printf("box filter (resolution)\n");    
     initialize_box_filter(&CF, OTF.resolution_size);
     C.resolution_size = OTF.resolution_size;    
   } else {
+    printf("box filter (cell/2)\n");    
     initialize_box_filter(&CF, OTF.cell_size/2.);
     C.resolution_size = OTF.resolution_size;
   }
@@ -133,6 +144,10 @@ int main(int argc, char *argv[])
   initialize_plane(&M, n);
   initialize_plane_axis(&M, X_AXIS, 0.0, (n[0]-1.)/2.+1., OTF.cell_size, "X", "arcsec");
   initialize_plane_axis(&M, Y_AXIS, 0.0, (n[1]-1.)/2.+1., OTF.cell_size, "Y", "arcsec");
+
+  initialize_plane(&T, n);
+  initialize_plane_axis(&T, X_AXIS, 0.0, (n[0]-1.)/2.+1., OTF.cell_size, "X", "arcsec");
+  initialize_plane_axis(&T, Y_AXIS, 0.0, (n[1]-1.)/2.+1., OTF.cell_size, "Y", "arcsec");
 
   if (OTF.model)
     read_fits_plane(&A, OTF.a_filename);
@@ -173,7 +188,7 @@ int main(int argc, char *argv[])
 	C.obsnum[C.nobsnum] = S.obsnum;
 	C.nobsnum += 1;
       }
-	
+
       totspec +=  S.nspec;
 
       int nout = 0;
@@ -206,11 +221,19 @@ int main(int argc, char *argv[])
 	}
       }
 
+#if 0
+      // hack - test weight and spread of just one point
+      for(i=0;i<S.nspec;i++)
+	S.use[i] = 0;
+      S.use[1002] = 1;
+#endif      
+
       // now we do the gridding
       for(i=0;i<S.nspec;i++) {
 	if(S.use[i]) {
 	  ngood++;
 	  spectrum = get_spectrum(&S,i);
+	  tsys = get_tsys(&S,0,S.Pixel[i]);
 	  
 	  if (rot_angle == 0.0) {
 	    xpos = S.XPos[i];
@@ -226,6 +249,21 @@ int main(int argc, char *argv[])
 	  iy = cube_axis_index(&C, Y_AXIS, ypos);
 	  if( (ix>=0) && (iy>=0) )
 	    {
+	      // first loop finding the normalization of weights
+	      float wsum = 0.0;
+	      for(ii=-CF.n_cells; ii<=CF.n_cells; ii++)
+		for(jj=-CF.n_cells; jj<=CF.n_cells; jj++)
+		  {
+		    if (ix+ii < 0 || iy+jj<0 || ix+ii >= C.n[X_AXIS] || iy+jj >= C.n[Y_AXIS])
+			continue;
+		    x = xpos-C.caxis[X_AXIS][ix+ii];
+		    y = ypos-C.caxis[Y_AXIS][iy+jj];
+		    distance = sqrt(x*x+y*y);
+		    weight = get_weight(&CF, distance);
+		    wsum += weight;
+		  } // ii,jj
+
+	      // actual loop accumulating weights
 	      for(ii=-CF.n_cells; ii<=CF.n_cells; ii++)
 		for(jj=-CF.n_cells; jj<=CF.n_cells; jj++)
 		  {
@@ -238,21 +276,27 @@ int main(int argc, char *argv[])
 		    y = ypos-C.caxis[Y_AXIS][iy+jj];
 		    distance = sqrt(x*x+y*y);
 		    // @todo what if S.RMS[i] == 0.0
-		    if ((S.RMS[i] != 0.0) && (OTF.noise_sigma > 0.0)) {
+		    if ((S.RMS[i] != 0.0) && (OTF.noise_sigma == 1)) {
 		      rmsweight = 1.0 /(S.RMS[i] * S.RMS[i]);
+		    } else if ((S.RMS[i] != 0.0) && (OTF.noise_sigma == 2)) {		      
+		      rmsweight = 1.0 /(tsys*tsys);
 		    } else {
 		      rmsweight = 1.0;
 		    }
-		    weight = get_weight(&CF, distance) * rmsweight;
+		    weight = get_weight(&CF, distance) * rmsweight / wsum;
+
 		    iz = cube_z_index(&C, C.caxis[X_AXIS][ix+ii], C.caxis[Y_AXIS][iy+jj]);
 		    for(k=0;k<C.n[Z_AXIS];k++)
 		      C.cube[iz+k] = C.cube[iz+k] + weight * spectrum[k];
 		    izp = plane_index(&W, C.caxis[X_AXIS][ix+ii], C.caxis[Y_AXIS][iy+jj]);
 		    W.plane[izp] = W.plane[izp] + weight;
+		    // P: T.plane[izp] = T.plane[izp] + weight / (tsys*tsys);
+		    // M:
+		    T.plane[izp] = T.plane[izp] + weight * tsys;
 		    if (ii==0 && jj==0)
 		      M.plane[izp] = 1;
 		    // if (ii==0 && jj==0) printf("PJT      %d %d %d %d   %g %g\n",ix,iy,iz,izp,x,y);
-		  }		    
+		  } // ii,jj
 	    }
 	} // S.use
       } // i
@@ -285,6 +329,10 @@ int main(int argc, char *argv[])
 	  else                                                  // nothing
 	    for(k=0;k<C.n[Z_AXIS];k++)
 	      C.cube[iz+k] = NAN;
+	  // T.plane[izp] = sqrt(W.plane[izp]/(dfdt*T.plane[izp]));// T  wrong
+	  // T.plane[izp] = sqrt(1/(dfdt*T.plane[izp]));           // T  missing the factor > 1
+	  T.plane[izp] = T.plane[izp]/W.plane[izp];
+	  T.plane[izp] = T.plane[izp]/sqrt(dfdt * W.plane[izp]);   // T
 #else
 	  // old style with fuzzy_edge=0 "hardcoded"
           if(M.plane[izp] > 0.0 && W.plane[izp] > 0.0 )         // M
@@ -306,7 +354,7 @@ int main(int argc, char *argv[])
   izp = plane_index(&W, 0.0, 0.0);
   printf("Weight at %f %f is %f\n",0.0,0.0,W.plane[izp]);
   if (W.plane[izp] == 0.0)
-    printf("*** Warning: zero weights\n");
+    printf("*** Warning: zero weight at center\n");
   iz = cube_z_index(&C, 0.0, 0.0);
 #if 1
   // debug
@@ -331,6 +379,9 @@ int main(int argc, char *argv[])
 #else
     printf("write 0/1 mask to %s\n",OTF.w_filename);    
     write_fits_plane(&M, OTF.w_filename);
-#endif    
+#endif
+    printf("write expected RMS to %s\n",OTF.t_filename);
+    write_fits_plane(&T, OTF.t_filename);
+    
   }
 }
