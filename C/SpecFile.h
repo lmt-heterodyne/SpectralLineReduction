@@ -11,7 +11,10 @@
 
 typedef struct
 {
-  int nspec,nchan;
+  int nspec;                           // number of spectra (see sequence)
+  int nchan;                           // number of channels
+  int npix;                            // number of pixels (fixed at 16)
+  int ncal;                            // number of Tsys cals
   // data from obs header
   int obsnum;
   int map_coord;                       // 0=azel 1=radec 2=latlon
@@ -34,7 +37,8 @@ typedef struct
   int *use;
   float *XPos;                         // arcsec
   float *YPos;                         // arcsec
-  float *RMS;
+  float *RMS;                          // K
+  float *Tsys;                         // tsys[ncal][npix]   unused pixels have Tsys=0
   char *telescop;
   char *instrume;
   double *Date;        // not used yet
@@ -46,5 +50,6 @@ int read_spec_file(SpecFile *S, char *filename);
 void make_spec_beam(SpecFile *S);
 void free_spec_file(SpecFile *S);
 float *get_spectrum(SpecFile *S, int i);
+float get_tsys(SpecFile *S, int i, int j);
 
 #endif

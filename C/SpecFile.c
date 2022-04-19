@@ -2,20 +2,21 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <netcdf.h>
+#include <math.h>
 
 #include "OTFParameters.h"
 #include "SpecFile.h"
 
 int read_spec_file(SpecFile *S, char *filename)
 {
-  int i,j;
+  int i,j,k;
   /* This will be the netCDF ID for the file and data variable. */
   int ncid;
   /* for error handling. */
   int retval;
   /* dimensions and varid's */
-  size_t nspec, nchan;
-  int nspec_id, nchan_id, data_id, x_id, y_id, pix_id, seq_id, rms_id;
+  size_t nspec, nchan, ncal, npix;
+  int nspec_id, nchan_id, ncal_id, npix_id, npixl_id, data_id, tsys_id, x_id, y_id, pix_id, seq_id, rms_id;
   char version[20];
   char history[512];
 
@@ -26,8 +27,7 @@ int read_spec_file(SpecFile *S, char *filename)
     return -1;
   }
  
-  /* Open the file. NC_NOWRITE tells netCDF we want read-only access
-     to the file.*/
+  /* Open the file. NC_NOWRITE tells netCDF we want read-only access to the file.*/
   if ((retval = nc_open(filename, NC_NOWRITE, &ncid)))
     ERR(retval);
 
@@ -36,12 +36,18 @@ int read_spec_file(SpecFile *S, char *filename)
     ERR(retval);
   if ((retval = nc_inq_dimid(ncid, "nchan", &nchan_id)))
     ERR(retval);
+  if ((retval = nc_inq_dimid(ncid, "ncal",  &ncal_id)))
+    ERR(retval);
+  if ((retval = nc_inq_dimid(ncid, "npix",  &npix_id)))
+    ERR(retval);
   if ((retval = nc_inq_dimlen(ncid, nspec_id, &nspec)))
     ERR(retval);
   if ((retval = nc_inq_dimlen(ncid, nchan_id, &nchan)))
     ERR(retval);
-
-  //printf("Dimensions complete %zu %zu\n",nspec,nchan);
+  if ((retval = nc_inq_dimlen(ncid, ncal_id,  &ncal)))
+    ERR(retval);
+  if ((retval = nc_inq_dimlen(ncid, npix_id,  &npix)))
+    ERR(retval);
 
   int obsnum_id, mapcoord_id, source_id,source_x,source_y,crval_id,crpix_id,cdelt_id,ctype_id,caxis_id;
   int rf_id, vlsr_id, do_id, do_rc, do_version, do_history;
@@ -73,7 +79,7 @@ int read_spec_file(SpecFile *S, char *filename)
     ERR(retval);
   
 
-  //printf("Header.Obs complete\n");
+  // printf("Header.Obs complete\n");
 
   /* Get the varids of the spectrum axis header variables */
   if ((retval = nc_inq_varid(ncid, "Header.SpectrumAxis.CRVAL", &crval_id)))
@@ -112,11 +118,19 @@ int read_spec_file(SpecFile *S, char *filename)
   if ((retval = nc_inq_varid(ncid, "Data.RMS", &rms_id)))
     ERR(retval);
   //printf("Data.RMS\n");
+  if ((retval = nc_inq_varid(ncid, "Data.Tsys", &tsys_id)))
+    ERR(retval);
+  // printf("Data.Tsys\n");
+
+  //  if ((retval = nc_inq_varid(ncid, "Data.PixelList", &pixl_id)))
+  //    ERR(retval);
 
   /* Read the data and load the SpecFile struct */
-  printf("file: %s nspec= %zu nchan= %zu\n",filename,nspec,nchan);
+  printf("file: %s nspec= %zu nchan= %zu npix=%zu ncal=%zu\n",filename,nspec,nchan,npix,ncal);
   S->nspec = nspec;
   S->nchan = nchan;
+  S->npix  = npix;
+  S->ncal  = ncal;
 
   if((retval = nc_get_var_int(ncid,obsnum_id, &S->obsnum)) != NC_NOERR)
     ERR(retval);
@@ -159,10 +173,15 @@ int read_spec_file(SpecFile *S, char *filename)
   if(S->theData == NULL) {
     fprintf(stderr,"SpecFile: Error allocating data array\n");
     exit(1);
-  } 
+  }
   S->XPos = (float *)malloc(nspec*sizeof(float));
   S->YPos = (float *)malloc(nspec*sizeof(float));
-  S->RMS = (float *)malloc(nspec*sizeof(float));
+  S->RMS  = (float *)malloc(nspec*sizeof(float));
+  S->Tsys = (float *)malloc(ncal*npix*sizeof(float));
+  if (S->Tsys == NULL) {
+    fprintf(stderr,"SpecFile: Error allocating tsys array\n");
+    exit(1);
+  }
   S->Pixel = (int *)malloc(nspec*sizeof(int));
   S->Sequence = (int *)malloc(nspec*sizeof(int));
   S->RMS_cut = (float *)malloc(MAXPIXEL*sizeof(float));   // MAXPIXEL
@@ -176,6 +195,8 @@ int read_spec_file(SpecFile *S, char *filename)
     ERR(retval);
   if ((retval = nc_get_var_float(ncid, rms_id, S->RMS)))
     ERR(retval);
+  if ((retval = nc_get_var_float(ncid, tsys_id, S->Tsys)))
+    ERR(retval);
   if ((retval = nc_get_var_int(ncid, pix_id, S->Pixel)))
     ERR(retval);
   if ((retval = nc_get_var_int(ncid, seq_id, S->Sequence)))
@@ -183,6 +204,18 @@ int read_spec_file(SpecFile *S, char *filename)
 
   for (i=0; i<nspec; i++)
     S->use[i] = 1;
+
+#if 1
+  float tsys_min;
+  float tsys_max;
+  float tsys, tsys_1, tsys_2;
+  tsys_min = tsys_max = S->Tsys[0];
+  for (i=1; i<ncal*npix; i++) {
+    if (S->Tsys[i] < tsys_min) tsys_min = S->Tsys[i]; 
+    if (S->Tsys[i] > tsys_max) tsys_max = S->Tsys[i]; 
+  }
+  printf("Global Tsys min/max = %g %g\n", tsys_min, tsys_max);
+#endif
 
   // compute and report on the extreme positions the array has seen
 
@@ -198,6 +231,7 @@ int read_spec_file(SpecFile *S, char *filename)
     if (S->YPos[i] < ymin) ymin = S->YPos[i];
     if (S->YPos[i] > ymax) ymax = S->YPos[i];
   }
+  printf("First/Last beam: [mapcoord=%d] %g %g  %g %g\n",S->map_coord, S->XPos[0], S->YPos[0], S->XPos[nspec-1], S->YPos[nspec-1]);
   printf("X-range: %g %g   Y-range: %g %g arcsec\n",xmin,xmax,ymin,ymax);
   printf("X-ramp:  %g %g   Y-ramp:  %g %g arcsec\n",xmin+3*bs,xmax-3*bs,ymin+3*bs,ymax-3*bs);
   printf("MapSize: %g x %g arcsec\n", xmax-xmin, ymax-ymin);
@@ -219,10 +253,19 @@ void free_spec_file(SpecFile *S)
   free(S->CAXIS);
 }
 
+//  S    Spectrum
+//  i    spectrum index (0..nspec)
+//  returns the address where a spectrum[nchan] is located
 float *get_spectrum(SpecFile *S, int i)
 {
   int index;
 
   index = i*S->nchan;
   return(&(S->theData[index]));
+}
+
+float get_tsys(SpecFile *S, int ical, int jpix)
+{
+  int index = ical*S->ncal + jpix;
+  return S->Tsys[index];
 }
