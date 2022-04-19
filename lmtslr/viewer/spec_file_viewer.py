@@ -45,7 +45,9 @@ class SpecFileViewer():
             self.have_tsys = True
             self.tsys = nc.variables['Data.Tsys'][:]
         except:
-            self.have_tsys = True            
+            self.have_tsys = False
+        # version 18-apr-2022 - oops, Tsys was removed as nchan array
+        self.have_tsys = False            
 
         nc.close()
 
