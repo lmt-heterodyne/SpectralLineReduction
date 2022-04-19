@@ -66,7 +66,7 @@ if "DATA_LMT" in os.environ:
 else:
     data_lmt = "/data_lmt/"
 
-arguments = docopt(__doc__,options_first=True, version='0.2')
+arguments = docopt(__doc__,options_first=True, version='0.3')
 
 header = "# Y-M-D   T H:M:S     ObsNum ObsGoal       ObgPgm    SourceName                ProjectId                 RestFreq  VLSR   TINT     RA        DEC          AZ    EL"
 
