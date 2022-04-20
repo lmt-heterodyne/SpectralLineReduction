@@ -22,7 +22,7 @@ from lmtslr.grid.grid import Grid
 
 class SpecFile():
     def __init__(self, ifproc, specbank, pix_list):
-        self.version = "18-apr-2022"         # modify this if anything in the output SpecFile has been changed
+        self.version = "20-apr-2022"         # modify this if anything in the output SpecFile has been changed
         self.ifproc = ifproc
         self.specbank = specbank
         self.pix_list = pix_list
@@ -152,7 +152,7 @@ class SpecFile():
         nc_rms.units = 'K'
         nc_data = self.ncout.createVariable('Data.Spectra', 'f4', ('nspec','nchan'))
         nc_data.units = 'K'
-        nc_tsys = self.ncout.createVariable('Data.Tsys', 'f4', ('ncal','npix'))
+        nc_tsys = self.ncout.createVariable('Data.Tsys', 'f4', ('ncal','npix','nchan'))
         nc_tsys.units = 'K'
 
         ncal = self.specbank.ncal
@@ -183,7 +183,7 @@ class SpecFile():
             tmp_x   = np.zeros(nspec)
             tmp_y   = np.zeros(nspec)
             tmp_data= np.zeros(nspec*nchan).reshape(nspec,nchan)
-            tmp_tsys= np.zeros(ncal*npix).reshape(ncal,npix)
+            tmp_tsys= np.zeros(ncal*npix*nchan).reshape(ncal,npix,nchan)
         print("FAST_NC:", fast_nc)
         #nc_pix_list[:] = self.pix_list[:]
         
@@ -251,9 +251,9 @@ class SpecFile():
                 if type(LL.tarray) == np.ndarray:
                     idx = self.pix_list.index(ipix)
                     if fast_nc:
-                        tmp_tsys[j,ipix] = LL.tarray.mean()
+                        tmp_tsys[j,ipix] = LL.tarray
                     else:
-                        nc_tsys[j,ipix] = LL.tarray.mean()
+                        nc_tsys[j,ipix] = LL.tarray
                     #nc_tsys[j,ipix,:] = LL.tarray
                     t = LL.tarray
                     print("TSYS[%d] slice: %g (%g)  minmax: %g %g" % (ipix,t.mean(),t.std(),t.min(),t.max()))
@@ -307,7 +307,7 @@ class SpecFile():
             nc_x[:]        = tmp_x[:]
             nc_y[:]        = tmp_y[:]
             nc_data[:,:]   = tmp_data[:,:]
-            nc_tsys[:,:]   = tmp_tsys[:,:]
+            nc_tsys[:,:,:] = tmp_tsys[:,:,:]
         print("CPU TIME: %g sec" % (time.time()-time0))
         
         print("Warnings:")

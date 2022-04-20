@@ -316,6 +316,8 @@ def rsr_summary(rsr_file, rc=False):
     #date_obs = new_date_obs(date_obs)
     date_obs = nc.variables['Data.Sky.Time'][0].tolist()
     date_obs = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%dT%H:%M:%S')
+
+    tau = nc.variables['Header.Radiometer.Tau'][0]    
     
     # Header.Weather.UpdateDate = "22/01/15 0:39:48
     # Header.Source.Ra
@@ -362,6 +364,7 @@ def rsr_summary(rsr_file, rc=False):
         #print('x_extent=%g   # arcsec' % xlen)
         #print('y_extent=%g   # arcsec' % ylen)
         print('instrument="RSR"')
+        print('tau=%g' % tau)
         print("# </lmtinfo>")
 
     else:     # one line summary

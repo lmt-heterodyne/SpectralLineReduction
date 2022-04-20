@@ -46,8 +46,6 @@ class SpecFileViewer():
             self.tsys = nc.variables['Data.Tsys'][:]
         except:
             self.have_tsys = False
-        # version 18-apr-2022 - oops, Tsys was removed as nchan array
-        self.have_tsys = False            
 
         nc.close()
 
@@ -270,7 +268,7 @@ class SpecFileViewer():
         pl.title('PIXEL: %d'%(the_pixel))
         Plots.savefig()        
         
-    def sequoia_tsys_spectra_plot(self, pixel_list, plot_range=[50,500], figsize=8):
+    def sequoia_tsys_spectra_plot(self, pixel_list, plot_range=[50,250], figsize=8):
         """
         Makes mean spectra plot of spectra from pixels in pixel_list.
         Args:
@@ -297,12 +295,12 @@ class SpecFileViewer():
             if len(pindex) == 0: continue
             for ical in range(ncal):
                 ax4[np.mod(the_pixel, 4), the_pixel // 4].plot(self.caxis,self.tsys[ical][idx])
-                ax4[np.mod(the_pixel, 4), the_pixel // 4].set_xlim([-300,300])
-                ax4[np.mod(the_pixel, 4), the_pixel // 4].set_ylim(plot_range)
+                ax4[np.mod(the_pixel, 4), the_pixel // 4]   #  .set_xlim([-300,300])
+                ax4[np.mod(the_pixel, 4), the_pixel // 4]   #  .set_ylim(plot_range)
             idx = idx + 1
         Plots.savefig()
 
-    def pixel_tsys_spectra_plot(self, the_pixel, plot_range=[50,500]):
+    def pixel_tsys_spectra_plot(self, the_pixel, plot_range=[50,250]):
         """
         Makes mean spectra plot of spectra from pixel the_pixel.
         Args:
