@@ -177,7 +177,7 @@ int read_spec_file(SpecFile *S, char *filename)
   S->XPos = (float *)malloc(nspec*sizeof(float));
   S->YPos = (float *)malloc(nspec*sizeof(float));
   S->RMS  = (float *)malloc(nspec*sizeof(float));
-  S->Tsys = (float *)malloc(ncal*npix*sizeof(float));
+  S->Tsys = (float *)malloc(ncal*npix*nchan*sizeof(float));
   if (S->Tsys == NULL) {
     fprintf(stderr,"SpecFile: Error allocating tsys array\n");
     exit(1);
@@ -210,11 +210,29 @@ int read_spec_file(SpecFile *S, char *filename)
   float tsys_max;
   float tsys, tsys_1, tsys_2;
   tsys_min = tsys_max = S->Tsys[0];
-  for (i=1; i<ncal*npix; i++) {
+  for (i=1; i<ncal*npix*nchan; i++) {
     if (S->Tsys[i] < tsys_min) tsys_min = S->Tsys[i]; 
     if (S->Tsys[i] > tsys_max) tsys_max = S->Tsys[i]; 
   }
   printf("Global Tsys min/max = %g %g\n", tsys_min, tsys_max);
+  // take an average of all nchan values and stuff if in the first channel
+  // for get_tsys()
+  int idx;
+  for (i=0; i<ncal; i++) {
+    for (j=0; j<npix; j++) {
+      tsys_1 = tsys_2 = 0.0;
+      idx = i*npix*nchan + j*nchan;
+      for (k=0; k<nchan; k++) {
+	tsys = S->Tsys[idx+k];
+	tsys_1 += tsys;
+	tsys_2 += tsys*tsys;
+      }
+      tsys = tsys_1/nchan;
+      printf("Tsys[%d] = %g +/- %g\n", tsys, sqrt(tsys_2/nchan - tsys*tsys));
+      S->Tsys[idx] = tsys;
+    }
+  }
+  
 #endif
 
   // compute and report on the extreme positions the array has seen
@@ -264,8 +282,12 @@ float *get_spectrum(SpecFile *S, int i)
   return(&(S->theData[index]));
 }
 
+//   S     spectrum
+//   ical  which cal
+//   jpix  which pix
+//   returns the Tsys in the first element of the Tsys[chan] array
 float get_tsys(SpecFile *S, int ical, int jpix)
 {
-  int index = ical*S->ncal + jpix;
+  int index = ical*S->npix*S->nchan + jpix*S->nchan;
   return S->Tsys[index];
 }

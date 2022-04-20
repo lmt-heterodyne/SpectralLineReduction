@@ -38,7 +38,7 @@ typedef struct
   float *XPos;                         // arcsec
   float *YPos;                         // arcsec
   float *RMS;                          // K
-  float *Tsys;                         // tsys[ncal][npix]   unused pixels have Tsys=0
+  float *Tsys;                         // tsys[ncal][npix][nchan]   unused pixels have Tsys=0
   char *telescop;
   char *instrume;
   double *Date;        // not used yet
