@@ -36,9 +36,6 @@ int main(int argc, char *argv[])
   printf("%s %s\n", argv[0], LMTSLR_VERSION);
   if (argc == 1) exit(0);
 
-  dfdt = 800e6 * 0.1 / 2048;   // @todo df.dt assumed constant during an observation
-  printf("HACK:  sqrt(dfdt) = %g\n", sqrt(dfdt));
-
   // @todo this failed despite the "ncpy"  https://github.com/astroumd/lmtoy/issues/13
   hlen = 0;
   strncpy(C.history2,argv[0],MAXHIST-hlen);
@@ -72,7 +69,10 @@ int main(int argc, char *argv[])
   strncpy(C.date_obs,S.date_obs,20); // or 40 ???
   strncpy(C.receiver,S.receiver,20);
   strncpy(C.history1,S.history,MAXHIST);   
-  printf("DATE-OBS %s\n",C.date_obs);  
+  printf("DATE-OBS %s\n",C.date_obs);
+  dfdt = S.deltaf * S.deltat;
+  printf("DeltaFreq=%g  DeltaTime=%g : sqrt(Df.Dt) = %g\n",S.deltaf,S.deltat,sqrt(dfdt));
+  
   C.x_position = S.x_position;
   C.y_position = S.y_position;
   C.map_coord  = S.map_coord;
@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
 
   // prints the convolution function ; n_cells denotes how much we will use?
   // @todo the scaling of delta is wrong, but irrelevant
-  printf("CF.n_cells= %d delta=%g  cell=%g resol=%g oft_select=%d\n",
+  printf("CF.n_cells= %d delta=%g  cell=%g resol=%g otf_select=%d\n",
 	 CF.n_cells,CF.delta,CF.cell_size,CF.resolution_size,OTF.otf_select);
 #if 0
   printf("r(arcsec)  conv.array\n");

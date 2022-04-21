@@ -50,6 +50,7 @@ int read_spec_file(SpecFile *S, char *filename)
     ERR(retval);
 
   int obsnum_id, mapcoord_id, source_id,source_x,source_y,crval_id,crpix_id,cdelt_id,ctype_id,caxis_id;
+  int deltaf_id, deltat_id;
   int rf_id, vlsr_id, do_id, do_rc, do_version, do_history;
   /* Get the varids of the observation header */
   if ((retval = nc_inq_varid(ncid, "Header.Obs.ObsNum", &obsnum_id)))
@@ -69,6 +70,10 @@ int read_spec_file(SpecFile *S, char *filename)
     ERR(retval);
   // Header.LineData.ZSource = 0
   
+  if ((retval = nc_inq_varid(ncid, "Header.LineData.DeltaFrequency", &deltaf_id)))
+    ERR(retval);
+  if ((retval = nc_inq_varid(ncid, "Header.Obs.DumpTime", &deltat_id)))
+    ERR(retval);
   if ((retval = nc_inq_varid(ncid, "Header.Obs.DateObs", &do_id)))
     ERR(retval);
   if ((retval = nc_inq_varid(ncid, "Header.Obs.Receiver", &do_rc)))
@@ -145,6 +150,10 @@ int read_spec_file(SpecFile *S, char *filename)
   if((retval = nc_get_var_double(ncid, rf_id, &S->restfreq)) != NC_NOERR)
     ERR(retval);
   if((retval = nc_get_var_float(ncid, vlsr_id, &S->vlsr)) != NC_NOERR)
+    ERR(retval);
+  if((retval = nc_get_var_float(ncid, deltaf_id, &S->deltaf)) != NC_NOERR)
+    ERR(retval);
+  if((retval = nc_get_var_float(ncid, deltat_id, &S->deltat)) != NC_NOERR)
     ERR(retval);
   if((retval = nc_get_var(ncid,do_id, S->date_obs)) != NC_NOERR)
     ERR(retval);
@@ -228,7 +237,7 @@ int read_spec_file(SpecFile *S, char *filename)
 	tsys_2 += tsys*tsys;
       }
       tsys = tsys_1/nchan;
-      printf("Tsys[%d] = %g +/- %g\n", tsys, sqrt(tsys_2/nchan - tsys*tsys));
+      printf("Tsys[%d] = %g +/- %g\n", j, tsys, sqrt(tsys_2/nchan - tsys*tsys));
       S->Tsys[idx] = tsys;
     }
   }

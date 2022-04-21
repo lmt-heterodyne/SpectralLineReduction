@@ -102,6 +102,10 @@ class SpecFile():
         nc_mapcoord = self.ncout.createVariable('Header.Obs.MapCoord', 'i4')
         self.ncout.variables['Header.Obs.MapCoord'][0] = self.specbank.map_coord
 
+        # the DumpTime
+        nc_dumptime = self.ncout.createVariable('Header.Obs.DumpTime', 'f4')
+        self.ncout.variables['Header.Obs.DumpTime'][0] = self.ifproc.dumptime
+
         # copy the source name into netCDF header
         nc_source = self.ncout.createVariable('Header.Obs.SourceName', 'c', ('nlabel',))
         if len(self.specbank.source) > 19:
