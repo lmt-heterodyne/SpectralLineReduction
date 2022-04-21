@@ -38,6 +38,8 @@ typedef struct
   float *XPos;                         // arcsec
   float *YPos;                         // arcsec
   float *RMS;                          // K
+  float deltaf;                        // deltaFreq * deltaTime for radiometer equation
+  float deltat;                        // deltaFreq * deltaTime for radiometer equation
   float *Tsys;                         // tsys[ncal][npix][nchan]   unused pixels have Tsys=0
   char *telescop;
   char *instrume;
