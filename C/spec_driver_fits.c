@@ -249,7 +249,10 @@ int main(int argc, char *argv[])
 	  iy = cube_axis_index(&C, Y_AXIS, ypos);
 	  if( (ix>=0) && (iy>=0) )
 	    {
-	      // first loop finding the normalization of weights
+	      // first loop finding the normalization of weights (do we?)
+#if 1	      
+	      float wsum = 1.0;
+#else	      
 	      float wsum = 0.0;
 	      for(ii=-CF.n_cells; ii<=CF.n_cells; ii++)
 		for(jj=-CF.n_cells; jj<=CF.n_cells; jj++)
@@ -262,6 +265,7 @@ int main(int argc, char *argv[])
 		    weight = get_weight(&CF, distance);
 		    wsum += weight;
 		  } // ii,jj
+#endif	      
 
 	      // actual loop accumulating weights
 	      for(ii=-CF.n_cells; ii<=CF.n_cells; ii++)
