@@ -118,8 +118,13 @@ class IFProc():
                         bp0 = bp[i]
                         tt0 = tt[i]
                 print("BufPos %3d  %6.1f sec %s" % (bp[-1], tt[-1] - tt0, on))
-            self.dumptime = self.nc.variables['Header.SpecBackend.DumpTime'][0]
-            
+            try:
+                # only in newer data
+                self.dumptime = self.nc.variables['Header.SpecBackend.DumpTime'][0]
+            except:
+                print("Old data, assuming Header.SpecBackend.DumpTime = 0.1")
+                self.dumptime = 0.1
+                
             self.source_RA = self.nc.variables['Header.Source.Ra'][0]
             self.source_Dec = self.nc.variables['Header.Source.Dec'][0]
             # PJT: mapcoords add L,B
