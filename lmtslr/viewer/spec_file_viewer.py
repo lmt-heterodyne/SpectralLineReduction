@@ -162,7 +162,7 @@ class SpecFileViewer():
         pl.title('PIXEL: %d'%(the_pixel))
         Plots.savefig()
         
-    def xy_position_plot(self, all=True):
+    def xy_position_plot(self, all=True, title='Sky Coverage'):
         """
         Makes x-y position plot.   xpos > 0 means larger RA, to the left
                                    ypos > 0 means larger DEC, to the top
@@ -179,7 +179,17 @@ class SpecFileViewer():
             pl.plot(-self.xpos,self.ypos, 'k.', markersize=0.2)
         else:
             pl.plot(-self.xpos[s0:s1],self.ypos[s0:s1], 'k.', markersize=0.2)
-        pl.title("Coverage around RA,DEC=")
+        xlim = pl.xlim()
+        ylim = pl.ylim()
+        pmin = min(xlim[0],ylim[0])
+        pmax = max(xlim[1],ylim[1])
+        pmax = max(abs(pmax),abs(pmin))
+        pl.xlim([-pmax,pmax])
+        pl.ylim([-pmax,pmax])
+        axes=pl.gca()
+        axes.set_aspect("equal")
+        
+        pl.title(title)
         pl.xlabel('X offset [arcsec]')
         pl.ylabel('Y offset [arcsec]')
         Plots.savefig()        
