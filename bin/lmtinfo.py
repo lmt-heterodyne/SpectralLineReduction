@@ -19,6 +19,7 @@ Usage: lmtinfo.py OBSNUM
        lmtinfo.py data
        lmtinfo.py build
        lmtinfo.py grep TERM1 [TERM2 ...]
+       lmtinfo.py find TERM1 [TERM2 ...]
 
 -h --help  This help
 
@@ -47,6 +48,7 @@ seems to be the first data here.
 data:     show the database, no sorting and culling
 build:    rebuild the sorted database (needs write permission in $DATA_LMT)
 grep:     search in database, terms are logically AND-ed
+find:     search in database, terms are logically AND-ed
 
 """
 
@@ -59,7 +61,7 @@ import datetime
 import netCDF4
 from docopt import docopt
 
-version="13-apr-2022"
+version="3-may-2022"
 
 if "DATA_LMT" in os.environ:
     data_lmt = os.environ["DATA_LMT"]
@@ -485,7 +487,7 @@ if len(sys.argv) == 2:
 elif len(sys.argv) == 3:
 
     # special case:
-    if sys.argv[1] == "grep":
+    if sys.argv[1] == "grep" or sys.argv[1] == "find":
         print(header)
         grep(sys.argv[2:])
         sys.exit(0)
