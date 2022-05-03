@@ -340,7 +340,8 @@ void write_fits_cube(Cube *C, char *filename)
       printf("CRVAL1 %f\n",crval);
       print_fits_error(status);
     }
-  if((retval=fits_update_key(fptr, TFLOAT,  "CDELT1  ", &cdelt, cunit, &status)) != 0)
+  sprintf(comment,"deg (%g arcsec)", C->cdelt[X_AXIS]);
+  if((retval=fits_update_key(fptr, TFLOAT,  "CDELT1  ", &cdelt, comment, &status)) != 0)
     {
       printf("CDELT1 %f\n",cdelt);
       print_fits_error(status);
