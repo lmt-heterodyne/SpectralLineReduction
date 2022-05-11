@@ -61,7 +61,7 @@ import datetime
 import netCDF4
 from docopt import docopt
 
-version="3-may-2022"
+version="10-may-2022"
 
 if "DATA_LMT" in os.environ:
     data_lmt = os.environ["DATA_LMT"]
@@ -467,7 +467,7 @@ if len(sys.argv) == 2:
                     obsnum   = " "
                 print("%-20s %7s  failed for rsr %s" % (yyyymmdd,obsnum,f))                    
 
-        globs = '%s/ifproc/ifproc*.nc' % data_lmt
+        globs = '%s/ifproc/ifproc_*.nc' % data_lmt
         fn = glob.glob(globs)
         fn.sort(key=os.path.getmtime)
         print("# Found %d SLR with %s" % (len(fn),globs))
