@@ -29,6 +29,7 @@ def main(argv):
     #if result == 0:
     # this will be a list of processed spectral lines
     LineList = []
+    label    = []
     # here are the number of spectra to be reduced
     nscans = len(Opts.obs_list)
     npixels = len(Opts.pix_list)
@@ -48,6 +49,7 @@ def main(argv):
             LD = LineData(I,Opts.bank,S.nchan,S.bandwidth,S.roach[i].ps_spectrum)
             LD.set_x_axis(Opts.x_axis)
             LineList.append(LD)
+            label.append("%d/%d" % (obs,Opts.pix_list[i]))
 
     # show all the plots just to illustrate reduction
     # this will be replaced by write out of spectra to FITS file.
@@ -55,7 +57,7 @@ def main(argv):
         if len(LineList) == 2:
             pl.plot(LineList[0].xarray, LineList[1].yarray - LineList[0].yarray, label='Diff')
     for i in range(len(LineList)):
-        pl.plot(LineList[i].xarray,LineList[i].yarray, label='%s' % Opts.pix_list[i])
+        pl.plot(LineList[i].xarray,LineList[i].yarray, label='%s' % label[i])
         #pl.axis([-20,20,-1,1])
         pl.xlabel('VSRC')
     pl.legend()
