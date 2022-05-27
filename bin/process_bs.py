@@ -17,14 +17,15 @@ from lmtslr.viewer.spec_viewer import *
 
 from lmtslr.reduction.line_reduction import *
 
-from lmtslr.utils.reader import read_obsnum_ps
+from lmtslr.utils.reader import read_obsnum_bs
 #from lmtslr.utils.parser import HandleProcessOptions
 from lmtslr.utils.argparser import HandlePSProcessOptions
 
 def main(argv):
-    
+    #  Header.Bs.Beam = 10, 8 ;
     Opts = HandlePSProcessOptions()
     result = Opts.parse_options(argv, 'process_bs', 1, True)
+    print("D:",Opts.data_path)
     #if result == 0:
     # this will be a list of processed spectral lines
     LineList = []
@@ -34,7 +35,7 @@ def main(argv):
 
     for obs in Opts.obs_list:
 
-        I,S = read_obsnum_ps(obs,
+        I,S = read_obsnum_bs(obs,
                              Opts.pix_list,
                              Opts.bank,
                              Opts.use_cal,
@@ -50,10 +51,14 @@ def main(argv):
 
     # show all the plots just to illustrate reduction
     # this will be replaced by write out of spectra to FITS file.
+    if True:
+        if len(LineList) == 2:
+            pl.plot(LineList[0].xarray, LineList[1].yarray - LineList[0].yarray, label='Diff')
     for i in range(len(LineList)):
-        pl.plot(LineList[i].xarray,LineList[i].yarray)
+        pl.plot(LineList[i].xarray,LineList[i].yarray, label='%s' % Opts.pix_list[i])
         #pl.axis([-20,20,-1,1])
         pl.xlabel('VSRC')
+    pl.legend()
     pl.show()
 
 
