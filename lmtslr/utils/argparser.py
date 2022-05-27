@@ -1,4 +1,5 @@
 import argparse
+import os
 from lmtslr.utils.configuration import Configuration, \
     otf_config_spec_text, viewspec_config_spec_text, \
     viewcube_config_spec_text, grid_config_text, \
@@ -23,6 +24,9 @@ class HandleOptions:
         if hasattr(self, 'path'):
             self.data_path = self.path
             self.attrs.add('data_path')
+        else:
+            self.data_path = os.environ['DATA_LMT']
+            self.attrs.add('data_path')            
         if hasattr(self, 'output'):
             self.output_file_name = self.output
             self.attrs.add('output_file_name')
@@ -103,6 +107,9 @@ class HandleOTFProcessOptions(HandleOptions):
         if args.path:
             self.data_path = args.path
             self.attrs.add('data_path')
+        else:
+            self.data_path = os.environ['DATA_LMT']
+            self.attrs.add('data_path')            
         if args.output:
             self.output_file_name = args.output
             self.attrs.add('output_file_name')
@@ -170,6 +177,9 @@ class HandlePSProcessOptions(HandleOptions):
         if args.path:
             self.data_path = args.path
             self.attrs.add('data_path')
+        else:
+            self.data_path = os.environ['DATA_LMT']
+            self.attrs.add('data_path')            
         if args.output:
             self.output_file_name = args.output
             self.attrs.add('output_file_name')
