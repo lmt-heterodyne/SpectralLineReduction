@@ -43,6 +43,8 @@ def main(argv):
                              tsys=Opts.tsys,
                              path=Opts.data_path)
 
+        print("NOTE: for obsnum=%d bs_beams=%s, you specified %s" % (obs,I.bs_beams,Opts.pix_list))
+
         # create a LineData object for each "pixel" in pix_list
         # we could do processing here...
         for i in range(npixels):
