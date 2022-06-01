@@ -63,7 +63,7 @@ class HandleOTFProcessOptions(HandleOptions):
                             help="ObsNum of observation")
         #self.parser.add_argument("--obs_list", dest="obs_list", type=str,
         #                help="Comma separated list of ObsNums")
-        self.parser.add_argument("-b", "--bank", dest="bank", type=int,
+        self.parser.add_argument("-b", "--bank", dest="bank", type=int, 
                             help="Spectral Bank for processing")
         self.parser.add_argument("--pix_list", dest="pix_list", type=str,
                             help="Comma separated list of pixels")
@@ -137,8 +137,10 @@ class HandlePSProcessOptions(HandleOptions):
         #                    help="ObsNum of observation")
         self.parser.add_argument("--obs_list", dest="obs_list", type=str,
                         help="Comma separated list of ObsNums")
-        self.parser.add_argument("-b", "--bank", dest="bank", type=int,
+        self.parser.add_argument("-b", "--bank", dest="bank", type=int, default=0,
                             help="Spectral Bank for processing")
+        self.parser.add_argument("--block", dest="block", type=int, default=-1,
+                            help="Spectral block for stype=2 processing")
         self.parser.add_argument("--pix_list", dest="pix_list", type=str,
                             help="Comma separated list of pixels")
         self.parser.add_argument("--use_cal", dest="use_cal", action="store_true",

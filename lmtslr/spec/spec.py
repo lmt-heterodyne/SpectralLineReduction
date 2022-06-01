@@ -93,8 +93,8 @@ class RoachSpec():
         value. 
         Args:
             value (int): type of observation for search.
-                         0 is ons
-                         1 is refs
+                         0 is ons  ("ON")
+                         1 is refs ("OFF")
                          2 is sky
                          3 is hot
         Returns:
@@ -258,7 +258,7 @@ class RoachSpec():
             self.on_spectrum = self.on_spectrum * tsys_no_cal
 
     def reduce_ps_spectrum(self, stype=2, normal_ps=True, calibrate=False, 
-                           tsys_spectrum=0, tsys_no_cal=1):
+                           tsys_spectrum=0, tsys_no_cal=1, block=-1):
         """
         Creates a PS spectrum returned as self.ps_spectrum. Reduction 
         procedure depends on the stype parameter.
@@ -306,7 +306,11 @@ class RoachSpec():
                         ps_list[i,:] = (self.reference_spectra[i,:] - 
                                         self.main_spectra[i,:]) \
                                        / self.main_spectra[i,:]
-                self.ps_spectrum = np.mean(ps_list[:,:],axis=0)
+                if block < 0:
+                    self.ps_spectrum = np.mean(ps_list[:,:],axis=0)
+                else:
+                    print("Selecting block %d/%d" % (block,self.nons))
+                    self.ps_spectrum = ps_list[block,:]
             else:
                 print('check number of ons and refs %d %d'%(self.nons, 
                                                             self.nrefs))
