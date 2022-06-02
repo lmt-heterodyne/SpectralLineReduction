@@ -57,10 +57,8 @@ def read_obsnum_ps(obsnum, list_of_pixels, bank, use_calibration,
     # look up files to match pixel list
     roach_list = create_roach_list(list_of_pixels)
     files, nfiles = lookup_roach_files(obsnum, roach_list,
-                                       path=os.path.join(path, 'spectrometer')
-                                       )
-    ifproc_file = lookup_ifproc_file(obsnum, path=os.path.join(path, 'ifproc')
-        )
+                                       path=os.path.join(path, 'spectrometer'))
+    ifproc_file = lookup_ifproc_file(obsnum, path=os.path.join(path, 'ifproc'))
     ifproc = IFProcData(ifproc_file)
     ifproc_cal_file = lookup_ifproc_file(ifproc.calobsnum,
                                          path=os.path.join(path, 'ifproc'))
@@ -69,15 +67,14 @@ def read_obsnum_ps(obsnum, list_of_pixels, bank, use_calibration,
 
     # create the spec_bank object.  This reads all the roaches in the \
     # list "files"
-    specbank = SpecBankData(files, ifproc, pixel_list=list_of_pixels,
-                            bank=bank)
+    specbank = SpecBankData(files, ifproc, pixel_list=list_of_pixels, bank=bank)
 
     # check whether to use calibration and open necessary file
     if use_calibration == True:
         specbank.cal_flag = False
         calobsnum = specbank.calobsnum
         cal_files, ncalfiles = lookup_roach_files(calobsnum, roach_list, 
-            path=os.path.join(path, 'spectrometer'))
+                                                  path=os.path.join(path, 'spectrometer'))
         specbank_cal = SpecBankCal(cal_files, ifproc_cal, 
                                    pixel_list=list_of_pixels)
         check_cal = specbank_cal.test_cal(specbank)
@@ -99,7 +96,7 @@ def read_obsnum_ps(obsnum, list_of_pixels, bank, use_calibration,
     return ifproc, specbank
 
 def read_obsnum_bs(obsnum, list_of_pixels, bank,
-                   use_calibration, tsys=150., stype=2, path=None):
+                   use_calibration, tsys=150., stype=2, block=-1, path=None):
     """
     Reads the spectral line data from WARES spectrometer for a 
     particular obsnum.
@@ -113,12 +110,20 @@ def read_obsnum_bs(obsnum, list_of_pixels, bank,
         list_of_pixels (list): identifies which elements of the 
             spectrometer are to be read - for BS observation this is 
             just the two pixels used for the switch
+            @todo For "Bs" this ought to be Header.Bs.Beam from ifproc
         bank
         use_calibration (bool): set True if we are to use calibration 
             scan for cal. 
             False just multiplies by system temperature
         tsys (float): system temperature to use of use_calibration is 
             False
+        stype - type of reduction
+                0 = not defined
+                1 = compute average of all OFF and ON
+                2 = compute OFF and ON in blocks
+                3 = like 2, but only grab one block of refs/ons as given
+                    by the block= parameter
+        block - which block (< 0 means average all)
         path (str): path to the top of the data_lmt directory (usually 
             '/data_lmt/',  or use $DATA_LMT)
     Returns:
@@ -137,10 +142,8 @@ def read_obsnum_bs(obsnum, list_of_pixels, bank,
     ifproc_cal = IFProcCal(ifproc_cal_file)
     ifproc_cal.compute_tsys()
     
-    # create the spec_bank object.  This reads all the roaches in the \
-    # list "files"
-    specbank = SpecBankData(files, ifproc, pixel_list=list_of_pixels,
-                            bank=bank)
+    # create the spec_bank object.  This reads all the roaches in the list "files[]"
+    specbank = SpecBankData(files, ifproc, pixel_list=list_of_pixels, bank=bank)
 
     # check whether to use calibration and open necessary file
     if use_calibration == True:
@@ -155,17 +158,25 @@ def read_obsnum_bs(obsnum, list_of_pixels, bank,
             print('WARNING: CAL MAY NOT BE CORRECT')
 
         # reduce the two spectra - calibrated 
-        specbank.roach[0].reduce_ps_spectrum(stype=stype, normal_ps=False, 
-            calibrate=True, tsys_spectrum=specbank_cal.roach[0].tsys_spectrum)
-        specbank.roach[1].reduce_ps_spectrum(stype=stype, normal_ps=True, 
-            calibrate=True, tsys_spectrum=specbank_cal.roach[1].tsys_spectrum)
+        specbank.roach[0].reduce_ps_spectrum(stype=stype, block=block, normal_ps=False, 
+                                             calibrate=True, tsys_spectrum=specbank_cal.roach[0].tsys_spectrum)
+        specbank.roach[1].reduce_ps_spectrum(stype=stype, block=block, normal_ps=True, 
+                                             calibrate=True, tsys_spectrum=specbank_cal.roach[1].tsys_spectrum)
+        if True:
+            print("Warning: now saving Tsys spectrum")
+            specbank.roach[0].tsys_spectrum = specbank_cal.roach[0].tsys_spectrum
+            specbank.roach[1].tsys_spectrum = specbank_cal.roach[1].tsys_spectrum
 
     else:
         # reduce the two spectra - uncalibrated
-        specbank.roach[0].reduce_ps_spectrum(stype=stype, normal_ps=False, 
-            calibrate=False, tsys_no_cal=ifproc_cal.tsys[list_of_pixels[0]])
-        specbank.roach[1].reduce_ps_spectrum(stype=stype, normal_ps=True, 
-            calibrate=False, tsys_no_cal=ifproc_cal.tsys[list_of_pixels[1]])
+        specbank.roach[0].reduce_ps_spectrum(stype=stype, block=block, normal_ps=False, 
+                                             calibrate=False, tsys_no_cal=ifproc_cal.tsys[list_of_pixels[0]])
+        specbank.roach[1].reduce_ps_spectrum(stype=stype, block=block, normal_ps=True, 
+                                             calibrate=False, tsys_no_cal=ifproc_cal.tsys[list_of_pixels[1]])
+        if True:
+            print("Warning: now saving Tsys value %g" % ifproc_cal.tsys[list_of_pixels[0]])
+            specbank.roach[0].tsys_spectrum = ifproc_cal.tsys[list_of_pixels[0]]
+            specbank.roach[1].tsys_spectrum = ifproc_cal.tsys[list_of_pixels[1]]
 
     return ifproc, specbank
 
@@ -337,4 +348,3 @@ def count_otf_spectra(specbank, list_of_pixels):
         #print(ipix, n_spectra, total_spectra)    # now reported when specfile computed
     print('Total Number of OTF Spectra = %d' % (total_spectra))
     return total_spectra
-
