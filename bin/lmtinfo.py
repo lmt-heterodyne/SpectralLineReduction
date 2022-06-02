@@ -61,7 +61,7 @@ import datetime
 import netCDF4
 from docopt import docopt
 
-version="10-may-2022"
+version="2-jun-2022"
 
 if "DATA_LMT" in os.environ:
     data_lmt = os.environ["DATA_LMT"]
@@ -116,7 +116,16 @@ def alist(x):
         s = s + ",%s" % repr(x[i])
     return s
 
+def iau(src):
+    """
+    sanitize a source name to prevent spaces and meta characters?
+    e.g. "NGC6946_(CO)"  ->  "NGC6946"
+    """
+    # for now case by case basis
+    if src=="NGC6946_(CO)":   return "NGC6946"
+    return src
 
+    
 #  Examples:
 #  ifproc/ifproc_2018-06-29_078085_00_0001.nc
 #         ifproc_2018-02-26_9901395_00_0001.nc        (older)
@@ -137,6 +146,7 @@ def slr_summary(ifproc, rc=False):
     
     vlsr = nc.variables['Header.Source.Velocity'][0]
     src = b''.join(nc.variables['Header.Source.SourceName'][:]).decode().strip()
+    src = iau(src)
     if receiver == 'Sequoia':
         instrument = 'SEQ'
         numbands = nc.variables['Header.Sequoia.NumBands'][0]        
@@ -295,6 +305,7 @@ def rsr_summary(rsr_file, rc=False):
 
     # Header.Source.SourceName
     src = b''.join(nc.variables['Header.Source.SourceName'][:]).decode().strip()
+    src = iau(src)
 
     try:
         pid = b''.join(nc.variables['Header.Dcs.ProjectId'][:]).decode().strip()
