@@ -133,6 +133,8 @@ class HandlePSProcessOptions(HandleOptions):
                             help="data path")
         self.parser.add_argument("-o", "--output", dest="output",
                             help="name of output SpecFile")
+        self.parser.add_argument("--show", dest="show", action="store_true", default=False,
+                            help="Show figures interactively")
         #self.parser.add_argument("-O", "--obsnum", dest="obsnum", type=int,
         #                    help="ObsNum of observation")
         self.parser.add_argument("--obs_list", dest="obs_list", type=str,

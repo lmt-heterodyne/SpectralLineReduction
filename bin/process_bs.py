@@ -31,8 +31,7 @@ def main(argv):
     npixels = len(Opts.pix_list)
     block = Opts.block
     edge = 64
-    Qshow = False
-
+    
     for obs in Opts.obs_list:
 
             if block == -2:
@@ -43,6 +42,7 @@ def main(argv):
                                      Opts.use_cal,
                                      tsys=Opts.tsys,
                                      block=0,
+                                     stype=Opts.stype,                                     
                                      path=Opts.data_path)
                 nblocks = S.roach[0].nons
                 for i in range(npixels):
@@ -58,6 +58,7 @@ def main(argv):
                                          Opts.use_cal,
                                          tsys=Opts.tsys,
                                          block=iblock,
+                                         stype=Opts.stype,
                                          path=Opts.data_path)
                     for i in range(npixels):
                         data = S.roach[i].ps_spectrum
@@ -75,6 +76,7 @@ def main(argv):
                                      Opts.use_cal,
                                      tsys=Opts.tsys,
                                      block=block,
+                                     stype=Opts.stype,                                     
                                      path=Opts.data_path)
 
                 print("NOTE: for obsnum=%d bs_beams=%s, you specified %s" % (obs,I.bs_beams,Opts.pix_list))
@@ -110,7 +112,7 @@ def main(argv):
     pl.xlabel('VSRC')
     pl.legend()
     pl.suptitle("%s : block=%d" % (I.source,block))
-    if Qshow:
+    if Opts.show:
         pl.show()
     else:
         pout = 'bs%d.png' % block
