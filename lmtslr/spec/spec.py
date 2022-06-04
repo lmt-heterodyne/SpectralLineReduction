@@ -126,8 +126,8 @@ class RoachSpec():
         for iref in range(self.nrefs):
             the_refs = range(self.ref_ranges[iref][0], 
                              self.ref_ranges[iref][1] + 1)
-            self.reference_spectra[iref, :] = np.mean(
-                   self.raw_spec[the_refs, :], axis=0)
+            self.reference_spectra[iref, :] = np.mean(self.raw_spec[the_refs, :], axis=0)
+            #print("PJT off %d %d-%d" % (iref,the_refs[0], the_refs[-1]))            
 
     def compute_main_spectra(self):
         """
@@ -142,6 +142,7 @@ class RoachSpec():
         for ion in range(self.nons):
             the_ons = range(self.on_ranges[ion][0], self.on_ranges[ion][1] + 1)
             self.main_spectra[ion, :] = np.mean(self.raw_spec[the_ons, :], axis=0)
+            #print("PJT on %d %d-%d" % (ion,the_ons[0], the_ons[-1]))
 
     def compute_median_spectrum(self):
         """
@@ -291,7 +292,7 @@ class RoachSpec():
             else:
                 self.ps_spectrum = (self.reference_spectrum - 
                                     self.main_spectrum) / self.main_spectrum
-        else: # type == 2:
+        elif stype == 2:
             self.compute_main_spectra()
             self.compute_reference_spectra()
             if self.nons == self.nrefs:
@@ -308,12 +309,42 @@ class RoachSpec():
                                        / self.main_spectra[i,:]
                 if block < 0:
                     self.ps_spectrum = np.mean(ps_list[:,:],axis=0)
+                    print("Counting blocks %d" % self.nons)
                 else:
                     print("Selecting block %d/%d" % (block,self.nons))
                     self.ps_spectrum = ps_list[block,:]
             else:
                 print('check number of ons and refs %d %d'%(self.nons, 
                                                             self.nrefs))
+        elif stype == 3:
+            edge=1
+            print("Warning: new mode stype=3 using edge=%d" % edge)
+            self.compute_main_spectra()
+            self.compute_reference_spectra()
+            if self.nons == self.nrefs:
+                ps_list = np.zeros((self.nons-2*edge,self.nchan))
+                if normal_ps == True:
+                    for i in range(edge,self.nons-edge):
+                        son  = self.main_spectra[i,:]
+                        soff = (self.reference_spectra[i-1,:] +  self.reference_spectra[i+1,:])/2
+                        ps_list[i-edge,:] = (son - soff) / soff
+                else:
+                    for i in range(edge,self.nons-edge):
+                        son  = self.reference_spectra[i,:]
+                        soff = (self.main_spectra[i-1,:] + self.main_spectra[i+1,:])/2
+                        ps_list[i-edge,:] = (son - soff) / soff
+                if block < 0:
+                    self.ps_spectrum = np.mean(ps_list[:,:],axis=0)
+                    print("Counting blocks %d edge=%d" % (self.nons,edge))
+                else:
+                    print("Selecting block %d/%d edge=%d" % (block,self.nons,edge))
+                    self.ps_spectrum = ps_list[block,:]
+            else:
+                print('check number of ons and refs %d %d'%(self.nons, 
+                                                            self.nrefs))
+            
+        else:
+            print("Illegel stype=%d" % stype)
             
         # calibrate it if requested
         if calibrate == True:
