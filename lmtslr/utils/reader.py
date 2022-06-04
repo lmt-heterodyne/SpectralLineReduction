@@ -121,8 +121,7 @@ def read_obsnum_bs(obsnum, list_of_pixels, bank,
                 0 = not defined
                 1 = compute average of all OFF and ON
                 2 = compute OFF and ON in blocks
-                3 = like 2, but only grab one block of refs/ons as given
-                    by the block= parameter
+                3 = a leapfrog type using OFFs from adjacent (same pixel) ON
         block - which block (< 0 means average all)
         path (str): path to the top of the data_lmt directory (usually 
             '/data_lmt/',  or use $DATA_LMT)
