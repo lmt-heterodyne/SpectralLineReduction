@@ -70,7 +70,7 @@ else:
 
 arguments = docopt(__doc__,options_first=True, version='0.3')
 
-header = "# Y-M-D   T H:M:S     ObsNum ObsGoal       ObgPgm    SourceName                ProjectId                 RestFreq  VLSR   TINT     RA        DEC          AZ    EL"
+header = "# Y-M-D   T H:M:S     ObsNum  Receiver             ObsGoal      ObgPgm    SourceName                ProjectId                   RestFreq      VLSR    TINT    RA          DEC        AZ     EL"
 
 def grep(terms):
     """
@@ -186,6 +186,7 @@ def slr_summary(ifproc, rc=False):
     # the following Map only if obspgm=='Map'
     if obspgm=='Map':
         map_coord = b''.join(nc.variables['Header.Map.MapCoord'][:]).decode().strip()
+        map_motion = b''.join(nc.variables['Header.Map.MapMotion'][:]).decode().strip() 
         xlen = nc.variables['Header.Map.XLength'][0] * 206264.806
         ylen = nc.variables['Header.Map.YLength'][0] * 206264.806
         xoff = nc.variables['Header.Map.XOffset'][0] * 206264.806
@@ -263,8 +264,8 @@ def slr_summary(ifproc, rc=False):
         print('tau=%g' % tau)
         print("# </lmtinfo>")
     else:
-        print("%-20s %7s  %-12s %-9s %-25s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %
-              (date_obs, obsnum, obsgoal, obspgm +(('('+map_coord+')') if obspgm=='Map' else ''), src, pid, restfreq[0], vlsr, tint, ra, dec, az, el, az1, el1))
+        print("%-20s %7s  %-20s %-12s %-9s %-25s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %
+              (date_obs, obsnum, receiver, obsgoal, obspgm +(('('+map_coord+'/'+map_motion[0]+')') if obspgm=='Map' else ''), src, pid, restfreq[0], vlsr, tint, ra, dec, az, el, az1, el1))
 
     # -end slr_summary() 
 
@@ -314,13 +315,20 @@ def rsr_summary(rsr_file, rc=False):
         
     # Header.Dcs.ObsNum = 33551 ;
     obsnum = nc.variables['Header.Dcs.ObsNum'][0]
+    receiver = b''.join(nc.variables['Header.Dcs.Receiver'][:]).decode().strip()
     # yuck, with the RSR filenameconvention this is the trick to find the chassic
     chassis   = rsr_file[ rsr_file.rfind('/') + 16 ]
+    # this is how you'd do it.
+    for k in nc.variables.keys():
+        if k.startswith('Header.RedshiftChassis') and k.endswith('.ChassisNumber'):
+            chassis = nc.variables[k][0]
     con_name  = 'Header.RedshiftChassis_%s_.CalObsNum' % chassis
     calobsnum = nc.variables[con_name][0]
     
     # Bs, Cal
     obspgm = b''.join(nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
+    if obspgm=='Map':
+        map_coord = b''.join(nc.variables['Header.Map.MapCoord'][:]).decode().strip()
     # ObsGoal
     obsgoal = b''.join(nc.variables['Header.Dcs.ObsGoal'][:]).decode().strip()
 
@@ -384,8 +392,8 @@ def rsr_summary(rsr_file, rc=False):
         #import pdb; pdb.set_trace()
         #print(date_obs, obsnum, obsgoal, obspgm, src,  pid,         tint,   ra,    dec,   az,   el)
         if True:
-            print("%-20s %7d  %-12s %-9s %-25s %-30s RSR      0    %6.1f  %10.6f %10.6f  %5.1f %5.1f" %
-              (date_obs, obsnum, obsgoal, obspgm, src,  pid,         tint,   ra,    dec,   az,   el))
+            print("%-20s %7d  %-20s %-12s %-9s %-25s %-30s              0    %6.1f  %10.6f %10.6f  %5.1f %5.1f" %
+              (date_obs, obsnum, receiver, obsgoal, obspgm+(('('+map_coord+')') if obspgm=='Map' else ''), src,  pid,         tint,   ra,    dec,   az,   el))
 
     # -end  rsr_summary()
     
