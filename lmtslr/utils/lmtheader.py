@@ -2,7 +2,10 @@ import numpy
 from netCDF4 import Variable as NetCDFVariable
 from lmtslr.utils.ordered_netcdf_dict import OrderedNetCDFDict, \
     OrderedHeaderDict
-from collections import OrderedDict
+try:
+    from collections import OrderedDict
+except ImportError:
+    OrderedDict = dict
 
 class LMTHeader(OrderedNetCDFDict):
     """The most generic LMT Header class. This class is not usually
