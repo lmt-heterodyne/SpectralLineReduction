@@ -52,17 +52,24 @@ class Line(object):
     def __len__(self):
         return self.nchan
 
-    def eliminate(self, list):
+    def eliminate(self, list, interpolate=True):
         """
         Sets yarray values to nan according to input list so that 
         channels can be ignored in functions.
         Args:
             list (list): list of channels that are to be eliminated
+            interpolate (boolean):   if to interpolate instead
         Returns:
             none
-        """ 
-        for i in list:
-            self.yarray[np.where(self.iarray == i)] = np.nan
+        """
+        if interpolate:
+            for i in list:
+                if i<=0: continue
+                j = np.where(self.iarray == i)[0][0]                
+                self.yarray[j] = (self.yarray[j-1] + self.yarray[j+1])/2.0
+        else:
+            for i in list:
+                self.yarray[np.where(self.iarray == i)] = np.nan
 
     def baseline(self, list, n, baseline_order=0):
         """
