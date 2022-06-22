@@ -509,7 +509,9 @@ class SpecFileViewer():
                         
                 if r > birdie_factor:
                     print("birdie:",the_pixel,j,r)
-                
+                else:
+                    print("bumpie:",the_pixel,j,r)
+                    
             else:
                 x = self.data[pindex]
                 x = x[:nsamp1,:nchan1]
