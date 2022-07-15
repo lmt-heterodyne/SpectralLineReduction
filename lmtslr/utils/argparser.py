@@ -74,6 +74,9 @@ class HandleOTFProcessOptions(HandleOptions):
         self.parser.add_argument("--tsys", dest="tsys", type=float,
                             default=250.0,
                             help="If use_cal is False, value of Tsys to use")
+        self.parser.add_argument("--restfreq", dest="restfreq", type=float,
+                                 default=-1,
+                            help="Override rest frequency (in GHz) - experimental")
         self.parser.add_argument("--use_otf_cal", dest="use_otf_cal",
                                  action="store_true", default=False, help="Use calibration within OTF scan")
         self.parser.add_argument("--stype", dest="stype", type=int,
