@@ -21,7 +21,7 @@
 --l_regions L_REGIONS              enter list of lists for line fit regions (default: [[],[]])
 --slice SLICE                      enter list to specify slice from spectrum for processing
 --sample PIXEL,S0,S1               Series of sample sections per pixel to be removed from SpecFile (not implemented yet)
---restfreq RESTFREQ                Override the rest frequency. Not used yet, but useful for multi-line slices.
+--restfreq RESTFREQ                Override the rest frequency (in GHz) for this bank. [Default: -1]
 
 -h --help                          show this help
 
@@ -67,7 +67,7 @@ from lmtslr.utils.argparser import HandleOTFProcessOptions
 import time
 
 def main(argv):
-    av = docopt(__doc__,options_first=True, version='0.1')
+    av = docopt(__doc__,options_first=True, version='0.2')
     print(av)   # debug
     # vslice = acv.listf(av['--slice'], 2)
 
@@ -92,6 +92,7 @@ def main(argv):
                            stype=Opts.stype,
                            use_otf_cal=Opts.use_otf_cal,
                            save_tsys=save_tsys,
+                           restfreq=Opts.restfreq,
                            path=Opts.data_path)
 
     specfile = SpecFile(I, S, Opts.pix_list)
