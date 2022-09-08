@@ -274,6 +274,8 @@ class IFProc():
                 self.baseline_list = []
             try:
                 self.line_rest_frequency = self.nc.variables['Header.' + self.receiver + '.LineFreq'][0:2]
+                print("PJT: line_rest_freq ", self.line_rest_frequency)
+                # @todo   reset self.line_rest_frequency[board]
                 self.doppler_track = self.nc.variables['Header.' + self.receiver + '.DopplerTrack'][0]
                 self.observatory_velocity = self.nc.variables['Header.Sky.ObsVel'][0]
                 self.barycenter_velocity = self.nc.variables['Header.Sky.BaryVel'][0]

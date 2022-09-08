@@ -180,6 +180,7 @@ class SpecFile():
             nchan = len(LL)
             print("NSPEC: %d" % nspec)
             print("NCHAN: %d" % nchan)
+            print("ICHAN: %d" % LL.iarray[0])
             tmp_pix = np.zeros(nspec, dtype=int)
             tmp_seq = np.zeros(nspec, dtype=int)
             tmp_pixl= np.zeros(npix,  dtype=int)

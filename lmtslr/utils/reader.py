@@ -180,7 +180,7 @@ def read_obsnum_bs(obsnum, list_of_pixels, bank,
     return ifproc, specbank
 
 def read_obsnum_otf(obsnum, list_of_pixels, bank,
-                    use_calibration, tsys=150., stype=1,
+                    use_calibration, tsys=150., stype=1, restfreq=-1,
                     use_otf_cal=False, save_tsys=False,
                     path=None):
     """
@@ -224,7 +224,8 @@ def read_obsnum_otf(obsnum, list_of_pixels, bank,
 
     # create the spec_bank object.  This reads all the roaches in the list "files"
     specbank = SpecBankData(files, ifproc,
-                            pixel_list=list_of_pixels, bank=bank, save_tsys=save_tsys)
+                            pixel_list=list_of_pixels, bank=bank,
+                            restfreq=restfreq, save_tsys=save_tsys)
 
     print("RESTFREQ %g GHz" % specbank.line_rest_frequency)
 
@@ -234,7 +235,7 @@ def read_obsnum_otf(obsnum, list_of_pixels, bank,
         calobsnum = specbank.calobsnum
         cal_files,ncalfiles = lookup_roach_files(calobsnum, roach_list,
                                                  path=os.path.join(path, 'spectrometer'))
-        specbank_cal = SpecBankCal(cal_files, ifproc_cal,
+        specbank_cal = SpecBankCal(cal_files, ifproc_cal, restfreq=restfreq,
                                    pixel_list=list_of_pixels)
         check_cal = specbank_cal.test_cal(specbank)
         if check_cal > 0:

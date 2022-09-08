@@ -485,12 +485,30 @@ class SpecFileViewer():
         sp    = np.zeros(npix*nchan1*nsamp1, dtype=np.float32).reshape(npix,nsamp1*nchan1)
         print("FITS file will be %d x %d x %d" % (nsamp//binning[0], nchan1//binning[1],npix))
 
+        # if the max in rms is 10x from its neighbors, it's a birdie
+        birdie_factor = 10.0
+
         for (i,the_pixel) in zip(range(npix),pixel_list):
             pindex = np.where(self.pixel == the_pixel)[0]
             if len(pindex) > nsamp1:
                 pindex = pindex[:nsamp1]
             if nchan == nchan1:
                 sp[i,:] = self.data[pindex].ravel()
+
+                d = self.data[pindex]
+                drms = d.std(axis=0)
+                j = np.argmax(drms)
+                if j<=0 or j>=nchan-1:
+                    # edge has the peak
+                    r = 0.0
+                else:
+                    r = 2*drms[j]/(drms[j-1]+drms[j+1])
+                        
+                if r > birdie_factor:
+                    print("birdie:",the_pixel,j,r)
+                else:
+                    print("bumpie:",the_pixel,j,r)
+                    
             else:
                 x = self.data[pindex]
                 x = x[:nsamp1,:nchan1]
