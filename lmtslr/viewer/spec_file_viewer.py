@@ -19,8 +19,7 @@ class SpecFileViewer():
         """
         nc = netCDF4.Dataset(netcdf_filename, 'r', format='NETCDF4')
         self.obsnum = nc.variables['Header.Obs.ObsNum'][0]
-        self.source_name = netCDF4.chartostring(
-            nc.variables['Header.Obs.SourceName'][:])
+        self.source_name = netCDF4.chartostring(nc.variables['Header.Obs.SourceName'][:])
 
         self.x_position =  nc.variables['Header.Obs.XPosition'][0]
         self.y_position =  nc.variables['Header.Obs.YPosition'][0]
@@ -30,8 +29,7 @@ class SpecFileViewer():
         self.cdelt = nc.variables['Header.SpectrumAxis.CDELT'][0]
         self.crpix = nc.variables['Header.SpectrumAxis.CRPIX'][0]
         self.crval = nc.variables['Header.SpectrumAxis.CRVAL'][0]
-        self.ctype = netCDF4.chartostring(
-            nc.variables['Header.SpectrumAxis.CTYPE'][:])
+        self.ctype = netCDF4.chartostring(nc.variables['Header.SpectrumAxis.CTYPE'][:])
         self.caxis = nc.variables['Header.SpectrumAxis.CAXIS'][:]
 
         self.pixel = nc.variables['Data.Pixel'][:]
@@ -49,8 +47,7 @@ class SpecFileViewer():
 
         nc.close()
 
-    def sequoia_waterfall_plot(self, pixel_list, rms_cut, plot_range=[-1,1], 
-                               figsize=8):
+    def sequoia_waterfall_plot(self, pixel_list, rms_cut, plot_range=[-1,1],figsize=8):
         """
         Makes waterfall plots of spectra from pixels in pixel_list.
         Args:
