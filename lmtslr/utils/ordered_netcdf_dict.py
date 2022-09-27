@@ -1,4 +1,7 @@
-from collections import OrderedDict
+try:
+    from collections import OrderedDict
+except ImportError:
+    OrderedDict = dict
 import numpy
 from netCDF4 import Variable as NetCDFVariable
 import types
