@@ -61,16 +61,16 @@ import datetime
 import netCDF4
 from docopt import docopt
 
-version="2-jun-2022"
+version="5-oct-2022"
 
 if "DATA_LMT" in os.environ:
     data_lmt = os.environ["DATA_LMT"]
 else:
     data_lmt = "/data_lmt/"
 
-arguments = docopt(__doc__,options_first=True, version='0.3')
+arguments = docopt(__doc__,options_first=True, version='0.4')
 
-header = "# Y-M-D   T H:M:S     ObsNum  Receiver             ObsGoal      ObgPgm    SourceName                ProjectId                   RestFreq      VLSR    TINT    RA          DEC        AZ     EL"
+header = "# Y-M-D   T H:M:S     ObsNum  Receiver   ObsGoal      ObgPgm      SourceName                ProjectId                   RestFreq      VLSR    TINT    RA          DEC        AZ     EL"
 
 def grep(terms):
     """
@@ -231,6 +231,7 @@ def slr_summary(ifproc, rc=False):
     nc.close()
         
     if rc:
+        nppb = 2.0
         print('# <lmtinfo>')
         print('# version=%s' % version)
         print('# ifproc="%s"' % ifproc)
@@ -256,7 +257,8 @@ def slr_summary(ifproc, rc=False):
         print('src="%s"' % src)
         resolution = math.ceil(1.0 * 299792458 / skyfreq[0] / 1e9 / 50.0 * 206264.806)
         print('resolution=%g  # arcsec' % resolution)
-        print('cell=%g   # arcsec' % (resolution/2.0))
+        print('nppd=%g   # number of points per beam' % nppb)
+        print('cell=%g   # arcsec' % (resolution/nppb))
         # @todo https://github.com/astroumd/lmtoy/issues/9     xlen needs to be equal to ylen
         print('x_extent=%g   # arcsec' % xlen)
         print('y_extent=%g   # arcsec' % ylen)
@@ -264,8 +266,8 @@ def slr_summary(ifproc, rc=False):
         print('tau=%g' % tau)
         print("# </lmtinfo>")
     else:
-        print("%-20s %7s  %-20s %-12s %-9s %-25s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %
-              (date_obs, obsnum, receiver, obsgoal, obspgm +(('('+map_coord+'/'+map_motion[0]+')') if obspgm=='Map' else ''), src, pid, restfreq[0], vlsr, tint, ra, dec, az, el, az1, el1))
+        print("%-20s %7s  %-10s %-12s %-11s %-25s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %
+              (date_obs, obsnum, instrument, obsgoal, obspgm +(('('+map_coord+'/'+map_motion[0]+')') if obspgm=='Map' else ''), src, pid, restfreq[0], vlsr, tint, ra, dec, az, el, az1, el1))
 
     # -end slr_summary() 
 
@@ -316,6 +318,7 @@ def rsr_summary(rsr_file, rc=False):
     # Header.Dcs.ObsNum = 33551 ;
     obsnum = nc.variables['Header.Dcs.ObsNum'][0]
     receiver = b''.join(nc.variables['Header.Dcs.Receiver'][:]).decode().strip()
+    instrument = "RSR"
     # yuck, with the RSR filenameconvention this is the trick to find the chassic
     chassis   = rsr_file[ rsr_file.rfind('/') + 16 ]
     # this is how you'd do it.
@@ -392,8 +395,8 @@ def rsr_summary(rsr_file, rc=False):
         #import pdb; pdb.set_trace()
         #print(date_obs, obsnum, obsgoal, obspgm, src,  pid,         tint,   ra,    dec,   az,   el)
         if True:
-            print("%-20s %7d  %-20s %-12s %-9s %-25s %-30s              0    %6.1f  %10.6f %10.6f  %5.1f %5.1f" %
-              (date_obs, obsnum, receiver, obsgoal, obspgm+(('('+map_coord+')') if obspgm=='Map' else ''), src,  pid,         tint,   ra,    dec,   az,   el))
+            print("%-20s %7d  %-10s %-12s %-11s %-25s %-30s              0    %6.1f  %10.6f %10.6f  %5.1f %5.1f" %
+              (date_obs, obsnum, instrument, obsgoal, obspgm+(('('+map_coord+')') if obspgm=='Map' else ''), src,  pid,         tint,   ra,    dec,   az,   el))
 
     # -end  rsr_summary()
     
