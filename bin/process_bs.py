@@ -28,7 +28,10 @@ def main(argv):
     label    = []
     # here are the number of spectra to be reduced
     nscans = len(Opts.obs_list)
-    npixels = len(Opts.pix_list)
+    try:
+        pix_list = Opts.pix_list
+    except:
+        pix_list = None
     block = Opts.block
     edge = 64
     
@@ -37,7 +40,7 @@ def main(argv):
             if block == -2:
                 # special loop
                 I,S = read_obsnum_bs(obs,
-                                     Opts.pix_list,
+                                     pix_list,
                                      Opts.bank,
                                      Opts.use_cal,
                                      tsys=Opts.tsys,
@@ -45,6 +48,7 @@ def main(argv):
                                      stype=Opts.stype,                                     
                                      path=Opts.data_path)
                 nblocks = S.roach[0].nons
+                npixels = len(S.roach)
                 for i in range(npixels):
                     data = S.roach[i].ps_spectrum
                     LD = LineData(I,Opts.bank,S.nchan,S.bandwidth,S.roach[i].ps_spectrum)
@@ -71,7 +75,7 @@ def main(argv):
             else:
                 nblocks = 1
                 I,S = read_obsnum_bs(obs,
-                                     Opts.pix_list,
+                                     pix_list,
                                      Opts.bank,
                                      Opts.use_cal,
                                      tsys=Opts.tsys,
@@ -79,17 +83,20 @@ def main(argv):
                                      stype=Opts.stype,                                     
                                      path=Opts.data_path)
 
-                print("NOTE: for obsnum=%d bs_beams=%s, you specified %s" % (obs,I.bs_beams,Opts.pix_list))
+                if pix_list is None:
+                    pix_list = I.bs_beams
+                print("NOTE: for obsnum=%d bs_beams=%s, you specified %s" % (obs,I.bs_beams,pix_list))
                 print("Number of blocks: %d" % S.roach[0].nons)
 
                 # create a LineData object for each "pixel" in pix_list
                 # we could do processing here...
+                npixels = len(S.roach)
                 for i in range(npixels):
                     data = S.roach[i].ps_spectrum
                     LD = LineData(I,Opts.bank,S.nchan,S.bandwidth,S.roach[i].ps_spectrum)
                     LD.set_x_axis(Opts.x_axis)
                     LineList.append(LD)
-                    label.append("%d/%d" % (obs,Opts.pix_list[i]))
+                    label.append("%d/%d" % (obs,pix_list[i]))
 
     # show all the plots just to illustrate reduction
     # this will be replaced by write out of spectra to FITS file.
@@ -98,7 +105,11 @@ def main(argv):
         fp.write("# vlsr  TA(K)   Tsys1  Tsys2\n")
         for i in range(edge,len(LineList[0].xarray)-edge):
             fp.write("%g %g  %g %g\n" %
-                     (LineList[0].xarray[i], 0.5*(LineList[1].yarray[i] + LineList[0].yarray[i]),S.roach[0].tsys_spectrum[i],S.roach[1].tsys_spectrum[i]))
+                     (LineList[0].xarray[i],
+                      0.5*(LineList[1].yarray[i] +
+                           LineList[0].yarray[i]),
+                      S.roach[0].tsys_spectrum[i] if Opts.use_cal else S.roach[0].tsys_spectrum,
+                      S.roach[1].tsys_spectrum[i] if Opts.use_cal else S.roach[1].tsys_spectrum))
         fp.close()
         # pl.plot(LineList[0].xarray[edge:-edge], LineList[1].yarray[edge:-edge] - LineList[0].yarray[edge:-edge], label='Diff')
     pl.figure()

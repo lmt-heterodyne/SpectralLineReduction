@@ -68,6 +68,7 @@ class RoachSpec():
         self.tsys_aver = False
         self.tsyscal = None
         self.ncal = 0
+        self.pixel = 4*self.roach_id + self.roach_input
 
         self.ons,  self.on_ranges,  self.nons  = self.get_ranges(0)
         self.refs, self.ref_ranges, self.nrefs = self.get_ranges(1)
@@ -200,9 +201,7 @@ class RoachSpec():
             else:
                 self.tsys_spectra[ihot, :] = tsys_spec
             #print("TSYS: ",self.tsys_spectra[ihot, :],tsys[ihot])
-        # can we use pixel= this way?
-        pixel = 4*self.roach_id + self.roach_input
-        print("TSYS[%d] otf_cal %s" % (pixel,repr(tsys)))
+        print("TSYS[%d] otf_cal %s" % (self.pixel,repr(tsys)))
             
         
     def get_nearest_reference(self, index, left=True):
@@ -596,9 +595,7 @@ class RoachSpec():
                 self.tsys_spectrum[:] = self.tsys
                 
             #print("TSYS: ",self.tsys_spectrum[:])
-            # @todo can we use pixel= this way?
-            pixel = 4*self.roach_id + self.roach_input
-            print("TSYS[%d] = %g +/- %g (%d channels)" % (pixel,self.tsys, tsysstd, len(self.tsys_spectrum)))
+            print("TSYS[%d] = %g +/- %g (%d channels)" % (self.pixel,self.tsys, tsysstd, len(self.tsys_spectrum)))
         else:
             print('ObsNum %d Roach %d does not have calibration data'%(
                 self.obsnum, self.roach_id))
@@ -1024,7 +1021,7 @@ class SpecBank():
                           indx_small)
                 # now we append the individual roach spectrum object to\
                 # our list
-                self.roach.append(RoachSpec(obsnum, roach_id, input_chan, 
+                self.roach.append(RoachSpec(obsnum, roach_index, input_chan, 
                                             nchan, bandwidth, nspec, raw_spec,
                                             spec_time, xmap, ymap, pmap, gmap,
                                             bufpos))
