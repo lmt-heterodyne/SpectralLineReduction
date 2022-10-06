@@ -377,6 +377,7 @@ int main(int argc, char *argv[])
   // and the weight plane @todo need a flag for this, 7 times
   if (strlen(OTF.w_filename) > 0) {
     unlink(OTF.w_filename);
+    unlink(OTF.t_filename);
 #if 1
     printf("write weights to %s\n",OTF.w_filename);
     write_fits_plane(&W, OTF.w_filename);
