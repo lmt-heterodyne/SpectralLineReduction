@@ -14,6 +14,7 @@
 #              RedshiftChassisN  uses %06d_%02d_%04d 
 #
 #
+
 """
 Usage: lmtinfo.py OBSNUM
        lmtinfo.py data
@@ -52,6 +53,8 @@ find:     search in database, terms are logically AND-ed
 
 """
 
+version="21-oct-2022"
+
 import os
 import sys
 import math
@@ -60,8 +63,6 @@ import numpy as np
 import datetime
 import netCDF4
 from docopt import docopt
-
-version="5-oct-2022"
 
 if "DATA_LMT" in os.environ:
     data_lmt = os.environ["DATA_LMT"]
@@ -194,8 +195,10 @@ def slr_summary(ifproc, rc=False):
         xram = nc.variables['Header.Map.XRamp'][0]   * 206264.806
         yram = nc.variables['Header.Map.YRamp'][0]   * 206264.806
         hpbw = nc.variables['Header.Map.HPBW'][0]    * 206264.806
+        srate= nc.variables['Header.Map.ScanRate'][0]* 206264.806
         xstep= nc.variables['Header.Map.XStep'][0] 
-        ystep= nc.variables['Header.Map.YStep'][0] 
+        ystep= nc.variables['Header.Map.YStep'][0]
+        tsamp= nc.variables['Header.Map.TSamp'][0]        
     else:
         xlen = 0
         ylen = 0
@@ -204,8 +207,10 @@ def slr_summary(ifproc, rc=False):
         xram = 0
         yram = 0
         hpbw = 0
+        srate= 0
         xstep= 0
         ystep= 0
+        tsamp= 0
 
     date_obs = nc.variables['Data.TelescopeBackend.TelTime'][0].tolist()
     date_obs = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%dT%H:%M:%S')
@@ -219,6 +224,17 @@ def slr_summary(ifproc, rc=False):
     el1 = nc.variables['Header.Sky.ElOff'][1] * 206264.81
 
     tint = nc.variables['Header.Dcs.IntegrationTime'][0]
+
+    # this estimate only works for rectilinear maps
+    if xlen > 0 and ylen>0:
+        nrows = math.ceil((ylen+2*yram)/(ystep*hpbw))
+        rowtint = (xlen+2*xram)/(srate)
+        # rowtint = (xlen+2*xram)/(xstep*hpbw)*tsamp    # two ways to get the same
+        tint_on = nrows * rowtint
+    else:
+        nrows = 0
+        rowtint = 0
+        tint_on = -1
     
     # Header.Dcs.ObsGoal
     # Header.ScanFile.Valid = 1 ;
@@ -250,6 +266,9 @@ def slr_summary(ifproc, rc=False):
         print('# XYRamp=%g %g arcsec' % (xram,yram))
         print('# XYoff=%g %g arcsec' % (xoff,yoff))
         print('# XYstep=%g %g' % (xstep,ystep))
+        print('# nrows=%d' % nrows)
+        print('# rowtint=%g' % rowtint)
+        print('tint_on=%g  # excluding corning' % tint_on)
         print('numbands=%d' % numbands)
         print('vlsr=%g        # km/s' % vlsr)
         print('skyfreq=%s     # GHz' % alist(skyfreq))
