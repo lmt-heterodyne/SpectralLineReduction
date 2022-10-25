@@ -268,13 +268,15 @@ def slr_summary(ifproc, rc=False):
         print('# XYstep=%g %g' % (xstep,ystep))
         print('nrows=%d' % nrows)
         print('rowtint=%g' % rowtint)
-        print('tint_on=%g  # excluding corning' % tint_on)
+        print('tint_on=%g  # excluding 1.6sec (?) switchback' % tint_on)
         print('numbands=%d' % numbands)
         print('vlsr=%g        # km/s' % vlsr)
         print('skyfreq=%s     # GHz' % alist(skyfreq))
         print('restfreq=%s    # Ghz' % alist(restfreq))
         print('src="%s"' % src)
-        resolution = math.ceil(1.0 * 299792458 / skyfreq[0] / 1e9 / 50.0 * 206264.806)
+        resolution = 1.0 * 299792458 / skyfreq[0] / 1e9 / 50.0 * 206264.806
+        # why is this an integer again?
+        resolution = math.ceil(resolution)
         print('resolution=%g  # arcsec' % resolution)
         print('nppd=%g   # number of points per beam' % nppb)
         print('cell=%g   # arcsec' % (resolution/nppb))
