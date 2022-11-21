@@ -14,6 +14,7 @@
 #              RedshiftChassisN  uses %06d_%02d_%04d 
 #
 #
+
 """
 Usage: lmtinfo.py OBSNUM
        lmtinfo.py data
@@ -52,6 +53,8 @@ find:     search in database, terms are logically AND-ed
 
 """
 
+version="21-oct-2022"
+
 import os
 import sys
 import math
@@ -61,16 +64,14 @@ import datetime
 import netCDF4
 from docopt import docopt
 
-version="2-jun-2022"
-
 if "DATA_LMT" in os.environ:
     data_lmt = os.environ["DATA_LMT"]
 else:
     data_lmt = "/data_lmt/"
 
-arguments = docopt(__doc__,options_first=True, version='0.3')
+arguments = docopt(__doc__,options_first=True, version='0.4')
 
-header = "# Y-M-D   T H:M:S     ObsNum ObsGoal       ObgPgm    SourceName                ProjectId                 RestFreq  VLSR   TINT     RA        DEC          AZ    EL"
+header = "# Y-M-D   T H:M:S     ObsNum  Receiver   ObsGoal      ObgPgm      SourceName                ProjectId                   RestFreq      VLSR    TINT    RA          DEC        AZ     EL"
 
 def grep(terms):
     """
@@ -186,6 +187,7 @@ def slr_summary(ifproc, rc=False):
     # the following Map only if obspgm=='Map'
     if obspgm=='Map':
         map_coord = b''.join(nc.variables['Header.Map.MapCoord'][:]).decode().strip()
+        map_motion = b''.join(nc.variables['Header.Map.MapMotion'][:]).decode().strip() 
         xlen = nc.variables['Header.Map.XLength'][0] * 206264.806
         ylen = nc.variables['Header.Map.YLength'][0] * 206264.806
         xoff = nc.variables['Header.Map.XOffset'][0] * 206264.806
@@ -193,8 +195,10 @@ def slr_summary(ifproc, rc=False):
         xram = nc.variables['Header.Map.XRamp'][0]   * 206264.806
         yram = nc.variables['Header.Map.YRamp'][0]   * 206264.806
         hpbw = nc.variables['Header.Map.HPBW'][0]    * 206264.806
+        srate= nc.variables['Header.Map.ScanRate'][0]* 206264.806
         xstep= nc.variables['Header.Map.XStep'][0] 
-        ystep= nc.variables['Header.Map.YStep'][0] 
+        ystep= nc.variables['Header.Map.YStep'][0]
+        tsamp= nc.variables['Header.Map.TSamp'][0]        
     else:
         xlen = 0
         ylen = 0
@@ -203,8 +207,10 @@ def slr_summary(ifproc, rc=False):
         xram = 0
         yram = 0
         hpbw = 0
+        srate= 0
         xstep= 0
         ystep= 0
+        tsamp= 0
 
     date_obs = nc.variables['Data.TelescopeBackend.TelTime'][0].tolist()
     date_obs = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%dT%H:%M:%S')
@@ -218,6 +224,17 @@ def slr_summary(ifproc, rc=False):
     el1 = nc.variables['Header.Sky.ElOff'][1] * 206264.81
 
     tint = nc.variables['Header.Dcs.IntegrationTime'][0]
+
+    # this estimate only works for rectilinear maps
+    if xlen > 0 and ylen>0:
+        nrows = math.ceil((ylen+2*yram)/(ystep*hpbw))
+        rowtint = (xlen+2*xram)/(srate)
+        # rowtint = (xlen+2*xram)/(xstep*hpbw)*tsamp    # two ways to get the same
+        tint_on = nrows * rowtint
+    else:
+        nrows = 0
+        rowtint = 0
+        tint_on = -1
     
     # Header.Dcs.ObsGoal
     # Header.ScanFile.Valid = 1 ;
@@ -230,6 +247,7 @@ def slr_summary(ifproc, rc=False):
     nc.close()
         
     if rc:
+        nppb = 2.0
         print('# <lmtinfo>')
         print('# version=%s' % version)
         print('# ifproc="%s"' % ifproc)
@@ -248,14 +266,20 @@ def slr_summary(ifproc, rc=False):
         print('# XYRamp=%g %g arcsec' % (xram,yram))
         print('# XYoff=%g %g arcsec' % (xoff,yoff))
         print('# XYstep=%g %g' % (xstep,ystep))
+        print('nrows=%d' % nrows)
+        print('rowtint=%g' % rowtint)
+        print('tint_on=%g  # excluding 1.6sec (?) switchback' % tint_on)
         print('numbands=%d' % numbands)
         print('vlsr=%g        # km/s' % vlsr)
         print('skyfreq=%s     # GHz' % alist(skyfreq))
         print('restfreq=%s    # Ghz' % alist(restfreq))
         print('src="%s"' % src)
-        resolution = math.ceil(1.0 * 299792458 / skyfreq[0] / 1e9 / 50.0 * 206264.806)
+        resolution = 1.0 * 299792458 / skyfreq[0] / 1e9 / 50.0 * 206264.806
+        # why is this an integer again?
+        resolution = math.ceil(resolution)
         print('resolution=%g  # arcsec' % resolution)
-        print('cell=%g   # arcsec' % (resolution/2.0))
+        print('nppd=%g   # number of points per beam' % nppb)
+        print('cell=%g   # arcsec' % (resolution/nppb))
         # @todo https://github.com/astroumd/lmtoy/issues/9     xlen needs to be equal to ylen
         print('x_extent=%g   # arcsec' % xlen)
         print('y_extent=%g   # arcsec' % ylen)
@@ -263,8 +287,8 @@ def slr_summary(ifproc, rc=False):
         print('tau=%g' % tau)
         print("# </lmtinfo>")
     else:
-        print("%-20s %7s  %-12s %-9s %-25s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %
-              (date_obs, obsnum, obsgoal, obspgm +(('('+map_coord+')') if obspgm=='Map' else ''), src, pid, restfreq[0], vlsr, tint, ra, dec, az, el, az1, el1))
+        print("%-20s %7s  %-10s %-12s %-11s %-25s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %
+              (date_obs, obsnum, instrument, obsgoal, obspgm +(('('+map_coord+'/'+map_motion[0]+')') if obspgm=='Map' else ''), src, pid, restfreq[0], vlsr, tint, ra, dec, az, el, az1, el1))
 
     # -end slr_summary() 
 
@@ -314,13 +338,21 @@ def rsr_summary(rsr_file, rc=False):
         
     # Header.Dcs.ObsNum = 33551 ;
     obsnum = nc.variables['Header.Dcs.ObsNum'][0]
+    receiver = b''.join(nc.variables['Header.Dcs.Receiver'][:]).decode().strip()
+    instrument = "RSR"
     # yuck, with the RSR filenameconvention this is the trick to find the chassic
     chassis   = rsr_file[ rsr_file.rfind('/') + 16 ]
+    # this is how you'd do it.
+    for k in nc.variables.keys():
+        if k.startswith('Header.RedshiftChassis') and k.endswith('.ChassisNumber'):
+            chassis = nc.variables[k][0]
     con_name  = 'Header.RedshiftChassis_%s_.CalObsNum' % chassis
     calobsnum = nc.variables[con_name][0]
     
     # Bs, Cal
     obspgm = b''.join(nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
+    if obspgm=='Map':
+        map_coord = b''.join(nc.variables['Header.Map.MapCoord'][:]).decode().strip()
     # ObsGoal
     obsgoal = b''.join(nc.variables['Header.Dcs.ObsGoal'][:]).decode().strip()
 
@@ -384,8 +416,8 @@ def rsr_summary(rsr_file, rc=False):
         #import pdb; pdb.set_trace()
         #print(date_obs, obsnum, obsgoal, obspgm, src,  pid,         tint,   ra,    dec,   az,   el)
         if True:
-            print("%-20s %7d  %-12s %-9s %-25s %-30s RSR      0    %6.1f  %10.6f %10.6f  %5.1f %5.1f" %
-              (date_obs, obsnum, obsgoal, obspgm, src,  pid,         tint,   ra,    dec,   az,   el))
+            print("%-20s %7d  %-10s %-12s %-11s %-25s %-30s              0    %6.1f  %10.6f %10.6f  %5.1f %5.1f" %
+              (date_obs, obsnum, instrument, obsgoal, obspgm+(('('+map_coord+')') if obspgm=='Map' else ''), src,  pid,         tint,   ra,    dec,   az,   el))
 
     # -end  rsr_summary()
     

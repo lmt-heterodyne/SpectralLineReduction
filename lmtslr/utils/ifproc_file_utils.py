@@ -27,6 +27,8 @@ def lookup_ifproc_file(obsnum, path=None, debug=False):
         paths += ['/data_lmt/lmttpm/']
     if 'tel' not in path:
         paths += ['/data_lmt/tel/']
+    if 'tel_toltec' not in path:
+        paths += ['/data_lmt/tel_toltec/']
 
     if debug:
         print(paths)

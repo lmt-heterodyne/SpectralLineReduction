@@ -132,17 +132,25 @@ def read_obsnum_bs(obsnum, list_of_pixels, bank,
     """
     path = get_data_lmt(path)
     # look up files to match pixel list
-    roach_list = create_roach_list(list_of_pixels)
-    files, nfiles = lookup_roach_files(obsnum, roach_list,
-                                       path=os.path.join(path, 'spectrometer'))
     ifproc_file = lookup_ifproc_file(obsnum, path=os.path.join(path, 'ifproc'))
     ifproc = IFProcData(ifproc_file)
     ifproc_cal_file = lookup_ifproc_file(ifproc.calobsnum, path=os.path.join(path, 'ifproc'))
     ifproc_cal = IFProcCal(ifproc_cal_file)
     ifproc_cal.compute_tsys()
+    if list_of_pixels is None:
+        list_of_pixels = ifproc.bs_beams
+    roach_list = create_roach_list(list_of_pixels)
+    files, nfiles = lookup_roach_files(obsnum, roach_list,
+                                       path=os.path.join(path, 'spectrometer'))
     
     # create the spec_bank object.  This reads all the roaches in the list "files[]"
     specbank = SpecBankData(files, ifproc, pixel_list=list_of_pixels, bank=bank)
+
+    # dict of pixel id to pixel index
+    dict_pix = {}
+    dict_pix[specbank.roach[0].pixel] = 0
+    dict_pix[specbank.roach[1].pixel] = 1
+    print('dict_pix', dict_pix)
 
     # check whether to use calibration and open necessary file
     if use_calibration == True:
@@ -157,10 +165,10 @@ def read_obsnum_bs(obsnum, list_of_pixels, bank,
             print('WARNING: CAL MAY NOT BE CORRECT')
 
         # reduce the two spectra - calibrated 
-        specbank.roach[0].reduce_ps_spectrum(stype=stype, block=block, normal_ps=False, 
-                                             calibrate=True, tsys_spectrum=specbank_cal.roach[0].tsys_spectrum)
-        specbank.roach[1].reduce_ps_spectrum(stype=stype, block=block, normal_ps=True, 
-                                             calibrate=True, tsys_spectrum=specbank_cal.roach[1].tsys_spectrum)
+        specbank.roach[dict_pix[list_of_pixels[0]]].reduce_ps_spectrum(stype=stype, block=block, normal_ps=True, 
+                                             calibrate=True, tsys_spectrum=specbank_cal.roach[dict_pix[list_of_pixels[0]]].tsys_spectrum)
+        specbank.roach[dict_pix[list_of_pixels[1]]].reduce_ps_spectrum(stype=stype, block=block, normal_ps=False, 
+                                             calibrate=True, tsys_spectrum=specbank_cal.roach[dict_pix[list_of_pixels[1]]].tsys_spectrum)
         if True:
             print("Warning: now saving Tsys spectrum")
             specbank.roach[0].tsys_spectrum = specbank_cal.roach[0].tsys_spectrum
@@ -168,19 +176,19 @@ def read_obsnum_bs(obsnum, list_of_pixels, bank,
 
     else:
         # reduce the two spectra - uncalibrated
-        specbank.roach[0].reduce_ps_spectrum(stype=stype, block=block, normal_ps=False, 
-                                             calibrate=False, tsys_no_cal=ifproc_cal.tsys[list_of_pixels[0]])
-        specbank.roach[1].reduce_ps_spectrum(stype=stype, block=block, normal_ps=True, 
-                                             calibrate=False, tsys_no_cal=ifproc_cal.tsys[list_of_pixels[1]])
+        specbank.roach[dict_pix[list_of_pixels[0]]].reduce_ps_spectrum(stype=stype, block=block, normal_ps=True, 
+                                             calibrate=False, tsys_no_cal=ifproc_cal.tsys[list_of_pixels[dict_pix[list_of_pixels[0]]]])
+        specbank.roach[dict_pix[list_of_pixels[1]]].reduce_ps_spectrum(stype=stype, block=block, normal_ps=False, 
+                                             calibrate=False, tsys_no_cal=ifproc_cal.tsys[list_of_pixels[dict_pix[list_of_pixels[1]]]])
         if True:
-            print("Warning: now saving Tsys value %g" % ifproc_cal.tsys[list_of_pixels[0]])
-            specbank.roach[0].tsys_spectrum = ifproc_cal.tsys[list_of_pixels[0]]
-            specbank.roach[1].tsys_spectrum = ifproc_cal.tsys[list_of_pixels[1]]
+            print("Warning: now saving Tsys value %g %g" % (ifproc_cal.tsys[specbank.roach[0].pixel], ifproc_cal.tsys[specbank.roach[1].pixel]))
+            specbank.roach[0].tsys_spectrum = ifproc_cal.tsys[specbank.roach[0].pixel]
+            specbank.roach[1].tsys_spectrum = ifproc_cal.tsys[specbank.roach[1].pixel]
 
     return ifproc, specbank
 
 def read_obsnum_otf(obsnum, list_of_pixels, bank,
-                    use_calibration, tsys=150., stype=1,
+                    use_calibration, tsys=150., stype=1, restfreq=-1,
                     use_otf_cal=False, save_tsys=False,
                     path=None):
     """
@@ -224,7 +232,8 @@ def read_obsnum_otf(obsnum, list_of_pixels, bank,
 
     # create the spec_bank object.  This reads all the roaches in the list "files"
     specbank = SpecBankData(files, ifproc,
-                            pixel_list=list_of_pixels, bank=bank, save_tsys=save_tsys)
+                            pixel_list=list_of_pixels, bank=bank,
+                            restfreq=restfreq, save_tsys=save_tsys)
 
     print("RESTFREQ %g GHz" % specbank.line_rest_frequency)
 
@@ -234,7 +243,7 @@ def read_obsnum_otf(obsnum, list_of_pixels, bank,
         calobsnum = specbank.calobsnum
         cal_files,ncalfiles = lookup_roach_files(calobsnum, roach_list,
                                                  path=os.path.join(path, 'spectrometer'))
-        specbank_cal = SpecBankCal(cal_files, ifproc_cal,
+        specbank_cal = SpecBankCal(cal_files, ifproc_cal, restfreq=restfreq,
                                    pixel_list=list_of_pixels)
         check_cal = specbank_cal.test_cal(specbank)
         if check_cal > 0:

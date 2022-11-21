@@ -99,6 +99,7 @@ class IFProc():
 
             date_obs = self.nc.variables['Data.TelescopeBackend.TelTime'][0].tolist()
             self.date_obs = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%dT%H:%M:%S')
+            self.date_ymd = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%d')
             print("%s begin %s" % (self.date_obs, self.filename))
 
             date_obs2 = self.nc.variables['Data.TelescopeBackend.TelTime'][-1:].tolist()[0]
@@ -216,8 +217,10 @@ class IFProc():
             self.el_total = self.nc.variables['Header.PointModel.ElTotalCor'][0] * 206264.8
             self.az_receiver = self.nc.variables['Header.PointModel.AzReceiverOff'][0] * 206264.8
             self.el_receiver = self.nc.variables['Header.PointModel.ElReceiverOff'][0] * 206264.8
-            self.el_m2 = self.nc.variables['Header.PointModel.ElM2Cor'][0] * 206264.8
             self.az_m2 = self.nc.variables['Header.PointModel.AzM2Cor'][0] * 206264.8
+            self.el_m2 = self.nc.variables['Header.PointModel.ElM2Cor'][0] * 206264.8
+            self.az_point_model_cor = self.nc.variables['Header.PointModel.AzPointModelCor'][0] * 206264.8
+            self.el_point_model_cor = self.nc.variables['Header.PointModel.ElPointModelCor'][0] * 206264.8
 
             # TILTMETER Information                                                                                  
             self.tilt0_x = self.nc.variables['Header.Tiltmeter_0_.TiltX'][0] * 206264.8
@@ -227,6 +230,10 @@ class IFProc():
 
             # TEMPERATURE SENSOR Information
             self.T = TempSens(self.nc.variables['Header.TempSens.TempSens'][:] / 100)
+
+            # WEATHER
+            self.weather_temperature = self.nc.variables['Header.Weather.Temperature'][0]
+            
 
             # map parameters 
             try:
@@ -274,6 +281,8 @@ class IFProc():
                 self.baseline_list = []
             try:
                 self.line_rest_frequency = self.nc.variables['Header.' + self.receiver + '.LineFreq'][0:2]
+                print("PJT: line_rest_freq ", self.line_rest_frequency)
+                # @todo   reset self.line_rest_frequency[board]
                 self.doppler_track = self.nc.variables['Header.' + self.receiver + '.DopplerTrack'][0]
                 self.observatory_velocity = self.nc.variables['Header.Sky.ObsVel'][0]
                 self.barycenter_velocity = self.nc.variables['Header.Sky.BaryVel'][0]

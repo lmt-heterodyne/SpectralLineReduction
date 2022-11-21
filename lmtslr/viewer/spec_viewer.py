@@ -154,7 +154,7 @@ class SpecBankViewer(SpecViewer):
         return(int(ispec[0]))
         
     def plot_peak_spectrum(self, S, pixel, plot_axis, baseline_list, 
-                           n_baseline_list):
+                           n_baseline_list, plot_line_list=None, plot_baseline_list=None):
         """
         Plots the spectrum which gives maximum value in map.
         Args:
@@ -180,6 +180,14 @@ class SpecBankViewer(SpecViewer):
         plot_axis[3] = (x - baseline)[prange].max() * 1.1
         legend_label = 'Pixel %d\nPeak Spectrum %d'%(pixel, ispec)
         pl.plot(v, (x - baseline), label=legend_label)
+        
+        if plot_line_list is not None:
+            for l in plot_line_list:
+                pl.axvspan(l[0], l[1], alpha=0.1, color='b')
+        if plot_baseline_list is not None:
+            for l in plot_baseline_list:
+                pl.axvspan(l[0], l[1], alpha=0.1, color='r')
+            
         legend = pl.legend(fontsize='x-small')
         pl.xlabel('Velocity (km/s)')
         pl.suptitle('ObsNum %d: %s %s %sGHz\n Pixel %d Peak Spectrum %d'%(
@@ -187,7 +195,7 @@ class SpecBankViewer(SpecViewer):
         pl.axis(plot_axis)
 
     def plot_all_spectra(self, S, pixel, plot_axis, baseline_list, 
-                         n_baseline_list):
+                         n_baseline_list, plot_line_list=None, plot_baseline_list=None):
         """
         Plots all spectra.
         Args:
@@ -236,6 +244,12 @@ class SpecBankViewer(SpecViewer):
             ax.tick_params(axis='both', which='minor', labelsize=6)
             ax.plot(v, (S.map_spectra[pixel_index][index] - np.sum(
                 S.map_spectra[pixel_index][index][S.blist]) / S.nb))
+            if plot_line_list is not None:
+                for l in plot_line_list:
+                    ax.axvspan(l[0], l[1], alpha=0.1, color='b')
+            if plot_baseline_list is not None:
+                for l in plot_baseline_list:
+                    ax.axvspan(l[0], l[1], alpha=0.1, color='r')
             ax.axis(plot_axis)
             ax.text(plot_axis[0] + 0.1 * (plot_axis[1] - plot_axis[0]), 
                     plot_axis[3] - 0.2 * (plot_axis[3] - plot_axis[2]), 
@@ -449,7 +463,7 @@ class SpecBankViewer(SpecViewer):
             S.receiver, S.line_rest_frequency))
 
     def plot_ps(self, S, baseline_order, plot_axis=[-200, 200, -0.5, 2.0], 
-                line_stats_all=[]):
+                line_stats_all=[], plot_line_list=None, plot_baseline_list=None):
         """
         Makes position-switch plots for pixels in SpecBank object S.
         Args:
@@ -485,6 +499,12 @@ class SpecBankViewer(SpecViewer):
             # for each line, fit baseline and compute line statistics
             line_stats = line_stats_all[ipix]
             ax.plot(line_stats.v, line_stats.spectrum)
+            if plot_line_list is not None:
+                for l in plot_line_list:
+                    ax.axvspan(l[0], l[1], alpha=0.1, color='b')
+            if plot_baseline_list is not None:
+                for l in plot_baseline_list:
+                    ax.axvspan(l[0], l[1], alpha=0.1, color='r')
             ax.axis(plot_axis)
             xtext = plot_axis[0] + 0.05 * (plot_axis[1] - plot_axis[0])
             ytext = plot_axis[3] - 0.05 * (plot_axis[3] - plot_axis[2])
@@ -500,7 +520,7 @@ class SpecBankViewer(SpecViewer):
             S.receiver, S.line_rest_frequency))
 
     def plot_bs(self, S, baseline_order, plot_axis=[-200, 200, -0.5, 2.0], 
-                line_stats=None):
+                line_stats=None, plot_line_list=None, plot_baseline_list=None):
         """
         Makes beam-switch plots for pixels in SpecBank object S.
         Args:
@@ -524,6 +544,13 @@ class SpecBankViewer(SpecViewer):
 
         ax.plot(line_stats.v, line_stats.spectrum)
         ax.axis(plot_axis)
+        if plot_line_list is not None:
+            for l in plot_line_list:
+                ax.axvspan(l[0], l[1], alpha=0.1, color='b')
+        if plot_baseline_list is not None:
+            for l in plot_baseline_list:
+                ax.axvspan(l[0], l[1], alpha=0.1, color='r')
+            
         xtext = plot_axis[0] + 0.05 * (plot_axis[1] - plot_axis[0])
         ytext = plot_axis[3] - 0.05 * (plot_axis[3] - plot_axis[2])
         ax.text(xtext, ytext, '%2d/%2d I=%8.3f(%8.3f)'%(S.roach_pixel_ids[0], 

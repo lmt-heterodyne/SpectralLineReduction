@@ -68,6 +68,7 @@ class RoachSpec():
         self.tsys_aver = False
         self.tsyscal = None
         self.ncal = 0
+        self.pixel = 4*self.roach_id + self.roach_input
 
         self.ons,  self.on_ranges,  self.nons  = self.get_ranges(0)
         self.refs, self.ref_ranges, self.nrefs = self.get_ranges(1)
@@ -200,9 +201,7 @@ class RoachSpec():
             else:
                 self.tsys_spectra[ihot, :] = tsys_spec
             #print("TSYS: ",self.tsys_spectra[ihot, :],tsys[ihot])
-        # can we use pixel= this way?
-        pixel = 4*self.roach_id + self.roach_input
-        print("TSYS[%d] otf_cal %s" % (pixel,repr(tsys)))
+        print("TSYS[%d] otf_cal %s" % (self.pixel,repr(tsys)))
             
         
     def get_nearest_reference(self, index, left=True):
@@ -596,9 +595,7 @@ class RoachSpec():
                 self.tsys_spectrum[:] = self.tsys
                 
             #print("TSYS: ",self.tsys_spectrum[:])
-            # @todo can we use pixel= this way?
-            pixel = 4*self.roach_id + self.roach_input
-            print("TSYS[%d] = %g +/- %g (%d channels)" % (pixel,self.tsys, tsysstd, len(self.tsys_spectrum)))
+            print("TSYS[%d] = %g +/- %g (%d channels)" % (self.pixel,self.tsys, tsysstd, len(self.tsys_spectrum)))
         else:
             print('ObsNum %d Roach %d does not have calibration data'%(
                 self.obsnum, self.roach_id))
@@ -690,7 +687,7 @@ class SpecBank():
                  pixel_list=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], 
                  time_offset=[-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,
                               -0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03], 
-                 bank=0, save_tsys=False):
+                 bank=0, restfreq=-1, save_tsys=False):
         """
         Constructor for SpecBank class.
         Args: 
@@ -747,16 +744,19 @@ class SpecBank():
         self.roach = []
         for i in range(self.nroach):
             self.roach_pixel_ids = self.roach_pixel_ids + \
-                                   self.read_roach(roach_files[i], i, 
-                                                   pixel_list)
+                                   self.read_roach(roach_files[i], i, pixel_list)
         self.roach_pixel_ids = np.array(self.roach_pixel_ids)
         self.npix = len(self.roach)
         self.nchan = self.roach[0].nchan
         self.bandwidth = self.roach[0].bandwidth
         self.channel_0 = (self.nchan - 1) / 2
-        self.velocity_0 = self.ifproc.velocity
+        self.velocity_0 = self.ifproc.velocity  # vlsr
         self.frequency_offset = self.ifproc.frequency_offset[bank]
-        self.line_rest_frequency = self.ifproc.line_rest_frequency[bank]
+        print("PJT frequency_offset, restfreq ",self.frequency_offset, restfreq)
+        if restfreq < 0:
+            self.line_rest_frequency = self.ifproc.line_rest_frequency[bank]
+        else:
+            self.line_rest_frequency = restfreq
         self.receiver = self.ifproc.receiver
         self.sideband = self.ifproc.sideband[bank]
         self.tracking_beam = self.ifproc.tracking_beam
@@ -769,7 +769,10 @@ class SpecBank():
         self.dvdc = -self.dfdc / (self.line_rest_frequency * np.float64(1e9)) \
                     * np.float64(299792.458)
         self.dvdf = -self.dvdc/self.dfdc
-        self.velocity_offset = self.dvdf * (self.frequency_offset * np.float64(1e9))
+        if restfreq < 0:
+            self.velocity_offset = self.dvdf * (self.frequency_offset * np.float64(1e9))
+        else:
+            self.velocity_offset = 0.0
 
         self.cal_flag = False
         self.save_tsys = save_tsys
@@ -1018,7 +1021,7 @@ class SpecBank():
                           indx_small)
                 # now we append the individual roach spectrum object to\
                 # our list
-                self.roach.append(RoachSpec(obsnum, roach_id, input_chan, 
+                self.roach.append(RoachSpec(obsnum, roach_index, input_chan, 
                                             nchan, bandwidth, nspec, raw_spec,
                                             spec_time, xmap, ymap, pmap, gmap,
                                             bufpos))
@@ -1036,7 +1039,7 @@ class SpecBankData(SpecBank):
                  pixel_list=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
                  time_offset=[-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,
                               -0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03],
-                 bank=0, save_tsys=False):
+                 bank=0, restfreq=-1, save_tsys=False):
         """
         Constructor for SpecBankData class.
         Args:
@@ -1051,7 +1054,7 @@ class SpecBankData(SpecBank):
         """
         SpecBank.__init__(self, roach_files, ifproc_data, 
                           pixel_list=pixel_list, time_offset=time_offset, 
-                          bank=bank, save_tsys=save_tsys)
+                          bank=bank, restfreq=restfreq, save_tsys=save_tsys)
     
     def create_map_data(self, channel_list, n_channel_list, baseline_list, 
                         n_baseline_list, baseline_order=0, 
@@ -1394,7 +1397,8 @@ class SpecBankCal(SpecBank):
     """
     Base class to deal with a complete "bank" of spectra
     """
-    def __init__(self, roach_files, ifproc_data, 
+    def __init__(self, roach_files, ifproc_data,
+                 restfreq=-1,
                  pixel_list=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], 
                  bdrop=50, edrop=100):
         """
@@ -1412,7 +1416,7 @@ class SpecBankCal(SpecBank):
             none
         """
         # @todo no bank?
-        SpecBank.__init__(self, roach_files, ifproc_data, 
+        SpecBank.__init__(self, roach_files, ifproc_data, restfreq=restfreq,
                           pixel_list=pixel_list)
     
         # go ahead and process the calibration files
@@ -1430,15 +1434,15 @@ class SpecBankCal(SpecBank):
         """
         result = 0
         if DATA_FILE.line_rest_frequency != self.line_rest_frequency:
-            print('Warning: Line Rest Frequency of Cal observation does not \
-                   match map')
+            print('Warning: Line Rest Frequency of Cal observation does not match map',
+                   DATA_FILE.line_rest_frequency,self.line_rest_frequency)
             result = result + 1
         if DATA_FILE.nchan != self.nchan:
-            print('Warning: number of channels for Cal observation does not \
-                   match map')
+            print('Warning: number of channels for Cal observation does not match map',
+                   DATA_FILE.nchan,self.nchan)
             result = result + 1
         if DATA_FILE.bandwidth != self.bandwidth:
-            print('Warning: spectrometer bandwidth of Cal observation does \
-                   not match map')
+            print('Warning: spectrometer bandwidth of Cal observation does not match map',
+                   DATA_FILE.bandwidth,self.bandwidth)
             result = result + 1
         return result

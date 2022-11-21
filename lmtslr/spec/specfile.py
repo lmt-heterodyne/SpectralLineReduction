@@ -18,11 +18,13 @@ from astropy.stats import mad_std
 from lmtslr.spec.spec import SpecBankData
 from lmtslr.reduction.line_reduction import LineData, NetCDFLineHeader
 from lmtslr.utils.reader import count_otf_spectra
-from lmtslr.grid.grid import Grid 
+from lmtslr.grid.grid import Grid
+
+_version =  "6-oct-2022"         # modify this if anything in the output SpecFile has been changed
 
 class SpecFile():
     def __init__(self, ifproc, specbank, pix_list):
-        self.version = "20-apr-2022"         # modify this if anything in the output SpecFile has been changed
+        self.version = _version
         self.ifproc = ifproc
         self.specbank = specbank
         self.pix_list = pix_list
@@ -115,13 +117,19 @@ class SpecFile():
 
         nc_x_position = self.ncout.createVariable('Header.Obs.XPosition', 'f4')
         nc_y_position = self.ncout.createVariable('Header.Obs.YPosition', 'f4')
-        # PJT:  1=RA/DEC   2=Lat/Lon 
+        # PJT:  0=Az/El 1=Ra/Dec   2=Lat/Lon   (0=az/al)
         if self.specbank.map_coord == 1:
             self.ncout.variables['Header.Obs.XPosition'][0] = self.specbank.ifproc.source_RA/np.pi*180.0
             self.ncout.variables['Header.Obs.YPosition'][0] = self.specbank.ifproc.source_Dec/np.pi*180.0
-        else:
+            print("PJT warning: assuming RA/DEC for map_coord = %d" % self.specbank.map_coord)            
+        elif self.specbank.map_coord == 2:
             self.ncout.variables['Header.Obs.XPosition'][0] = self.specbank.ifproc.source_L/np.pi*180.0
             self.ncout.variables['Header.Obs.YPosition'][0] = self.specbank.ifproc.source_B/np.pi*180.0
+        else:
+            # old or bad headers (?) - resort back to RA-DEC
+            self.ncout.variables['Header.Obs.XPosition'][0] = self.specbank.ifproc.source_RA/np.pi*180.0
+            self.ncout.variables['Header.Obs.YPosition'][0] = self.specbank.ifproc.source_Dec/np.pi*180.0
+            print("PJT warning: assuming RA/DEC for map_coord = %d" % self.specbank.map_coord)
 
         # PJT new DATE-OBS
         nc_do = self.ncout.createVariable('Header.Obs.DateObs', 'c', ('nlabel',))
