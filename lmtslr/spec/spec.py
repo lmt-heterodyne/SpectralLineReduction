@@ -23,7 +23,8 @@ from itertools import groupby
 # from lmtslr.ifproc.ifproc import IFProc
 
 # define all the pixels in the roach boards they appear in
-roach_pixels_all = [[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15]]
+roach_pixels_all = [[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15],
+                    [0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15]]
 
 
 
@@ -933,6 +934,9 @@ class SpecBank():
             roach_id (int): number of the roach. e.g. roach0 would be 0
             pixel_list (list): list of pixels we want to process
             as_float (bool): if True, uses float instead of double.
+                    [data before 2021/22 was in double, but we convert
+                     to float to save memory. Starting in 2021 raw data
+                     was saved in float as well]
         """
         pixel_ids = []
         if os.path.isfile(filename):
@@ -942,7 +946,7 @@ class SpecBank():
             obsnum = nc.variables['Header.Telescope.ObsNum'][0]
             nchan = nc.variables['Header.Mode.numchannels'][0]
             bandwidth = nc.variables['Header.Mode.Bandwidth'][0]
-            ninputs = 4
+            ninputs = 4    # number of pixels per roach
 
             datatime = nc.variables['Data.Integrate.time'][:]
             if as_float:
@@ -959,16 +963,16 @@ class SpecBank():
             print('read_roach %s     nspec,nchan=%d,%d' %
                   (filename, rawdata.shape[0], rawdata.shape[1]))
             
-            # get roach index
+            # get roach index back from the filename ??? why ???
             roach_index = roach_id
-            for i in range(4):
+            for i in range(8):
                 roach_name = 'roach%d'%i
                 if roach_name in filename:
                     roach_index = i
                     break
 
             for input_chan in range(ninputs):
-                # check to see whether this input matches one of the \
+                # check to see whether this input matches one of the
                 # pixels we would like
                 # if no match, then don't process it into the list
                 if roach_pixels_all[roach_index][input_chan] not in pixel_list:
