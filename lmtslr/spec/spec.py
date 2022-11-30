@@ -687,7 +687,9 @@ class SpecBank():
                  pixel_list=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], 
                  time_offset=[-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,
                               -0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03], 
-                 bank=0, restfreq=-1, save_tsys=False):
+                 bank=0,
+                 restfreq=-1,
+                 save_tsys=False):
         """
         Constructor for SpecBank class.
         Args: 
@@ -1044,7 +1046,7 @@ class SpecBankData(SpecBank):
         Constructor for SpecBankData class.
         Args:
             roach files (list): list of files for ROACH boards 
-                (nominally 4)
+                (nominally 4)   either roach0..3 or roach4..7
             ifproc_data (object): data from corresponding ifproc file
             pixel_list (list): list of pixels to process (default is 
                 all)
@@ -1109,8 +1111,7 @@ class SpecBankData(SpecBank):
                                          channel_list, n_channel_list, 
                                          baseline_list, n_baseline_list, 
                                          baseline_order=0, 
-                                         pixel_list=[0,1,2,3,4,5,6,7,8,9,10,
-                                                     11,12,13,14,15], 
+                                         pixel_list=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], 
                                          type=0):
         """
         Processes a list of pixel ids to make a set of bufpos grids for
@@ -1123,12 +1124,9 @@ class SpecBankData(SpecBank):
             n_channel_list (int): number of channels to use
             baseline_list (list): list of baselines to use
             n_baseline_list (int): number of baselines to use
-            baseline_order (int): order of fitting function (default is
-                0)
-            pixel_list (list): list of pixels to process (default is 
-                all)
-            type (int): type of integration to use. 0 is YINT and 1 is
-                YMAX.
+            baseline_order (int): order of fitting function (default is 0)
+            pixel_list (list): list of pixels to process (default is all)
+            type (int): type of integration to use. 0 is YINT and 1 is YMAX.
         Returns:
             none
         """
@@ -1144,7 +1142,7 @@ class SpecBankData(SpecBank):
                     xpt = xgrid[ixpt]
                     #grid_list = np.where( np.sqrt( (self.roach[i].xmap[self.roach[i].ons]-xpt)**2+(self.roach[i].ymap[self.roach[i].ons]-ypt)**2) < tole)
                     grid_list = np.where(np.sqrt((self.roach[i].xmap - xpt)**2
-                                                  + (self.roach[i].ymap - ypt)**2)
+                                               + (self.roach[i].ymap - ypt)**2)
                                          < tole)
                     self.roach[i].bufpos[grid_list] = bufpos
                     #print(xpt,ypt,bufpos)
@@ -1273,12 +1271,9 @@ class SpecBankData(SpecBank):
             n_channel_list (int): number of channels to use
             baseline_list (list): list of baselines to use
             n_baseline_list (int): number of baselines to use
-            baseline_order (int): order of fitting function (default is
-                0)
-            pixel_list (list): list of pixels to process (default is 
-                all)
-            type (int): type of integration to use. 0 is YINT and 1 is
-                YMAX.
+            baseline_order (int): order of fitting function (default is 0)
+            pixel_list (list): list of pixels to process (default is all)
+            type (int): type of integration to use. 0 is YINT and 1 is YMAX.
         Returns:
             none
         """
@@ -1396,6 +1391,7 @@ class SpecBankData(SpecBank):
 class SpecBankCal(SpecBank):
     """
     Base class to deal with a complete "bank" of spectra
+    @todo   note there is no bank= keyword here
     """
     def __init__(self, roach_files, ifproc_data,
                  restfreq=-1,
