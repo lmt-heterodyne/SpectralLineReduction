@@ -319,7 +319,7 @@ def slr_summary(ifproc, rc=False):
         dv = dataverse(pid)
         if dv != None:
             for k in dv.keys():
-                print('%s=%s' % (k,dv[k]))
+                print('%s="%s"' % (k,dv[k]))
         else:
             print("# no dataverse info")                
         print("# </lmtinfo>")
@@ -450,7 +450,7 @@ def rsr_summary(rsr_file, rc=False):
         dv = dataverse(pid)
         if dv != None:
             for k in dv.keys():
-                print('%s=%s' % (k,dv[k]))
+                print('%s="%s"' % (k,dv[k]))
         else:
             print("# no dataverse info")
         print("# </lmtinfo>")
