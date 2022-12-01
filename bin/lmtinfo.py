@@ -53,7 +53,7 @@ find:     search in database, terms are logically AND-ed
 
 """
 
-version="21-oct-2022"
+version="1-dec-2022"
 
 import os
 import sys
@@ -125,6 +125,37 @@ def iau(src):
     # for now case by case basis
     if src=="NGC6946_(CO)":   return "NGC6946"
     return src
+
+def dataverse(pid):
+    """
+    input:    Projectid (string)
+    output:   dictionary of dataverse key/val pairs
+    
+    for DataVerse ingestion we need a few new parameters in the rc file
+      PIName
+      projectTitle
+    The LMTOY environment needs to be present for this
+    
+    """
+    dbname = os.environ['LMTOY'] + '/etc/ProjectId.tab'
+    print("# project info:",dbname)
+    fp = open(dbname)
+    lines = fp.readlines()
+    fp.close()
+    #
+    db = {}
+    for line in lines:
+        w = line.strip().split()
+        if len(w) < 3:
+            continue
+        if w[0] == pid:
+            db['PIName'] = w[1]
+            db['projectTitle'] = w[2]
+            return db
+    db['PIName']       = 'Unknown'
+    db['projectTitle'] = 'Unknown'
+    return db
+
 
     
 #  Examples:
@@ -285,6 +316,12 @@ def slr_summary(ifproc, rc=False):
         print('y_extent=%g   # arcsec' % ylen)
         print('instrument="%s"' % instrument)
         print('tau=%g' % tau)
+        dv = dataverse(pid)
+        if dv != None:
+            for k in dv.keys():
+                print('%s=%s' % (k,dv[k]))
+        else:
+            print("# no dataverse info")                
         print("# </lmtinfo>")
     else:
         print("%-20s %7s  %-10s %-12s %-11s %-25s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %
@@ -410,6 +447,12 @@ def rsr_summary(rsr_file, rc=False):
         #print('y_extent=%g   # arcsec' % ylen)
         print('instrument="RSR"')
         print('tau=%g' % tau)
+        dv = dataverse(pid)
+        if dv != None:
+            for k in dv.keys():
+                print('%s=%s' % (k,dv[k]))
+        else:
+            print("# no dataverse info")
         print("# </lmtinfo>")
 
     else:     # one line summary
