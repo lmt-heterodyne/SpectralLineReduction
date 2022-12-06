@@ -217,7 +217,7 @@ class LineDataHeader(object):
         Args:
             ifproc (object): ifproc object with ifproc information
             bank (int): selects which bank of the spectrometer is 
-                relevant 
+                relevant  (usually 0 or 1)
             nchan (int): number of channels in the spectrum
             bandwidth (float): bandwidth of the spectrum (MHz)
         Returns:
