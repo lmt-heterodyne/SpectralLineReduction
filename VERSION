@@ -1,3 +1,6 @@
+6-dec-2022
+  - fix bug in radiometer fits file
+  - IF2 has been merged
 29-nov-2022
   - branch 'IF2' to prepare for the 2nd IF which will use roach4..7
 5-oct-2022
