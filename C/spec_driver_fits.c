@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
   strncpy(C.receiver,S.receiver,20);
   strncpy(C.history1,S.history,MAXHIST);   
   printf("DATE-OBS %s\n",C.date_obs);
-  dfdt = S.deltaf * S.deltat;
+  dfdt = fabs(S.deltaf * S.deltat);
   printf("DeltaFreq=%g  DeltaTime=%g : sqrt(Df.Dt) = %g\n",S.deltaf,S.deltat,sqrt(dfdt));
   
   C.x_position = S.x_position;
