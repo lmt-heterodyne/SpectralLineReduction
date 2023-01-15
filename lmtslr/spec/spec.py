@@ -1088,6 +1088,7 @@ class SpecBankData(SpecBank):
         x_list = []
         y_list = []
         p_list = []
+        g_list = []
         n_list = []
         mp_list = []
         for ipix in pixel_list:
