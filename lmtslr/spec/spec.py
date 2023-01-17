@@ -23,7 +23,8 @@ from itertools import groupby
 # from lmtslr.ifproc.ifproc import IFProc
 
 # define all the pixels in the roach boards they appear in
-roach_pixels_all = [[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15]]
+roach_pixels_all = [[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15],
+                    [0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15]]
 
 
 
@@ -687,7 +688,9 @@ class SpecBank():
                  pixel_list=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], 
                  time_offset=[-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,
                               -0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03,-0.03], 
-                 bank=0, restfreq=-1, save_tsys=False):
+                 bank=0,
+                 restfreq=-1,
+                 save_tsys=False):
         """
         Constructor for SpecBank class.
         Args: 
@@ -931,6 +934,9 @@ class SpecBank():
             roach_id (int): number of the roach. e.g. roach0 would be 0
             pixel_list (list): list of pixels we want to process
             as_float (bool): if True, uses float instead of double.
+                    [data before 2021/22 was in double, but we convert
+                     to float to save memory. Starting in 2021 raw data
+                     was saved in float as well]
         """
         pixel_ids = []
         if os.path.isfile(filename):
@@ -940,7 +946,7 @@ class SpecBank():
             obsnum = nc.variables['Header.Telescope.ObsNum'][0]
             nchan = nc.variables['Header.Mode.numchannels'][0]
             bandwidth = nc.variables['Header.Mode.Bandwidth'][0]
-            ninputs = 4
+            ninputs = 4    # number of pixels per roach
 
             datatime = nc.variables['Data.Integrate.time'][:]
             if as_float:
@@ -957,16 +963,16 @@ class SpecBank():
             print('read_roach %s     nspec,nchan=%d,%d' %
                   (filename, rawdata.shape[0], rawdata.shape[1]))
             
-            # get roach index
+            # get roach index back from the filename ??? why ???
             roach_index = roach_id
-            for i in range(4):
+            for i in range(8):
                 roach_name = 'roach%d'%i
                 if roach_name in filename:
                     roach_index = i
                     break
 
             for input_chan in range(ninputs):
-                # check to see whether this input matches one of the \
+                # check to see whether this input matches one of the
                 # pixels we would like
                 # if no match, then don't process it into the list
                 if roach_pixels_all[roach_index][input_chan] not in pixel_list:
@@ -1044,7 +1050,7 @@ class SpecBankData(SpecBank):
         Constructor for SpecBankData class.
         Args:
             roach files (list): list of files for ROACH boards 
-                (nominally 4)
+                (nominally 4)   either roach0..3 or roach4..7
             ifproc_data (object): data from corresponding ifproc file
             pixel_list (list): list of pixels to process (default is 
                 all)
@@ -1082,6 +1088,7 @@ class SpecBankData(SpecBank):
         x_list = []
         y_list = []
         p_list = []
+        g_list = []
         n_list = []
         mp_list = []
         for ipix in pixel_list:
@@ -1109,8 +1116,7 @@ class SpecBankData(SpecBank):
                                          channel_list, n_channel_list, 
                                          baseline_list, n_baseline_list, 
                                          baseline_order=0, 
-                                         pixel_list=[0,1,2,3,4,5,6,7,8,9,10,
-                                                     11,12,13,14,15], 
+                                         pixel_list=[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15], 
                                          type=0):
         """
         Processes a list of pixel ids to make a set of bufpos grids for
@@ -1123,12 +1129,9 @@ class SpecBankData(SpecBank):
             n_channel_list (int): number of channels to use
             baseline_list (list): list of baselines to use
             n_baseline_list (int): number of baselines to use
-            baseline_order (int): order of fitting function (default is
-                0)
-            pixel_list (list): list of pixels to process (default is 
-                all)
-            type (int): type of integration to use. 0 is YINT and 1 is
-                YMAX.
+            baseline_order (int): order of fitting function (default is 0)
+            pixel_list (list): list of pixels to process (default is all)
+            type (int): type of integration to use. 0 is YINT and 1 is YMAX.
         Returns:
             none
         """
@@ -1144,7 +1147,7 @@ class SpecBankData(SpecBank):
                     xpt = xgrid[ixpt]
                     #grid_list = np.where( np.sqrt( (self.roach[i].xmap[self.roach[i].ons]-xpt)**2+(self.roach[i].ymap[self.roach[i].ons]-ypt)**2) < tole)
                     grid_list = np.where(np.sqrt((self.roach[i].xmap - xpt)**2
-                                                  + (self.roach[i].ymap - ypt)**2)
+                                               + (self.roach[i].ymap - ypt)**2)
                                          < tole)
                     self.roach[i].bufpos[grid_list] = bufpos
                     #print(xpt,ypt,bufpos)
@@ -1273,12 +1276,9 @@ class SpecBankData(SpecBank):
             n_channel_list (int): number of channels to use
             baseline_list (list): list of baselines to use
             n_baseline_list (int): number of baselines to use
-            baseline_order (int): order of fitting function (default is
-                0)
-            pixel_list (list): list of pixels to process (default is 
-                all)
-            type (int): type of integration to use. 0 is YINT and 1 is
-                YMAX.
+            baseline_order (int): order of fitting function (default is 0)
+            pixel_list (list): list of pixels to process (default is all)
+            type (int): type of integration to use. 0 is YINT and 1 is YMAX.
         Returns:
             none
         """
@@ -1396,6 +1396,7 @@ class SpecBankData(SpecBank):
 class SpecBankCal(SpecBank):
     """
     Base class to deal with a complete "bank" of spectra
+    @todo   note there is no bank= keyword here
     """
     def __init__(self, roach_files, ifproc_data,
                  restfreq=-1,

@@ -40,7 +40,7 @@ def read_obsnum_ps(obsnum, list_of_pixels, bank, use_calibration,
         obsnum (int): sequential id (ObsNum) of the observation
         list_of_pixels (list): identifies which elements of the 
             spectrometer are to be read
-        bank (int):  which spectral window bank to read
+        bank (int):  which spectral window bank to read (0 or 1)
         use_calibration (bool): set True if we are to use calibration 
             scan for cal. 
             False just multiplies by system temperature
@@ -55,7 +55,7 @@ def read_obsnum_ps(obsnum, list_of_pixels, bank, use_calibration,
     """
     path = get_data_lmt(path)
     # look up files to match pixel list
-    roach_list = create_roach_list(list_of_pixels)
+    roach_list = create_roach_list(list_of_pixels,bank)
     files, nfiles = lookup_roach_files(obsnum, roach_list,
                                        path=os.path.join(path, 'spectrometer'))
     ifproc_file = lookup_ifproc_file(obsnum, path=os.path.join(path, 'ifproc'))
@@ -139,7 +139,7 @@ def read_obsnum_bs(obsnum, list_of_pixels, bank,
     ifproc_cal.compute_tsys()
     if list_of_pixels is None:
         list_of_pixels = ifproc.bs_beams
-    roach_list = create_roach_list(list_of_pixels)
+    roach_list = create_roach_list(list_of_pixels,bank)
     files, nfiles = lookup_roach_files(obsnum, roach_list,
                                        path=os.path.join(path, 'spectrometer'))
     
@@ -203,7 +203,7 @@ def read_obsnum_otf(obsnum, list_of_pixels, bank,
         obsnum (int): sequential id (ObsNum) of the observation
         list_of_pixels (list): identifies which elements of the 
             spectrometer are to be read
-        bank
+        bank (integer) : the spectral bank (0 or 1)
         use_calibration (bool): set True if we are to use calibration 
             scan for cal. 
             False just multiplies by system temperature
@@ -219,7 +219,7 @@ def read_obsnum_otf(obsnum, list_of_pixels, bank,
     """
     path = get_data_lmt(path)    
     # look up files to match pixel list
-    roach_list = create_roach_list(list_of_pixels)
+    roach_list = create_roach_list(list_of_pixels,bank)
     files, nfiles = lookup_roach_files(obsnum, roach_list,
                                        path=os.path.join(path, 'spectrometer'))
     ifproc_file = lookup_ifproc_file(obsnum,
@@ -307,7 +307,7 @@ def read_obsnum_otf_multiprocess(ifproc, ifproc_cal, obsnum,
     """
     path = get_data_lmt(path)    
     # look up files to match pixel list
-    roach_list = create_roach_list(list_of_pixels)
+    roach_list = create_roach_list(list_of_pixels,bank)
     files, nfiles = lookup_roach_files(obsnum, roach_list, 
                                        path=os.path.join(path, 'spectrometer/'))
 

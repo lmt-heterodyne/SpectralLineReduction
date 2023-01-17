@@ -19,8 +19,8 @@
 Usage: lmtinfo.py OBSNUM
        lmtinfo.py data
        lmtinfo.py build
-       lmtinfo.py grep TERM1 [TERM2 ...]
-       lmtinfo.py find TERM1 [TERM2 ...]
+       lmtinfo.py grep [TERM1 [TERM2 ...]]
+       lmtinfo.py find [TERM1 [TERM2 ...]]
 
 -h --help  This help
 
@@ -53,7 +53,7 @@ find:     search in database, terms are logically AND-ed
 
 """
 
-version="1-dec-2022"
+version="4-jan-2023"
 
 import os
 import sys
@@ -82,7 +82,9 @@ def grep(terms):
         print("Logfile %s does not exist, use the build option to create it" % logfile)
         sys.exit(1)
 
-    if len(terms) == 1:
+    if len(terms) == 0:
+        cmd = "grep -v ^# %s" % (logfile)
+    elif len(terms) == 1:
         cmd = "grep -i %s %s" % (terms[0],logfile)
     elif len(terms) == 2:
         cmd = "grep -i %s %s | grep -i %s" % (terms[0],logfile,terms[1])
@@ -516,6 +518,9 @@ if len(sys.argv) == 2:
     # replacement for $DATA_LMT
     if sys.argv[1] == 'data':
         print(header)
+    elif sys.argv[1] == 'grep' or sys.argv[1] == 'find':
+        print(header)
+        grep([])
     elif os.path.isdir(sys.argv[1]):
         data_lmt = sys.argv[1]
         print(header)
@@ -551,7 +556,7 @@ if len(sys.argv) == 2:
                 except:
                     yyyymmdd = "1900-00-00"
                     obsnum   = " "
-                print("%-20s %7s  failed for rsr %s" % (yyyymmdd,obsnum,f))                    
+                print("# %-20s %7s  failed for rsr %s" % (yyyymmdd,obsnum,f))                    
 
         globs = '%s/ifproc/ifproc_*.nc' % data_lmt
         fn = glob.glob(globs)
@@ -567,7 +572,7 @@ if len(sys.argv) == 2:
                 except:
                     yyyymmdd = "1900-00-00"
                     obsnum   = " "
-                print("%-20s %7s  failed for slr %s" % (yyyymmdd,obsnum,f))
+                print("# %-20s %7s  failed for slr %s" % (yyyymmdd,obsnum,f))
         sys.exit(0)
                
 elif len(sys.argv) == 3:
