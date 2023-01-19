@@ -421,6 +421,8 @@ def rsr_summary(rsr_file, rc=False):
         tint = 1
     else:
         tint = 0
+    # Header.Dcs.IntegrationTime
+    tint = nc.variables['Header.Dcs.IntegrationTime'][0]
 
     nc.close()
 
