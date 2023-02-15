@@ -49,11 +49,11 @@ seems to be the first data here.
 data:     show the database, no sorting and culling
 build:    rebuild the sorted database (needs write permission in $DATA_LMT)
 grep:     search in database, terms are logically AND-ed
-find:     search in database, terms are logically AND-ed
+find:     search in database, terms are logically AND-ed (alias for 'grep')
 
 """
 
-version="4-jan-2023"
+version="14-feb-2023"
 
 import os
 import sys
@@ -128,7 +128,7 @@ def iau(src):
     if src=="NGC6946_(CO)":   return "NGC6946"
     return src
 
-def dataverse(pid):
+def dataverse_old(pid):
     """
     input:    Projectid (string)
     output:   dictionary of dataverse key/val pairs
@@ -139,6 +139,7 @@ def dataverse(pid):
     The LMTOY environment needs to be present for this
     
     """
+    # PID,PI,Title
     dbname = os.environ['LMTOY'] + '/etc/ProjectId.tab'
     print("# project info:",dbname)
     fp = open(dbname)
@@ -154,6 +155,42 @@ def dataverse(pid):
             db['PIName'] = w[1]
             db['projectTitle'] = w[2]
             return db
+    db['PIName']       = 'Unknown'
+    db['projectTitle'] = 'Unknown'
+    return db
+
+def dataverse(pid):
+    """
+    input:    Projectid (string)
+    output:   dictionary of dataverse key/val pairs
+    
+    for DataVerse ingestion we need a few new parameters in the rc file
+      PIName
+      projectTitle
+    The LMTOY environment needs to be present for this
+    
+    """
+    db = {}
+    if pid.find('Commissioning') >= 0:
+        db['PIName'] = 'LMT'
+        db['projectTitle'] = 'Commissioning'
+        return db
+    # PID,Title,PI
+    dbname = os.environ['LMTOY'] + '/etc/ProjectId.csv'
+    print("# project info:",dbname)
+    fp = open(dbname,encoding='utf-8', errors='ignore')
+    lines = fp.readlines()
+    fp.close()
+    #
+    for line in lines:
+        w = line.strip().split(',')
+        if len(w) < 3:
+            continue
+        if w[0].strip() == pid:
+            db['PIName'] = w[2].strip()
+            db['projectTitle'] = w[1].strip()
+            return db
+    # last resort (should not happen)
     db['PIName']       = 'Unknown'
     db['projectTitle'] = 'Unknown'
     return db
