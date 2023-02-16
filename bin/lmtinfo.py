@@ -19,8 +19,9 @@
 Usage: lmtinfo.py OBSNUM
        lmtinfo.py data
        lmtinfo.py build
-       lmtinfo.py grep [TERM1 [TERM2 ...]]
-       lmtinfo.py find [TERM1 [TERM2 ...]]
+       lmtinfo.py grep  [TERM1 [TERM2 ...]]
+       lmtinfo.py grepw [TERM1 [TERM2 ...]]
+       lmtinfo.py find  [TERM1 [TERM2 ...]]
 
 -h --help  This help
 
@@ -49,11 +50,12 @@ seems to be the first data here.
 data:     show the database, no sorting and culling
 build:    rebuild the sorted database (needs write permission in $DATA_LMT)
 grep:     search in database, terms are logically AND-ed
-find:     search in database, terms are logically AND-ed (alias for 'grep')
+grepw:    search in database, terms are logically AND-ed and words need to match exactly
+find:     search in database, terms are logically AND-ed 
 
 """
 
-version="14-feb-2023"
+version="16-feb-2023"
 
 import os
 import sys
@@ -73,7 +75,7 @@ arguments = docopt(__doc__,options_first=True, version='0.4')
 
 header = "# Y-M-D   T H:M:S     ObsNum  Receiver   ObsGoal      ObgPgm      SourceName                ProjectId                   RestFreq      VLSR    TINT    RA          DEC        AZ     EL"
 
-def grep(terms):
+def grep(terms, flags=""):
     """
     search a predefined $DATA_LMT/data_lmt.log file for matching terms
     """
@@ -83,17 +85,22 @@ def grep(terms):
         sys.exit(1)
 
     if len(terms) == 0:
-        cmd = "grep -v ^# %s" % (logfile)
+        cmd = "grep %s -v ^# %s" %\
+        (flags,logfile)
     elif len(terms) == 1:
-        cmd = "grep -i %s %s" % (terms[0],logfile)
+        cmd = "grep %s -i %s %s" %\
+        (flags,terms[0],logfile)
     elif len(terms) == 2:
-        cmd = "grep -i %s %s | grep -i %s" % (terms[0],logfile,terms[1])
+        cmd = "grep %s -i %s %s | grep %s -i %s" %\
+        (flags,terms[0],logfile,flags,terms[1])
     elif len(terms) == 3:
-        cmd = "grep -i %s %s | grep -i %s | grep -i %s" % (terms[0],logfile,terms[1],terms[2])
+        cmd = "grep %s -i %s %s | grep %s -i %s | grep %s -i %s" %\
+        (flags,terms[0],logfile,flags,terms[1],flags,terms[2])
     elif len(terms) == 4:
-        cmd = "grep -i %s %s | grep -i %s | grep -i %s | grep -i %s" % (terms[0],logfile,terms[1],terms[2],terms[3])
+        cmd = "grep %s -i %s %s | grep %s -i %s | grep %s -i %s | grep %s -i %s" %\
+        (flags,terms[0],logfile,flags,terms[1],flags,terms[2],flags,terms[3])
     else:
-        print("too many arguments")
+        print("too many arguments for now")
         sys.exit(1)        
     os.system(cmd)
 
@@ -560,6 +567,9 @@ if len(sys.argv) == 2:
     elif sys.argv[1] == 'grep' or sys.argv[1] == 'find':
         print(header)
         grep([])
+    elif sys.argv[1] == 'grepw' or sys.argv[1] == 'findw':
+        print(header)
+        grep([],"-w")
     elif os.path.isdir(sys.argv[1]):
         data_lmt = sys.argv[1]
         print(header)
@@ -621,6 +631,11 @@ elif len(sys.argv) == 3:
         print(header)
         grep(sys.argv[2:])
         sys.exit(0)
+        
+    if sys.argv[1] == "grepw" or sys.argv[1] == "findw":
+        print(header)
+        grep(sys.argv[2:],"-w")
+        sys.exit(0)
 
     # there should be no more options now
     print("Illegal option ",sys.argv[1])
@@ -631,6 +646,10 @@ else:
     if sys.argv[1] == "grep":
         print(header)
         grep(sys.argv[2:])
+        sys.exit(0)
+    if sys.argv[1] == "grepw":
+        print(header)
+        grep(sys.argv[2:],"-w")
         sys.exit(0)
 
     # otherwise illegal options, so give help
