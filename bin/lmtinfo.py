@@ -55,7 +55,7 @@ find:     search in database, terms are logically AND-ed
 
 """
 
-version="16-feb-2023"
+version="26-feb-2023"
 
 import os
 import sys
@@ -331,8 +331,8 @@ def slr_summary(ifproc, rc=False):
         print('date_obs="%s"' % date_obs)
         print('skytime=%g' % tsky)
         print('inttime=%g' % tint)
-        print('obsnum="%s"' % obsnum)
-        print('calobsnum="%s"' % calobsnum)
+        print('obsnum=%s' % obsnum)
+        print('calobsnum=%s' % calobsnum)
         print('obspgm="%s"' % obspgm)
         print('obsgoal="%s"' % obsgoal)
         print('ProjectId="%s"' % pid)
@@ -355,7 +355,7 @@ def slr_summary(ifproc, rc=False):
         # why is this an integer again?
         resolution = math.ceil(resolution)
         print('resolution=%g  # arcsec' % resolution)
-        print('nppd=%g   # number of points per beam' % nppb)
+        print('nppb=%g   # number of points per beam' % nppb)
         print('cell=%g   # arcsec' % (resolution/nppb))
         # @todo https://github.com/astroumd/lmtoy/issues/9     xlen needs to be equal to ylen
         print('x_extent=%g   # arcsec' % xlen)
@@ -476,8 +476,8 @@ def rsr_summary(rsr_file, rc=False):
         print('date_obs="%s"' % date_obs)
         # print('# skytime=%g sec' % tsky)
         print('inttime=%g # sec' % tint)
-        print('obsnum="%s"' % obsnum)
-        print('calobsnum="%s"' % calobsnum)
+        print('obsnum=%s' % obsnum)
+        print('calobsnum=%s' % calobsnum)
         print('obspgm="%s"' % obspgm)
         print('obsgoal="%s"' % obsgoal)
         print('ProjectId="%s"' % pid)
