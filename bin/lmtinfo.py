@@ -55,7 +55,7 @@ find:     search in database, terms are logically AND-ed
 
 """
 
-version="26-feb-2023"
+version="28-feb-2023"
 
 import os
 import sys
@@ -336,6 +336,8 @@ def slr_summary(ifproc, rc=False):
         print('obspgm="%s"' % obspgm)
         print('obsgoal="%s"' % obsgoal)
         print('ProjectId="%s"' % pid)
+        print("ra=%f  # deg" % ra)
+        print("dec=%f # deg" % dec)
         print('# SkyOff=%g %g' % (az1,el1))
         #print('# bufpos=%s' % str(ubufpos))
         print('# HPBW=%g arcsec' % hpbw)
@@ -481,6 +483,8 @@ def rsr_summary(rsr_file, rc=False):
         print('obspgm="%s"' % obspgm)
         print('obsgoal="%s"' % obsgoal)
         print('ProjectId="%s"' % pid)
+        print("ra=%f  # deg" % ra)
+        print("dec=%f # deg" % dec)
         #print('# SkyOff=%g %g' % (az1,el1))
         #print('# bufpos=%s' % str(ubufpos))
         #print('# HPBW=%g arcsec' % hpbw)
