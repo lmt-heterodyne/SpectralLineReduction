@@ -57,7 +57,7 @@ find:     search in database, terms are logically AND-ed
 
 """
 
-version="28-mar-2023"
+_version="28-mar-2023"
 
 import os
 import sys
@@ -73,7 +73,7 @@ if "DATA_LMT" in os.environ:
 else:
     data_lmt = "/data_lmt/"
 
-arguments = docopt(__doc__,options_first=True, version='0.5')
+arguments = docopt(__doc__,options_first=True, version=_version)
 
 header = "# Y-M-D   T H:M:S     ObsNum  Receiver   ObsGoal      ObgPgm      SourceName                ProjectId                   RestFreq      VLSR    TINT    RA          DEC        AZ     EL"
 
@@ -115,11 +115,11 @@ def build():
     cmd = "cd $DATA_LMT; make -f $LMTOY/data_lmt/Makefile new"
     os.system(cmd)
 
-def new():
+def new(obsnum):
     """
-    update the database
+    update the database from a given obsnum up
     """
-    cmd = "cd $DATA_LMT; make -f $LMTOY/data_lmt/Makefile new2"
+    cmd = "cd $DATA_LMT; make -f $LMTOY/data_lmt/Makefile new2 OBSNUM0="
     os.system(cmd)
     
 def alist(x):
@@ -564,9 +564,6 @@ def nc_find(obsnum, raw=False):
         # since no RSR found, give up
         print("# No matching OBSNUM %s" % obsnum)
         sys.exit(0)
-    else:
-        print("Warning: %s does not seem like an obsnum" % obsnum)
-
 
 def find_newer(root,newer):
     """ find files newer than a given file using the unix find command
@@ -719,4 +716,4 @@ else:
 
     # otherwise illegal options, so give help
     
-    print("UUsage : %s [path] obsnum" % sys.argv[0])
+    print("Usage : %s [path] obsnum" % sys.argv[0])
