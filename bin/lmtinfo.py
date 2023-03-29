@@ -15,7 +15,9 @@
 #
 #
 
-"""
+_version="28-mar-2023"
+
+_help = """
 Usage: lmtinfo.py OBSNUM
        lmtinfo.py data
        lmtinfo.py build
@@ -24,8 +26,8 @@ Usage: lmtinfo.py OBSNUM
        lmtinfo.py grepw [TERM1 [TERM2 ...]]
        lmtinfo.py find  [TERM1 [TERM2 ...]]
 
--h --help  This help
-
+-h --help      This help
+-v --version   Script version
 
 This routine grabs some useful summary information for LMT raw data.
 For SLR they are taken from the ifproc file, ignoring the roach files.
@@ -33,7 +35,8 @@ For SLR they are taken from the ifproc file, ignoring the roach files.
 If an OBSNUM (5 or 6 digits) is given, it will show this information
 in a "rc" style for the pipeline. All OBSNUM summaries are given in
 tabular format.
-Example of early output:
+
+Example of output (some columns not shown here)
 
 
       #     DATE  OBSNUM   OBSPGM SOURCE      RESTFRQ VLSR INTTIME
@@ -53,11 +56,12 @@ build:    rebuild the sorted database (needs write permission in $DATA_LMT)
 new:      build the database with only new obsnums since the last build
 grep:     search in database, terms are logically AND-ed
 grepw:    search in database, terms are logically AND-ed and words need to match exactly
-find:     search in database, terms are logically AND-ed 
+find:     search in database, terms are logically AND-ed
 
-"""
+version = %s
 
-_version="28-mar-2023"
+""" % _version
+
 
 import os
 import sys
@@ -73,7 +77,7 @@ if "DATA_LMT" in os.environ:
 else:
     data_lmt = "/data_lmt/"
 
-arguments = docopt(__doc__,options_first=True, version=_version)
+arguments = docopt(_help,options_first=True, version=_version)
 
 header = "# Y-M-D   T H:M:S     ObsNum  Receiver   ObsGoal      ObgPgm      SourceName                ProjectId                   RestFreq      VLSR    TINT    RA          DEC        AZ     EL"
 
@@ -336,8 +340,8 @@ def slr_summary(ifproc, rc=False):
     if rc:
         nppb = 2.0
         print('# <lmtinfo>')
-        print('# version=%s' % version)
-        print('raw="%s"' % ifproc)
+        print('# version=%s' % _version)
+        print('rawnc="%s"' % ifproc)
         print('date_obs="%s"' % date_obs)
         print('skytime=%g' % tsky)
         print('inttime=%g' % tint)
@@ -484,8 +488,8 @@ def rsr_summary(rsr_file, rc=False):
 
     if rc:
         print('# <lmtinfo>')
-        print('# version=%s' % version)
-        print('raw="%s"' % rsr_file)
+        print('# version=%s' % _version)
+        print('rawnc="%s"' % rsr_file)
         print('date_obs="%s"' % date_obs)
         # print('# skytime=%g sec' % tsky)
         print('inttime=%g # sec' % tint)
@@ -528,7 +532,7 @@ def rsr_summary(rsr_file, rc=False):
     # -end  rsr_summary()
 
 
-def nc_find(obsnum, raw=False):
+def nc_find(obsnum, rawnc=False):
     """ find the raw NC file that belongs to an obsnum
     """
     if obsnum.isnumeric():
@@ -539,7 +543,7 @@ def nc_find(obsnum, raw=False):
         fn = glob.glob(globs)
         fn.sort(key=os.path.getmtime)
         if len(fn) == 1:
-            if raw:
+            if rawnc:
                 return fn[0]
             slr_summary(fn[0],rc=True)
             sys.exit(0)
@@ -553,7 +557,7 @@ def nc_find(obsnum, raw=False):
         fn = glob.glob(globs)
         fn.sort(key=os.path.getmtime)
         if len(fn) > 0 and len(fn) < 5:
-            if raw:
+            if rawnc:
                 return fn[0]
             rsr_summary(fn[0], rc=True)
             sys.exit(0)
@@ -693,9 +697,9 @@ elif len(sys.argv) == 3:
     # newer than an obsnum for incremental build
     if sys.argv[1] == "new":
         obsnum = sys.argv[2]
-        raw = nc_find(obsnum, raw=True)
-        rsr_find(newer=raw)
-        seq_find(newer=raw)        
+        rawnc = nc_find(obsnum, rawnc=True)
+        rsr_find(newer=rawnc)
+        seq_find(newer=rawnc)        
         
         sys.exit(0)
 
