@@ -15,7 +15,7 @@
 #
 #
 
-_version="28-mar-2023"
+_version="30-mar-2023"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -548,8 +548,8 @@ def nc_find(obsnum, rawnc=False):
             slr_summary(fn[0],rc=True)
             sys.exit(0)
         elif len(fn) > 0:
-            print("Multiple ifproc? ",fn)
-            sys.exit(0)
+            print("# lmtinfo: Multiple ifproc? ",fn)
+            sys.exit(1)
 
         # since no SLR found, try RSR
         globs = '%s/RedshiftChassis?/RedshiftChassis?_*%s*.nc'  % (data_lmt,obsnum)
@@ -562,12 +562,12 @@ def nc_find(obsnum, rawnc=False):
             rsr_summary(fn[0], rc=True)
             sys.exit(0)
         elif len(fn) > 4:
-            print("Multiple RSR ",fn)
-            sys.exit(0)
+            print("# lmtinfo: Multiple RSR ",fn)
+            sys.exit(1)
 
         # since no RSR found, give up
-        print("# No matching OBSNUM %s" % obsnum)
-        sys.exit(0)
+        print("# lmtinfo: No matching OBSNUM %s in %s" % (obsnum,data_lmt))
+        sys.exit(1)
 
 def find_newer(root,newer):
     """ find files newer than a given file using the unix find command
@@ -675,7 +675,7 @@ if len(sys.argv) == 2:
         print(header)
     else:
         print("no more valid options")
-        sys.exit(0)
+        sys.exit(1)
 
     rsr_find()
     seq_find()
@@ -700,7 +700,6 @@ elif len(sys.argv) == 3:
         rawnc = nc_find(obsnum, rawnc=True)
         rsr_find(newer=rawnc)
         seq_find(newer=rawnc)        
-        
         sys.exit(0)
 
     # there should be no more options now
