@@ -604,18 +604,27 @@ class SpecCalViewer(SpecViewer):
         if nscale > 0:
             plot_scale = plot_scale / nscale
         plot_order = [1,5,9,13,2,6,10,14,3,7,11,15,4,8,12,16];
+        print(S.roach_pixel_ids)
         for ipix in range(S.npix):
             pixel_id = S.roach_pixel_ids[ipix]
-            ax = pl.subplot(4, 4, plot_order[pixel_id])
+            ipix1 = plot_order[pixel_id]
+            ipix1 = plot_order[(pixel_id%len(plot_order))]+int(ipix/len(plot_order))*len(plot_order)
+            print(ipix, pixel_id, ipix1)
+            ax = pl.subplot(S.npix/4, 4, ipix1)
             ax.tick_params(axis='both', which='major', labelsize=6)
             ax.tick_params(axis='both', which='minor', labelsize=6)
             indx_fin = np.where(np.isfinite(S.roach[ipix].tsys_spectrum))
             l_fin = len(indx_fin[0])
             if l_fin > 0:
-                pl.plot(S.roach[ipix].tsys_spectrum)
-                pl.text(S.nchan / 2, 10, '%d %6.0fK'%(pixel_id, 
-                                                      S.roach[ipix].tsys), 
-                        horizontalalignment='center')
+                pl.plot(S.roach[ipix].tsys_spectrum[indx_fin])
+                if False:
+                    pl.text(S.nchan / 2, 10, '%d %6.0fK'%(pixel_id+int(ipix/len(plot_order))*len(plot_order), 
+                                                          S.roach[ipix].tsys), 
+                            horizontalalignment='center')
+                else:
+                    pl.text(l_fin / 2, 10, '%d %6.0fK'%(pixel_id+int(ipix/len(plot_order))*len(plot_order), 
+                                                        S.roach[ipix].tsys), 
+                            horizontalalignment='center')
                 if plot_scale != 0:
                     pl.axis([0, S.nchan, 0, plot_scale * 1.5])
             else:
