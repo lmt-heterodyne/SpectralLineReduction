@@ -202,7 +202,7 @@ class RoachSpec():
             else:
                 self.tsys_spectra[ihot, :] = tsys_spec
             #print("TSYS: ",self.tsys_spectra[ihot, :],tsys[ihot])
-        print("TSYS[%d] otf_cal %s" % (self.pixel,repr(tsys)))
+        print("SPEC TSYS[%d] otf_cal %s" % (self.pixel,repr(tsys)))
             
         
     def get_nearest_reference(self, index, left=True):
@@ -596,7 +596,7 @@ class RoachSpec():
                 self.tsys_spectrum[:] = self.tsys
                 
             #print("TSYS: ",self.tsys_spectrum[:])
-            print("TSYS[%d] = %g +/- %g (%d channels)" % (self.pixel,self.tsys, tsysstd, len(self.tsys_spectrum)))
+            print("SPEC TSYS[%d] = %g +/- %g (%d channels)" % (self.pixel,self.tsys, tsysstd, len(self.tsys_spectrum)))
         else:
             print('ObsNum %d Roach %d does not have calibration data'%(
                 self.obsnum, self.roach_id))
