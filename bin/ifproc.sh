@@ -12,13 +12,13 @@ fi
 tmp=/tmp/tmp$$.rc
 
 ifproc="obsnum $obsnum"
-lmtinfo.py $obsnum | grep '# ifproc' | cut -c3- > $tmp.rc
+lmtinfo.py $obsnum > $tmp.rc
 source $tmp.rc
 rm $tmp.rc
 
-if [ -e "$ifproc" ]; then
-    echo "$ifproc"
-    ncdump -l 256 $ifproc | grep '^ Header' | column -s= -t 
+if [ ! -z "$rawnc" ]; then
+    echo "$rawnc"
+    ncdump -l 256 $rawnc | grep '^ Header' | column -s= -t 
 else
     echo $ifproc does not exist
 fi
