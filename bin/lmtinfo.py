@@ -15,16 +15,19 @@
 #
 #
 
-"""
+_version="30-mar-2023"
+
+_help = """
 Usage: lmtinfo.py OBSNUM
        lmtinfo.py data
        lmtinfo.py build
+       lmtinfo.py new OBSNUM
        lmtinfo.py grep  [TERM1 [TERM2 ...]]
        lmtinfo.py grepw [TERM1 [TERM2 ...]]
        lmtinfo.py find  [TERM1 [TERM2 ...]]
 
--h --help  This help
-
+-h --help      This help
+-v --version   Script version
 
 This routine grabs some useful summary information for LMT raw data.
 For SLR they are taken from the ifproc file, ignoring the roach files.
@@ -32,7 +35,8 @@ For SLR they are taken from the ifproc file, ignoring the roach files.
 If an OBSNUM (5 or 6 digits) is given, it will show this information
 in a "rc" style for the pipeline. All OBSNUM summaries are given in
 tabular format.
-Example of early output:
+
+Example of output (some columns not shown here)
 
 
       #     DATE  OBSNUM   OBSPGM SOURCE      RESTFRQ VLSR INTTIME
@@ -49,13 +53,15 @@ seems to be the first data here.
 
 data:     show the database, no sorting and culling
 build:    rebuild the sorted database (needs write permission in $DATA_LMT)
+new:      build the database with only new obsnums since the last build
 grep:     search in database, terms are logically AND-ed
 grepw:    search in database, terms are logically AND-ed and words need to match exactly
-find:     search in database, terms are logically AND-ed 
+find:     search in database, terms are logically AND-ed
 
-"""
+version = %s
 
-version="16-feb-2023"
+""" % _version
+
 
 import os
 import sys
@@ -71,7 +77,7 @@ if "DATA_LMT" in os.environ:
 else:
     data_lmt = "/data_lmt/"
 
-arguments = docopt(__doc__,options_first=True, version='0.4')
+arguments = docopt(_help,options_first=True, version=_version)
 
 header = "# Y-M-D   T H:M:S     ObsNum  Receiver   ObsGoal      ObgPgm      SourceName                ProjectId                   RestFreq      VLSR    TINT    RA          DEC        AZ     EL"
 
@@ -107,11 +113,19 @@ def grep(terms, flags=""):
 
 def build():
     """
-    build the greppable database $DATA_LMT/data_lmt.log 
+    build the greppable database $DATA_LMT/data_lmt.log
+    this does nothing more than "lmtinfo.py $DATA_LMT > data_lmt.log"
     """
     cmd = "cd $DATA_LMT; make -f $LMTOY/data_lmt/Makefile new"
     os.system(cmd)
 
+def new(obsnum):
+    """
+    update the database from a given obsnum up
+    """
+    cmd = "cd $DATA_LMT; make -f $LMTOY/data_lmt/Makefile new2 OBSNUM0="
+    os.system(cmd)
+    
 def alist(x):
     """
     print a python array or list as a comma separated string of values
@@ -326,16 +340,18 @@ def slr_summary(ifproc, rc=False):
     if rc:
         nppb = 2.0
         print('# <lmtinfo>')
-        print('# version=%s' % version)
-        print('# ifproc="%s"' % ifproc)
+        print('# version=%s' % _version)
+        print('rawnc="%s"' % ifproc)
         print('date_obs="%s"' % date_obs)
         print('skytime=%g' % tsky)
         print('inttime=%g' % tint)
-        print('obsnum="%s"' % obsnum)
-        print('calobsnum="%s"' % calobsnum)
+        print('obsnum=%s' % obsnum)
+        print('calobsnum=%s' % calobsnum)
         print('obspgm="%s"' % obspgm)
         print('obsgoal="%s"' % obsgoal)
         print('ProjectId="%s"' % pid)
+        print("ra=%f  # deg" % ra)
+        print("dec=%f # deg" % dec)
         print('# SkyOff=%g %g' % (az1,el1))
         #print('# bufpos=%s' % str(ubufpos))
         print('# HPBW=%g arcsec' % hpbw)
@@ -355,7 +371,7 @@ def slr_summary(ifproc, rc=False):
         # why is this an integer again?
         resolution = math.ceil(resolution)
         print('resolution=%g  # arcsec' % resolution)
-        print('nppd=%g   # number of points per beam' % nppb)
+        print('nppb=%g   # number of points per beam' % nppb)
         print('cell=%g   # arcsec' % (resolution/nppb))
         # @todo https://github.com/astroumd/lmtoy/issues/9     xlen needs to be equal to ylen
         print('x_extent=%g   # arcsec' % xlen)
@@ -472,15 +488,18 @@ def rsr_summary(rsr_file, rc=False):
 
     if rc:
         print('# <lmtinfo>')
-        print('# %s' % rsr_file)
+        print('# version=%s' % _version)
+        print('rawnc="%s"' % rsr_file)
         print('date_obs="%s"' % date_obs)
         # print('# skytime=%g sec' % tsky)
         print('inttime=%g # sec' % tint)
-        print('obsnum="%s"' % obsnum)
-        print('calobsnum="%s"' % calobsnum)
+        print('obsnum=%s' % obsnum)
+        print('calobsnum=%s' % calobsnum)
         print('obspgm="%s"' % obspgm)
         print('obsgoal="%s"' % obsgoal)
         print('ProjectId="%s"' % pid)
+        print("ra=%f  # deg" % ra)
+        print("dec=%f # deg" % dec)
         #print('# SkyOff=%g %g' % (az1,el1))
         #print('# bufpos=%s' % str(ubufpos))
         #print('# HPBW=%g arcsec' % hpbw)
@@ -511,26 +530,11 @@ def rsr_summary(rsr_file, rc=False):
               (date_obs, obsnum, instrument, obsgoal, obspgm+(('('+map_coord+')') if obspgm=='Map' else ''), src,  pid,         tint,   ra,    dec,   az,   el))
 
     # -end  rsr_summary()
-    
 
-#   SLR
-#   print("%-20s %7s  %-5s %-30s %g %g %g" % (date_obs, fn[2], obspgm, src, restfreq, vlsr, dt))
 
-#  although we grab the command line arguments here, they are actually not
-#  used in the way most scripts use them. Below there is a hardcoded
-#  parsing of arguments based on how many there are, which are files, and
-#  which are directories.
-
-if len(sys.argv) == 2:
-
-    # build
-    if sys.argv[1] == "build":
-        print("Rebuilding $DATA_LMT/data_lmt.log for grep")
-        build()
-        sys.exit(0)
-
-    # single obsnum (for SLR or RSR)
-    obsnum = sys.argv[1]
+def nc_find(obsnum, rawnc=False):
+    """ find the raw NC file that belongs to an obsnum
+    """
     if obsnum.isnumeric():
         # obsnum=int(obsnum)
         # globs = '%s/ifproc/ifproc_*_%06d_*.nc' % (data_lmt,obsnum)
@@ -539,11 +543,13 @@ if len(sys.argv) == 2:
         fn = glob.glob(globs)
         fn.sort(key=os.path.getmtime)
         if len(fn) == 1:
+            if rawnc:
+                return fn[0]
             slr_summary(fn[0],rc=True)
             sys.exit(0)
         elif len(fn) > 0:
-            print("Multiple ifproc? ",fn)
-            sys.exit(0)
+            print("# lmtinfo: Multiple ifproc? ",fn)
+            sys.exit(1)
 
         # since no SLR found, try RSR
         globs = '%s/RedshiftChassis?/RedshiftChassis?_*%s*.nc'  % (data_lmt,obsnum)
@@ -551,15 +557,109 @@ if len(sys.argv) == 2:
         fn = glob.glob(globs)
         fn.sort(key=os.path.getmtime)
         if len(fn) > 0 and len(fn) < 5:
+            if rawnc:
+                return fn[0]
             rsr_summary(fn[0], rc=True)
             sys.exit(0)
         elif len(fn) > 4:
-            print("Multiple RSR ",fn)
-            sys.exit(0)
+            print("# lmtinfo: Multiple RSR ",fn)
+            sys.exit(1)
 
         # since no RSR found, give up
-        print("# No matching OBSNUM %s" % obsnum)
+        print("# lmtinfo: No matching OBSNUM %s in %s" % (obsnum,data_lmt))
+        sys.exit(1)
+
+def find_newer(root,newer):
+    """ find files newer than a given file using the unix find command
+    """
+    # add a '/' since it may be a symlink
+    cmd = 'find %s/ -name \*.nc -newer %s' % (root,newer)
+    pipe = os.popen(cmd,'r')
+    lines = pipe.readlines()
+    pipe.close()
+    fn = []
+    for line in lines:
+        fn.append(line.strip())
+    return fn
+        
+def rsr_find(newer=None):
+    """
+    find all RSR
+    """
+    if newer == None:
+        chassis = 1
+        if chassis < 0:
+            globs = '%s/RedshiftChassis?/RedshiftChassis?_*.nc'  % (data_lmt)
+        else:
+            globs = '%s/RedshiftChassis%d/RedshiftChassis%d_*.nc'  % (data_lmt,chassis,chassis)            
+        fn = glob.glob(globs)
+        fn.sort(key=os.path.getmtime)
+        print("# Found %d RSR with %s" % (len(fn),globs))
+    else:
+        fn = find_newer('RedshiftChassis1',newer)
+        
+    for f in fn:
+        # print('RSR',f)
+        try:
+            rsr_summary(f)
+        except:
+            # Failing on  /home/teuben/LMT/data_lmt/RedshiftChassis1/RedshiftChassis1_2013-04-18_006779_00_0004.nc
+            try:
+                yyyymmdd = f.split('/')[-1].split('_')[1]
+                obsnum   = f.split('/')[-1].split('_')[2]
+            except:
+                yyyymmdd = "1900-00-00"
+                obsnum   = " "
+            print("# %-20s %7s  failed for rsr %s" % (yyyymmdd,obsnum,f))                    
+
+    
+def seq_find(newer = None):
+    """
+    find all RSR
+    """
+    if newer == None:
+        globs = '%s/ifproc/ifproc_*.nc' % data_lmt
+        fn = glob.glob(globs)
+        fn.sort(key=os.path.getmtime)
+        print("# Found %d SLR with %s" % (len(fn),globs))
+    else:
+        fn = find_newer('ifproc',          newer)
+        
+    for f in fn:
+        try:
+            slr_summary(f)
+        except:
+            try:
+                yyyymmdd = f.split('/')[-1].split('_')[1]
+                obsnum   = f.split('/')[-1].split('_')[2]
+            except:
+                yyyymmdd = "1900-00-00"
+                obsnum   = " "
+            print("# %-20s %7s  failed for slr %s" % (yyyymmdd,obsnum,f))
+
+
+# ==================================================================================================================            
+
+
+if len(sys.argv) == 2:
+
+    # build
+    if sys.argv[1] == "build":
+        print("Rebuilding $DATA_LMT/data_lmt.log")
+        build()
         sys.exit(0)
+
+    # new
+    if sys.argv[1] == "old":
+        print("Updating $DATA_LMT/data_lmt.log")
+        new()
+        sys.exit(0)
+
+    # single obsnum (for SLR or RSR)
+    obsnum = sys.argv[1]
+    nc_find(obsnum)
+    
+
 
     # replacement for $DATA_LMT
     if sys.argv[1] == 'data':
@@ -575,58 +675,15 @@ if len(sys.argv) == 2:
         print(header)
     else:
         print("no more valid options")
-        sys.exit(0)
+        sys.exit(1)
 
-    if True:
-
-        # pick one, but they all seem to have different # data, 1 has the most
-        #RedshiftChassis0_2011-05-08_001809_00_0001.nc - RedshiftChassis0_2020-03-05_092087_00_0001.nc
-        #RedshiftChassis1_2011-05-09_001819_00_0001.nc - RedshiftChassis1_2020-03-11_092345_00_0001.nc
-        #RedshiftChassis2_2011-05-09_001819_00_0001.nc - RedshiftChassis2_2020-03-11_092345_00_0001.nc
-        #RedshiftChassis3_2013-05-04_007484_00_0001.nc - RedshiftChassis3_2020-03-11_092345_00_0001.nc
-
-        chassis = 1
-        if chassis < 0:
-            globs = '%s/RedshiftChassis?/RedshiftChassis?_*.nc'  % (data_lmt)
-        else:
-            globs = '%s/RedshiftChassis%d/RedshiftChassis%d_*.nc'  % (data_lmt,chassis,chassis)            
-        fn = glob.glob(globs)
-        fn.sort(key=os.path.getmtime)
-        print("# Found %d RSR with %s" % (len(fn),globs))        
-        for f in fn:
-            # print('RSR',f)
-            try:
-                rsr_summary(f)
-            except:
-                # Failing on  /home/teuben/LMT/data_lmt/RedshiftChassis1/RedshiftChassis1_2013-04-18_006779_00_0004.nc
-                try:
-                    yyyymmdd = f.split('/')[-1].split('_')[1]
-                    obsnum   = f.split('/')[-1].split('_')[2]
-                except:
-                    yyyymmdd = "1900-00-00"
-                    obsnum   = " "
-                print("# %-20s %7s  failed for rsr %s" % (yyyymmdd,obsnum,f))                    
-
-        globs = '%s/ifproc/ifproc_*.nc' % data_lmt
-        fn = glob.glob(globs)
-        fn.sort(key=os.path.getmtime)
-        print("# Found %d SLR with %s" % (len(fn),globs))
-        for f in fn:
-            try:
-                slr_summary(f)
-            except:
-                try:
-                    yyyymmdd = f.split('/')[-1].split('_')[1]
-                    obsnum   = f.split('/')[-1].split('_')[2]
-                except:
-                    yyyymmdd = "1900-00-00"
-                    obsnum   = " "
-                print("# %-20s %7s  failed for slr %s" % (yyyymmdd,obsnum,f))
-        sys.exit(0)
+    rsr_find()
+    seq_find()
+    sys.exit(0)
                
 elif len(sys.argv) == 3:
 
-    # special case:
+    # special cases:
     if sys.argv[1] == "grep" or sys.argv[1] == "find":
         print(header)
         grep(sys.argv[2:])
@@ -637,8 +694,16 @@ elif len(sys.argv) == 3:
         grep(sys.argv[2:],"-w")
         sys.exit(0)
 
+    # newer than an obsnum for incremental build
+    if sys.argv[1] == "new":
+        obsnum = sys.argv[2]
+        rawnc = nc_find(obsnum, rawnc=True)
+        rsr_find(newer=rawnc)
+        seq_find(newer=rawnc)        
+        sys.exit(0)
+
     # there should be no more options now
-    print("Illegal option ",sys.argv[1])
+    print("Illegal option 3",sys.argv[1])
 
 
 else:
@@ -654,6 +719,4 @@ else:
 
     # otherwise illegal options, so give help
     
-                                                     # no other modes
     print("Usage : %s [path] obsnum" % sys.argv[0])
-    sys.exit(0)

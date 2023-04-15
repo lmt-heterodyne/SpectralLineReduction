@@ -25,14 +25,14 @@ Example 2: Giving my collaborator the raw data for an observation
 
 import os
 import sys
-import math
-import numpy as np		
-import matplotlib.pyplot as pl
+#import math
+# import numpy as np		
+# import matplotlib.pyplot as pl
 import datetime
 
 import sys, os
 import glob
-import netCDF4
+# import netCDF4
 from  docopt import docopt
 
 
@@ -41,6 +41,10 @@ from  docopt import docopt
 data_lmt = os.environ['DATA_LMT']
 
 for obsnum in sys.argv[1:]:
+    if obsnum == '-h' or obsnum == '--help':
+        print('Usage:')
+        sys.exit(0)
+        
     obsnum  = int(obsnum)
     obsnum5 = '%d' % obsnum
     obsnum6 = '%06d' % obsnum
