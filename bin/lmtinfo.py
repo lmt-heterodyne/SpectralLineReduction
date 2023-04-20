@@ -348,7 +348,9 @@ def slr_summary(ifproc, rc=False):
         print('obsnum=%s' % obsnum)
         print('calobsnum=%s' % calobsnum)
         print('obspgm="%s"' % obspgm)
-        print('obsgoal="%s"' % obsgoal)
+        if obspgm=='Map':
+            print('map_coord="%s"' % map_coord)
+            print('map_motion="%s"' % map_motion)
         print('ProjectId="%s"' % pid)
         print("ra=%f  # deg" % ra)
         print("dec=%f # deg" % dec)

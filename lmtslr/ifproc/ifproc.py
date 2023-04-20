@@ -637,13 +637,16 @@ class IFProcData(IFProc):
         self.map_x = []
         self.map_y = []
         self.map_n = []
+        self.map_p = []
         for i in range(self.npix):
             self.map_x.append(self.azmap)
             self.map_y.append(self.elmap)
+            self.map_p.append(self.parang)
             self.map_n.append(self.nsamp)
             self.map_data.append(self.caldata[i,:] - self.bias[i])
         self.map_x = np.array(self.map_x)
         self.map_y = np.array(self.map_y)
+        self.map_p = np.array(self.map_p)
         self.map_n = np.array(self.map_n)
         self.map_data = np.array(self.map_data)
 
