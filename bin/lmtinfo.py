@@ -15,7 +15,7 @@
 #
 #
 
-_version="30-mar-2023"
+_version="20-apr-2023"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
