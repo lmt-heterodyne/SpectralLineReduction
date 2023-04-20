@@ -34,13 +34,13 @@ class Grid():
             self.RIGHT = np.array([0, 0, 0, 0, 0, 0])
             self.UP = np.array([0, 0, 0, 0, 0, 0])
         else:
-            self.nhorns = 16
+            self.nhorns = 32
             self.spacing = spacing
             self.rotation = rotation/180.*np.pi
             # these are the offsets in the grid ordered by pixel
-            self.RIGHT = np.array([-1.5, -1.5, -1.5, -1.5, -.5, -.5, -.5, -.5,
+            self.RIGHT = np.array(2*[-1.5, -1.5, -1.5, -1.5, -.5, -.5, -.5, -.5,
                                     .5, .5, .5, .5, 1.5, 1.5, 1.5, 1.5])
-            self.UP = np.array([1.5, .5, -.5, -1.5, 1.5, .5, -.5, -1.5, 1.5, 
+            self.UP = np.array(2*[1.5, .5, -.5, -1.5, 1.5, .5, -.5, -1.5, 1.5, 
                                 .5, -.5, -1.5, 1.5, .5, -.5, -1.5])
 
     def azel(self, elev, tracking_beam):
