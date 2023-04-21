@@ -15,12 +15,13 @@
 #
 #
 
-_version="30-mar-2023"
+_version="21-apr-2023"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
        lmtinfo.py data
        lmtinfo.py build
+       lmtinfo.py last
        lmtinfo.py new OBSNUM
        lmtinfo.py grep  [TERM1 [TERM2 ...]]
        lmtinfo.py grepw [TERM1 [TERM2 ...]]
@@ -53,6 +54,7 @@ seems to be the first data here.
 
 data:     show the database, no sorting and culling
 build:    rebuild the sorted database (needs write permission in $DATA_LMT)
+last:     report the last known obsnum
 new:      build the database with only new obsnums since the last build
 grep:     search in database, terms are logically AND-ed
 grepw:    search in database, terms are logically AND-ed and words need to match exactly
@@ -110,6 +112,16 @@ def grep(terms, flags=""):
         sys.exit(1)        
     os.system(cmd)
 
+def last():
+    """
+    report the last known obsnum
+    """
+    fn = data_lmt + '/last.obsnum'
+    if os.path.exists(fn):
+        lines = open(fn).readlines()
+        return int(lines[0])
+    print("Warning: no %s found" % fn)
+    return -1
 
 def build():
     """
@@ -649,6 +661,11 @@ if len(sys.argv) == 2:
     if sys.argv[1] == "build":
         print("Rebuilding $DATA_LMT/data_lmt.log")
         build()
+        sys.exit(0)
+
+    # last
+    if sys.argv[1] == "last":
+        print(last())
         sys.exit(0)
 
     # new
