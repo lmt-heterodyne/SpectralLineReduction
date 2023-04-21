@@ -23,7 +23,7 @@ from itertools import groupby
 # from lmtslr.ifproc.ifproc import IFProc
 
 # define all the pixels in the roach boards they appear in
-roach_pixels_all = [[i+j*4 for i in range(4)] for j in range(8)]
+roach_pixels_all = [[i+j*4 for i in range(4)] for j in range(4)]
 
 
 
@@ -695,8 +695,8 @@ class SpecBank():
     Base class for dealing with a complete "bank" of spectra.
     """
     def __init__(self, roach_files, ifproc_data, 
-                 pixel_list=range(32),
-                 time_offset=[-0.03]*32,
+                 pixel_list=list(range(16)),
+                 time_offset=[-0.03]*16,
                  bank=0,
                  restfreq=-1,
                  save_tsys=False):
@@ -988,7 +988,7 @@ class SpecBank():
             for i in range(8):
                 roach_name = 'roach%d'%i
                 if roach_name in filename:
-                    roach_index = i
+                    #roach_index = i
                     break
 
             for input_chan in range(ninputs):
@@ -1080,8 +1080,8 @@ class SpecBankData(SpecBank):
     Base class to deal with a complete "bank" of spectra.
     """
     def __init__(self,roach_files, ifproc_data,
-                 pixel_list=range(32),
-                 time_offset=[-0.03]*32,
+                 pixel_list=list(range(16)),
+                 time_offset=[-0.03]*16,
                  bank=0, restfreq=-1, save_tsys=False):
         """
         Constructor for SpecBankData class.
@@ -1101,7 +1101,7 @@ class SpecBankData(SpecBank):
     
     def create_map_data(self, channel_list, n_channel_list, baseline_list, 
                         n_baseline_list, baseline_order=0, 
-                        pixel_list=range(32),
+                        pixel_list=list(range(16)),
                         type=0):
         """
         Processes a list of pixel ids to make a set of integrated 
@@ -1172,7 +1172,7 @@ class SpecBankData(SpecBank):
                                          channel_list, n_channel_list, 
                                          baseline_list, n_baseline_list, 
                                          baseline_order=0, 
-                                         pixel_list=range(32),
+                                         pixel_list=list(range(16)),
                                          type=0):
         """
         Processes a list of pixel ids to make a set of bufpos grids for
@@ -1214,7 +1214,7 @@ class SpecBankData(SpecBank):
     def create_map_grid_data_from_grid(self, xgrid, ygrid, tole, channel_list,
                                        n_channel_list, baseline_list, 
                                        n_baseline_list, baseline_order=0, 
-                                       pixel_list=range(32),
+                                       pixel_list=list(range(16)),
                                        type=0):
         """
         Processes a list of pixel ids to make a set of grid data for 
@@ -1321,7 +1321,7 @@ class SpecBankData(SpecBank):
 
     def create_map_grid_data(self, channel_list, n_channel_list, 
                              baseline_list, n_baseline_list, baseline_order, 
-                             pixel_list=range(32),
+                             pixel_list=list(range(16)),
                              type=0):
         """
         Processes a list of pixel ids to make a set of grid data for 
@@ -1455,7 +1455,8 @@ class SpecBankCal(SpecBank):
     """
     def __init__(self, roach_files, ifproc_data,
                  restfreq=-1,
-                 pixel_list=range(32),
+                 pixel_list=list(range(16)),
+                 bank=0,
                  bdrop=50, edrop=100):
         """
         Args: 
@@ -1473,7 +1474,7 @@ class SpecBankCal(SpecBank):
         """
         # @todo no bank?
         SpecBank.__init__(self, roach_files, ifproc_data, restfreq=restfreq,
-                          pixel_list=pixel_list)
+                          pixel_list=pixel_list, bank=bank)
     
         # go ahead and process the calibration files
         for ipix in range(self.npix):

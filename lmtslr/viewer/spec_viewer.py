@@ -605,7 +605,7 @@ class SpecCalViewer(SpecViewer):
             plot_scale = plot_scale / nscale
         plot_order = [1,5,9,13,2,6,10,14,3,7,11,15,4,8,12,16];
         print(S.roach_pixel_ids)
-        nrows = S.npix/4
+        nrows = int(S.npix/4)
         for ipix in range(S.npix):
             pixel_id = S.roach_pixel_ids[ipix]
             if nrows == 1:
@@ -633,5 +633,5 @@ class SpecCalViewer(SpecViewer):
                     pl.axis([0, S.nchan, 0, plot_scale * 1.5])
             else:
                 pl.text(0.1, 0.5, '%d NaN'%(pixel_id))
-        pl.suptitle('TSys: ObsNum %d\n%s %s GHz'%(S.obsnum, S.receiver, 
-                                                  S.line_rest_frequency))
+        pl.suptitle('TSys: ObsNum %d\n%s %s GHz, bank %d'%(S.obsnum, S.receiver, 
+                                                           S.line_rest_frequency, S.bank))

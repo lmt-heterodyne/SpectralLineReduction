@@ -2,7 +2,7 @@ import os
 import fnmatch
 import glob
 
-roach_pixels_all = [[i+j*4 for i in range(4)] for j in range(8)]
+roach_pixels_all = [[i+j*4 for i in range(4)] for j in range(4)]
 
 def lookup_roach_files(obsnum,
                        roach_list=['roach0', 'roach1', 'roach2', 'roach3', 'roach4', 'roach5', 'roach6', 'roach7'],
