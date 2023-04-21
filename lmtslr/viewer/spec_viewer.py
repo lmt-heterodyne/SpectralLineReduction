@@ -633,5 +633,5 @@ class SpecCalViewer(SpecViewer):
                     pl.axis([0, S.nchan, 0, plot_scale * 1.5])
             else:
                 pl.text(0.1, 0.5, '%d NaN'%(pixel_id))
-        pl.suptitle('TSys: ObsNum %d\n%s %s GHz'%(S.obsnum, S.receiver, 
-                                                  S.line_rest_frequency))
+        pl.suptitle('TSys: ObsNum %d\n%s %s GHz, bank %d'%(S.obsnum, S.receiver, 
+                                                           S.line_rest_frequency, S.bank))
