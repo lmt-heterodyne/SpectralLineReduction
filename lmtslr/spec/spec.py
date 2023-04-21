@@ -27,12 +27,13 @@ roach_pixels_all = [[i+j*4 for i in range(4)] for j in range(8)]
 
 
 
+
 class RoachSpec():
     """
     Base class to deal with a single time series of spectra.
     """
     def __init__(self, obsnum, roach_id, roach_input, nchan, bandwidth, nspec,
-                 raw_spec, spec_time, xmap, ymap, pmap, gmap, bufpos):
+                 raw_spec, spec_time, xmap, ymap, azmap, elmap, ramap, decmap, lmap, bmap, pmap, gmap, bufpos):
         """
         Constructor for RoachSpec class.
         Args:
@@ -62,6 +63,12 @@ class RoachSpec():
         self.spec_time = spec_time
         self.xmap = xmap
         self.ymap = ymap
+        self.azmap = azmap
+        self.elmap = elmap
+        self.ramap = ramap
+        self.decmap = decmap
+        self.lmap = lmap
+        self.bmap = bmap
         self.pmap = pmap
         self.gmap = gmap
         self.bufpos = bufpos
@@ -200,7 +207,7 @@ class RoachSpec():
                 self.tsys_spectra[ihot, :] = tsys[ihot]
             else:
                 self.tsys_spectra[ihot, :] = tsys_spec
-            #print("TSYS: ",self.tsys_spectra[ihot, :],tsys[ihot])
+            #print("SPEC TSYS: ",self.tsys_spectra[ihot, :],tsys[ihot])
         print("SPEC TSYS[%d] otf_cal %s" % (self.pixel,repr(tsys)))
             
         
@@ -598,7 +605,7 @@ class RoachSpec():
             if self.tsys_aver:
                 self.tsys_spectrum[:] = self.tsys
                 
-            #print("TSYS: ",self.tsys_spectrum[:])
+            #print("SPEC TSYS: ",self.tsys_spectrum[:])
             print("SPEC TSYS[%d] = %g +/- %g (%d channels)" % (self.pixel,self.tsys, tsysstd, len(self.tsys_spectrum)))
         else:
             print('ObsNum %d Roach %d does not have calibration data'%(
@@ -728,12 +735,23 @@ class SpecBank():
             self.ifproc.azmap, bounds_error=False)
         self.y_interpolation_function = interpolate.interp1d(self.ifproc.time,
             self.ifproc.elmap, bounds_error=False)
+        self.az_interpolation_function = interpolate.interp1d(self.ifproc.time,
+            self.ifproc.azmap, bounds_error=False)
+        self.el_interpolation_function = interpolate.interp1d(self.ifproc.time,
+            self.ifproc.elmap, bounds_error=False)
+        self.ra_interpolation_function = interpolate.interp1d(self.ifproc.time,
+            self.ifproc.ramap, bounds_error=False)
+        self.dec_interpolation_function = interpolate.interp1d(self.ifproc.time,
+            self.ifproc.decmap, bounds_error=False)
+        self.l_interpolation_function = interpolate.interp1d(self.ifproc.time,
+            self.ifproc.lmap, bounds_error=False)
+        self.b_interpolation_function = interpolate.interp1d(self.ifproc.time,
+            self.ifproc.bmap, bounds_error=False)
         self.p_interpolation_function = interpolate.interp1d(self.ifproc.time,
             self.ifproc.parang, bounds_error=False)
         self.g_interpolation_function = interpolate.interp1d(self.ifproc.time,
             self.ifproc.galang, bounds_error=False)
-#            self.ifproc.parang, bounds_error=False)                                                             
-        self.b_interpolation_function = interpolate.interp1d(self.ifproc.time,
+        self.bufpos_interpolation_function = interpolate.interp1d(self.ifproc.time,
             self.ifproc.bufpos, kind='nearest', bounds_error=False)
 
         self.gaps = np.where(self.ifproc.bufpos[:-1] != self.ifproc.bufpos[1:])[0]
@@ -1000,11 +1018,23 @@ class SpecBank():
                     np.ma.getdata(spec_time, subok=False))
                 ymap = self.y_interpolation_function(
                     np.ma.getdata(spec_time, subok=False))
+                azmap = self.az_interpolation_function(
+                    np.ma.getdata(spec_time, subok=False))
+                elmap = self.el_interpolation_function(
+                    np.ma.getdata(spec_time, subok=False))
+                ramap = self.ra_interpolation_function(
+                    np.ma.getdata(spec_time, subok=False))
+                decmap = self.dec_interpolation_function(
+                    np.ma.getdata(spec_time, subok=False))
+                lmap = self.l_interpolation_function(
+                    np.ma.getdata(spec_time, subok=False))
+                bmap = self.b_interpolation_function(
+                    np.ma.getdata(spec_time, subok=False))
                 pmap = self.p_interpolation_function(
                     np.ma.getdata(spec_time, subok=False))
                 gmap = self.g_interpolation_function(
                     np.ma.getdata(spec_time, subok=False))
-                bufpos = self.b_interpolation_function(
+                bufpos = self.bufpos_interpolation_function(
                     np.ma.getdata(spec_time, subok=False))
 
                 # correct the interpolated arrays to remove points not\
@@ -1017,6 +1047,12 @@ class SpecBank():
                 spec_time = spec_time[cond]
                 xmap = xmap[cond]
                 ymap = ymap[cond]
+                azmap = azmap[cond]
+                elmap = elmap[cond]
+                ramap = ramap[cond]
+                decmap = decmap[cond]
+                lmap = lmap[cond]
+                bmap = bmap[cond]
                 pmap = pmap[cond]
                 gmap = gmap[cond]
                 bufpos = bufpos[cond].astype(int)
@@ -1031,7 +1067,7 @@ class SpecBank():
                 # our list
                 self.roach.append(RoachSpec(obsnum, roach_index, input_chan, 
                                             nchan, bandwidth, nspec, raw_spec,
-                                            spec_time, xmap, ymap, pmap, gmap,
+                                            spec_time, xmap, ymap, azmap, elmap, ramap, decmap, lmap, bmap, pmap, gmap,
                                             bufpos))
             nc.close()
         else:
@@ -1088,6 +1124,12 @@ class SpecBankData(SpecBank):
         data_list = []
         x_list = []
         y_list = []
+        az_list = []
+        el_list = []
+        ra_list = []
+        dec_list = []
+        l_list = []
+        b_list = []
         p_list = []
         g_list = []
         n_list = []
@@ -1098,6 +1140,12 @@ class SpecBankData(SpecBank):
             t_list.append(self.roach[i].spec_time[self.roach[i].ons])
             x_list.append(self.roach[i].xmap[self.roach[i].ons])
             y_list.append(self.roach[i].ymap[self.roach[i].ons])
+            az_list.append(self.roach[i].azmap[self.roach[i].ons])
+            el_list.append(self.roach[i].elmap[self.roach[i].ons])
+            ra_list.append(self.roach[i].ramap[self.roach[i].ons])
+            dec_list.append(self.roach[i].decmap[self.roach[i].ons])
+            l_list.append(self.roach[i].lmap[self.roach[i].ons])
+            b_list.append(self.roach[i].bmap[self.roach[i].ons])
             p_list.append(self.roach[i].pmap[self.roach[i].ons])
             g_list.append(self.roach[i].gmap[self.roach[i].ons])            
             n_list.append(len(self.roach[i].xmap[self.roach[i].ons]))
@@ -1108,7 +1156,14 @@ class SpecBankData(SpecBank):
         self.map_t = np.array(t_list)
         self.map_x = np.array(x_list)
         self.map_y = np.array(y_list)
+        self.map_az = np.array(az_list)
+        self.map_el = np.array(el_list)
+        self.map_ra = np.array(ra_list)
+        self.map_dec = np.array(dec_list)
+        self.map_l = np.array(l_list)
+        self.map_b = np.array(b_list)
         self.map_p = np.array(p_list)
+        self.map_g = np.array(g_list)
         self.map_n = np.array(n_list)
         self.map_bufpos = np.array(n_list)
         self.map_data = np.array(data_list)
