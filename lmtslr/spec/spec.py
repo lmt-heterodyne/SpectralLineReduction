@@ -984,11 +984,13 @@ class SpecBank():
                   (filename, rawdata.shape[0], rawdata.shape[1]))
             
             # get roach index back from the filename ??? why ???
+            # because roach_id is really the index of the roach in the roach array
+            # so we need to which roach from the name
             roach_index = roach_id
             for i in range(8):
                 roach_name = 'roach%d'%i
                 if roach_name in filename:
-                    #roach_index = i
+                    roach_index = i
                     break
 
             for input_chan in range(ninputs):
