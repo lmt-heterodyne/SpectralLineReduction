@@ -23,7 +23,9 @@ from itertools import groupby
 # from lmtslr.ifproc.ifproc import IFProc
 
 # define all the pixels in the roach boards they appear in
-roach_pixels_all = [[i+j*4 for i in range(4)] for j in range(4)]
+# [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15]]*2
+roach_pixels_all = [[i+j*4 for i in range(4)] for j in range(4)]*2
+
 
 
 
@@ -966,11 +968,13 @@ class SpecBank():
                   (filename, rawdata.shape[0], rawdata.shape[1]))
             
             # get roach index back from the filename ??? why ???
+            # because roach_id is really the index of the roach in the roach array
+            # so we need to which roach from the name
             roach_index = roach_id
             for i in range(8):
                 roach_name = 'roach%d'%i
                 if roach_name in filename:
-                    #roach_index = i
+                    roach_index = i
                     break
 
             for input_chan in range(ninputs):
@@ -1109,6 +1113,7 @@ class SpecBankData(SpecBank):
         self.map_x = np.array(x_list)
         self.map_y = np.array(y_list)
         self.map_p = np.array(p_list)
+        self.map_g = np.array(g_list)
         self.map_n = np.array(n_list)
         self.map_bufpos = np.array(n_list)
         self.map_data = np.array(data_list)

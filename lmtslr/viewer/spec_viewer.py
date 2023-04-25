@@ -604,8 +604,8 @@ class SpecCalViewer(SpecViewer):
         if nscale > 0:
             plot_scale = plot_scale / nscale
         plot_order = [1,5,9,13,2,6,10,14,3,7,11,15,4,8,12,16];
-        print(S.roach_pixel_ids)
         nrows = int(S.npix/4)
+        if nrows == 0: nrows = 1
         for ipix in range(S.npix):
             pixel_id = S.roach_pixel_ids[ipix]
             if nrows == 1:
@@ -613,7 +613,6 @@ class SpecCalViewer(SpecViewer):
             else:
                 ipix1 = plot_order[pixel_id]
                 ipix1 = plot_order[(pixel_id%len(plot_order))]+int(ipix/len(plot_order))*len(plot_order)
-            print(ipix, pixel_id, ipix1)
             ax = pl.subplot(nrows, 4, ipix1)
             ax.tick_params(axis='both', which='major', labelsize=6)
             ax.tick_params(axis='both', which='minor', labelsize=6)
