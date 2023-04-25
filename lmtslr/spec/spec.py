@@ -23,7 +23,9 @@ from itertools import groupby
 # from lmtslr.ifproc.ifproc import IFProc
 
 # define all the pixels in the roach boards they appear in
-roach_pixels_all = [[i+j*4 for i in range(4)] for j in range(4)]
+# [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15]]*2
+roach_pixels_all = [[i+j*4 for i in range(4)] for j in range(4)]*2
+
 
 
 
