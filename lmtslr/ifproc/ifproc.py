@@ -134,10 +134,8 @@ class IFProc():
             self.obspgm = b''.join(self.nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
             if 'ifproc' in filename:
                 self.calobsnum = self.nc.variables['Header.IfProc.CalObsNum'][0]
-                self.numbands = self.nc.variables['Header.IfProc.NumBands'][0]
             elif 'lmttpm' in filename:
                 self.calobsnum = self.nc.variables['Header.LmtTpm.CalObsNum'][0]
-                self.numbands = 1
             else:
                 self.calobsnum = 0
                     
@@ -665,7 +663,7 @@ class IFProcData(IFProc):
         self.bmap = (self.nc.variables['Data.TelescopeBackend.SourceBAct'][:] - self.source_B) * 206264.8
         self.lmap = self.ramap_astropy
         self.bmap = self.decmap_astropy
-            
+
         self.chop_option = 0
         if 'ifproc' in filename:
             self.bb_level = self.nc.variables['Data.IfProc.BasebandLevel'][:]
