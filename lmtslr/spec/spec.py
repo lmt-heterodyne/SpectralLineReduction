@@ -1113,6 +1113,7 @@ class SpecBankData(SpecBank):
         self.map_x = np.array(x_list)
         self.map_y = np.array(y_list)
         self.map_p = np.array(p_list)
+        self.map_g = np.array(g_list)
         self.map_n = np.array(n_list)
         self.map_bufpos = np.array(n_list)
         self.map_data = np.array(data_list)
