@@ -541,6 +541,7 @@ class IFProcData(IFProc):
         self.ramap_file = (self.nc.variables['Data.TelescopeBackend.SourceRaAct'][:] - self.source_RA) * np.cos(self.source_Dec) * 206264.8
         self.decmap_file = (self.nc.variables['Data.TelescopeBackend.SourceDecAct'][:] - self.source_Dec) * 206264.8
 
+        # interpolate ra/dec based on tel time
         if True:
             sl = slice(0, len(self.time), 1)
             ra_file = self.nc.variables['Data.TelescopeBackend.SourceRaAct'][:]
@@ -561,13 +562,15 @@ class IFProcData(IFProc):
                 np.ma.getdata(self.time, subok=False))
             self.ramap_interp = (ra_interp - self.source_RA) * np.cos(self.source_Dec) * 206264.8
             self.decmap_interp = (dec_interp - self.source_Dec) * 206264.8
-            print('sky_time-time', self.sky_time-self.time)
-            print('ramap_file', self.ramap_file)
-            print('sky_time', self.sky_time)
-            print('time', self.time)
-            print('ra_interp', ra_interp)
-            print('ramap_interp', self.ramap_interp)
+            if False:
+                print('sky_time-time', self.sky_time-self.time)
+                print('ramap_file', self.ramap_file)
+                print('sky_time', self.sky_time)
+                print('time', self.time)
+                print('ra_interp', ra_interp)
+                print('ramap_interp', self.ramap_interp)
 
+        # compute ra/dec from astropy
         if True:
             from astropy.coordinates import SkyCoord
             import astropy.units as u
@@ -626,11 +629,19 @@ class IFProcData(IFProc):
 
 
         # set the ra/dec map
-        self.ramap = self.ramap_file
-        self.decmap = self.decmap_file
+        self.ramap = self.ramap_interp
+        self.decmap = self.decmap_interp
+
+        # set the l/b map
+        self.lmap = (self.nc.variables['Data.TelescopeBackend.SourceLAct'][:] - self.source_L) * 206264.8
+        self.bmap = (self.nc.variables['Data.TelescopeBackend.SourceBAct'][:] - self.source_B) * 206264.8
+
+        # do this to compare different ra/dec: file vs interp vs astropy
+        self.lmap = self.ramap_astropy
+        self.bmap = self.decmap_astropy
 
 
-        if True:
+        if False:
             def stat_change(d, d_orig, unit, name):
                 #dd = (d - d_orig).to_value(unit)
                 dd = (d - d_orig)
@@ -657,12 +668,6 @@ class IFProcData(IFProc):
             import sys
             #sys.exit(0)
 
-
-        # LatLon map   PJT
-        self.lmap = (self.nc.variables['Data.TelescopeBackend.SourceLAct'][:] - self.source_L) * 206264.8
-        self.bmap = (self.nc.variables['Data.TelescopeBackend.SourceBAct'][:] - self.source_B) * 206264.8
-        self.lmap = self.ramap_astropy
-        self.bmap = self.decmap_astropy
 
         self.chop_option = 0
         if 'ifproc' in filename:
