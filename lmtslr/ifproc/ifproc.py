@@ -95,6 +95,7 @@ class IFProc():
 
             # header information
             self.source = b''.join(self.nc.variables['Header.Source.SourceName'][:]).decode().strip()
+            self.source_coord_sys = self.nc.variables['Header.Source.CoordSys'][0]
             self.vlsr = self.nc.variables['Header.Source.Velocity'][0]
 
             date_obs = self.nc.variables['Data.TelescopeBackend.TelTime'][0].tolist()
@@ -251,9 +252,10 @@ class IFProc():
                     self.map_coord = 0
 
                 self.map_motion = b''.join(self.nc.variables['Header.Map.MapMotion'][:]).decode().strip()
+                self.scanang = self.nc.variables['Header.Map.ScanAngle'][0] * 206264.8/3600.
                 print('Map Parameters: %s %s'%(test_map_coord, self.map_motion))
-                print('HPBW=%5.1f XLength=%8.1f YLength=%8.1f XStep=%6.2f YStep=%6.2f'
-                      %(self.hpbw, self.xlength, self.ylength, self.xstep, self.ystep))
+                print('HPBW=%5.1f XLength=%8.1f YLength=%8.1f XStep=%6.2f YStep=%6.2f ScanAngle=%6.2f'
+                      %(self.hpbw, self.xlength, self.ylength, self.xstep, self.ystep, self.scanang))
             except:
                 self.map_motion = None
                 print('%s does not have map parameters'%(self.filename))
@@ -629,16 +631,19 @@ class IFProcData(IFProc):
 
 
         # set the ra/dec map
-        self.ramap = self.ramap_interp
-        self.decmap = self.decmap_interp
+        #self.ramap = self.ramap_interp
+        #self.decmap = self.decmap_interp
+        self.ramap = self.ramap_file
+        self.decmap = self.decmap_file
 
         # set the l/b map
         self.lmap = (self.nc.variables['Data.TelescopeBackend.SourceLAct'][:] - self.source_L) * np.cos(self.source_B) * 206264.8
         self.bmap = (self.nc.variables['Data.TelescopeBackend.SourceBAct'][:] - self.source_B) * 206264.8
 
         # do this to compare different ra/dec: file vs interp vs astropy
-        #self.lmap = self.ramap_astropy
-        #self.bmap = self.decmap_astropy
+        if self.source_coord_sys != 2:
+            self.lmap = self.ramap_astropy
+            self.bmap = self.decmap_astropy
 
 
         if False:
