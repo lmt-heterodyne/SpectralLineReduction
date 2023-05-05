@@ -387,7 +387,7 @@ class RoachSpec():
         if use_otf_cal:
             self.compute_tsys_spectra()
             
-        if stype == 0:
+        if stype == 0 or self.nrefs == 0:
             self.compute_median_spectrum()
             for i in self.ons:
                 spectra.append((self.raw_spec[i,:] - self.median_spectrum[:]) 
@@ -396,66 +396,54 @@ class RoachSpec():
             #    self.compute_tsys_spectrum()
             #    self.reduced_spectra = np.array(spectra) * self.tsys_spectrum
         elif stype == 1:
-            if self.nrefs != 0:
-                self.compute_reference_spectrum()
-                for i in self.ons:
-                    spectra.append((self.raw_spec[i,:] - 
-                                    self.reference_spectrum[:]) / 
-                                   self.reference_spectrum[:])
-            else:
-                for i in self.ons:
-                    spectra.append((self.raw_spec[i,:]))
+            self.compute_reference_spectrum()
+            for i in self.ons:
+                spectra.append((self.raw_spec[i,:] - 
+                                self.reference_spectrum[:]) / 
+                               self.reference_spectrum[:])
             #if use_otf_cal:
             #    self.compute_tsys_spectrun()
             #    self.reduced_spectra = np.array(spectra) * self.tsys_spectrum
         elif stype == 2: # type == 2:
-            if self.nrefs != 0:
-                self.compute_reference_spectra()
-                #nbins = self.nrefs - 1
-                nbins = self.nons
-                for ibin in range(nbins):
-                    istart = self.on_ranges[ibin][0]
-                    start_ref_bin = self.get_nearest_reference(istart-1, left=True)
-                    istop = self.on_ranges[ibin][1]
-                    stop_ref_bin = self.get_nearest_reference(istop+1, left=False)
+            self.compute_reference_spectra()
+            #nbins = self.nrefs - 1
+            nbins = self.nons
+            for ibin in range(nbins):
+                istart = self.on_ranges[ibin][0]
+                start_ref_bin = self.get_nearest_reference(istart-1, left=True)
+                istop = self.on_ranges[ibin][1]
+                stop_ref_bin = self.get_nearest_reference(istop+1, left=False)
+                if use_otf_cal:
+                    tsys_bin = self.get_previous_hot(istart-1)
+                    # print("OTF_CAL %d %d %d %d %d -> %d" % (ibin,istart,istop,start_ref_bin,stop_ref_bin,tsys_bin))
+                for i in range(istart, istop + 1):
+                    ref = (self.reference_spectra[start_ref_bin] + 
+                           self.reference_spectra[stop_ref_bin]) / 2
                     if use_otf_cal:
-                        tsys_bin = self.get_previous_hot(istart-1)
-                        # print("OTF_CAL %d %d %d %d %d -> %d" % (ibin,istart,istop,start_ref_bin,stop_ref_bin,tsys_bin))
-                    for i in range(istart, istop + 1):
-                        ref = (self.reference_spectra[start_ref_bin] + 
-                               self.reference_spectra[stop_ref_bin]) / 2
-                        if use_otf_cal:
-                            spectra.append( ((self.raw_spec[i, :] - ref) / ref) * self.tsys_spectra[tsys_bin] )
-                        else:
-                            spectra.append((self.raw_spec[i,:] - ref) / ref)
-            else:
-                for i in self.ons:
-                    spectra.append((self.raw_spec[i,:]))
+                        spectra.append( ((self.raw_spec[i, :] - ref) / ref) * self.tsys_spectra[tsys_bin] )
+                    else:
+                        spectra.append((self.raw_spec[i,:] - ref) / ref)
         elif stype == 3: # type == 3:
-            if self.nrefs != 0:
-                self.compute_reference_spectra()
-                #nbins = self.nrefs - 1
-                nbins = self.nons
-                for ibin in range(nbins):
-                    istart = self.on_ranges[ibin][0]
-                    start_ref_bin = self.get_nearest_reference(istart-1, left=True)                    
-                    istop = self.on_ranges[ibin][1]
-                    stop_ref_bin = self.get_nearest_reference(istop+1, left=False)                    
-                    mapwidth = istop - istart
+            self.compute_reference_spectra()
+            #nbins = self.nrefs - 1
+            nbins = self.nons
+            for ibin in range(nbins):
+                istart = self.on_ranges[ibin][0]
+                start_ref_bin = self.get_nearest_reference(istart-1, left=True)                    
+                istop = self.on_ranges[ibin][1]
+                stop_ref_bin = self.get_nearest_reference(istop+1, left=False)                    
+                mapwidth = istop - istart
+                if use_otf_cal:
+                    tsys_bin = self.get_previous_hot(istart-1)                    
+                for i in range(istart, istop + 1):
+                    wt1 = float(mapwidth - (i - istart))/float(mapwidth)
+                    wt2 = 1 - wt1
+                    ref = (wt1 * self.reference_spectra[start_ref_bin] + 
+                           wt2 * self.reference_spectra[stop_ref_bin])
                     if use_otf_cal:
-                        tsys_bin = self.get_previous_hot(istart-1)                    
-                    for i in range(istart, istop + 1):
-                        wt1 = float(mapwidth - (i - istart))/float(mapwidth)
-                        wt2 = 1 - wt1
-                        ref = (wt1 * self.reference_spectra[start_ref_bin] + 
-                               wt2 * self.reference_spectra[stop_ref_bin])
-                        if use_otf_cal:
-                            spectra.append( ((self.raw_spec[i,:] - ref) / ref) * self.tsys_spectra[tsys_bin] )
-                        else:
-                            spectra.append((self.raw_spec[i,:] - ref) / ref)
-            else:
-                for i in self.ons:
-                    spectra.append((self.raw_spec[i,:]))
+                        spectra.append( ((self.raw_spec[i,:] - ref) / ref) * self.tsys_spectra[tsys_bin] )
+                    else:
+                        spectra.append((self.raw_spec[i,:] - ref) / ref)
                         
         # save reduced spectra as a 2D numpy array
         # calibrate it if requested
