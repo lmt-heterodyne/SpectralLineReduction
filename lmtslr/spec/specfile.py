@@ -212,17 +212,23 @@ class SpecFile():
         for ipix in self.pix_list:
             count0 = count
             i = self.specbank.find_pixel_index(ipix)
-            n_spectra = len(self.specbank.roach[i].xmap[self.specbank.roach[i].ons])
-            x_spectra =     self.specbank.roach[i].xmap[self.specbank.roach[i].ons] # x coordinate
-            y_spectra =     self.specbank.roach[i].ymap[self.specbank.roach[i].ons] # y coordinate
             if self.ifproc.map_coord == 0:
+                n_spectra = len(self.specbank.roach[i].azmap[self.specbank.roach[i].ons])
+                x_spectra =     self.specbank.roach[i].azmap[self.specbank.roach[i].ons] # x coordinate
+                y_spectra =     self.specbank.roach[i].elmap[self.specbank.roach[i].ons] # y coordinate
                 gx,gy = theGrid.azel(self.specbank.elev/180. * np.pi,
                                      self.ifproc.tracking_beam)
             elif self.ifproc.map_coord == 1:
+                n_spectra = len(self.specbank.roach[i].ramap[self.specbank.roach[i].ons])
+                x_spectra =     self.specbank.roach[i].ramap[self.specbank.roach[i].ons] # x coordinate
+                y_spectra =     self.specbank.roach[i].decmap[self.specbank.roach[i].ons] # y coordinate
                 parang = np.mean(self.specbank.roach[i].pmap[self.specbank.roach[i].ons]) # average parang
                 gx,gy = theGrid.radec(self.specbank.elev/180. * np.pi, parang,
                                       self.ifproc.tracking_beam)
             elif self.ifproc.map_coord == 2:
+                n_spectra = len(self.specbank.roach[i].lmap[self.specbank.roach[i].ons])
+                x_spectra =     self.specbank.roach[i].lmap[self.specbank.roach[i].ons] # x coordinate
+                y_spectra =     self.specbank.roach[i].gmap[self.specbank.roach[i].ons] # y coordinate
                 parang = np.mean(self.specbank.roach[i].pmap[self.specbank.roach[i].ons]) # average parang
                 galang = np.mean(self.specbank.roach[i].gmap[self.specbank.roach[i].ons]) # average galang
                 gx,gy = theGrid.latlon(self.specbank.elev/180. * np.pi, parang, galang,
