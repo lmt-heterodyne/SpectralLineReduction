@@ -328,23 +328,36 @@ class SpecBankViewer(SpecViewer):
         Returns:
             none
         """
+        map_x = S.map_ra
+        map_y = S.map_dec
+        map_data = S.map_data
+        if True or not map_region:
+            map_region = [0, 0, 0, 0]
+            map_region[0] = 1.1*(map_x[0]).min()
+            map_region[1] = 1.1*(map_x[0]).max()
+            map_region[2] = 1.1*(map_y[0]).min()
+            map_region[3] = 1.1*(map_y[0]).max()
+            #np.set_printoptions(threshold=sys.maxsize)
+            #print(map_x, map_y)
         nx = int((map_region[1] - map_region[0]) / grid_spacing + 1)
         ny = int((map_region[3] - map_region[2]) / grid_spacing + 1)
+        nx = max(nx, ny)
+        ny = nx
         xi = np.linspace(map_region[0], map_region[1], nx)
         yi = np.linspace(map_region[2], map_region[3], ny)
+        grid_x, grid_y = np.mgrid[map_region[0]:map_region[1]:complex(nx), map_region[2]:map_region[3]:complex(ny)]
         zi_sum = np.zeros((nx, ny))
         for pixel in pixel_list:
             index = S.find_map_pixel_index(pixel)
             try :
-                zi = interp.griddata((S.map_x[index], S.map_y[index]), 
-                                     S.map_data[index], (xi, yi), method='linear')
-            except:
-                zi = mlab.griddata(S.map_x[index], S.map_y[index], 
-                                   S.map_data[index], xi, yi, interp='linear')
-                
+                zi = interp.griddata((map_x[index],map_y[index]),map_data[index],(grid_x,grid_y),method='linear').T
+            except Exception as e:
+                zi = mlab.griddata(map_x[index], map_y[index], 
+                                   map_data[index], xi, yi, interp='linear')
             zi_sum = zi_sum + zi
         pl.imshow(zi_sum, clim=plot_range, interpolation='bicubic', 
                   cmap=pl.cm.jet, origin='lower', extent=map_region)
+        pl.plot(map_x[index], map_y[index])
         pl.xlabel('dAz (")')
         pl.ylabel('dEl (")')
         pl.suptitle('Spectral Line Sanchez Map: %d'%(S.obsnum))
@@ -369,33 +382,44 @@ class SpecBankViewer(SpecViewer):
         print('azel', gx, gy)
         gx, gy = g.radec(S.elev / 180 * np.pi, np.mean(S.map_p), S.tracking_beam)
         print('radec', gx, gy)
+        map_x = S.map_ra
+        map_y = S.map_dec
+        map_data = S.map_data
+        if True or not map_region:
+            map_region = [0, 0, 0, 0]
+            map_region[0] = 1.1*(map_x[0]).min()
+            map_region[1] = 1.1*(map_x[0]).max()
+            map_region[2] = 1.1*(map_y[0]).min()
+            map_region[3] = 1.1*(map_y[0]).max()
+            #np.set_printoptions(threshold=sys.maxsize)
+            #print(map_x, map_y)
         nx = int((map_region[1] - map_region[0]) / grid_spacing + 1)
         ny = int((map_region[3] - map_region[2]) / grid_spacing + 1)
+        nx = max(nx, ny)
+        ny = nx
         xi = np.linspace(map_region[0], map_region[1], nx)
         yi = np.linspace(map_region[2], map_region[3], ny)
+        grid_x, grid_y = np.mgrid[map_region[0]:map_region[1]:complex(nx), map_region[2]:map_region[3]:complex(ny)]
         zi_sum = np.zeros((nx, ny))
         wi_sum = np.zeros((nx, ny))
         for pixel in pixel_list:
             index = S.find_map_pixel_index(pixel)
-            wdata = np.ones(len(S.map_data[index]))
+            wdata = np.ones(len(map_data[index]))
             try :
-                zi = interp.griddata((S.map_x[index]-gx[pixel],
-                                      S.map_y[index]-gy[pixel]), 
-                                     S.map_data[index], (xi, yi), method='linear')
-                wi = interp.griddata((S.map_x[index]-gx[pixel],
-                                      S.map_y[index]-gy[pixel]), 
-                                     wdata, (xi, yi), method='linear')
+                zi = interp.griddata((map_x[index]-gx[pixel],map_y[index]-gy[pixel]),map_data[index],(grid_x,grid_y),method='linear').T
+                wi = interp.griddata((map_x[index]-gx[pixel],map_y[index]-gy[pixel]),wdata,(grid_x,grid_y),method='linear').T
             except:
-                zi = mlab.griddata(S.map_x[index] - gx[pixel], 
-                                   S.map_y[index] - gy[pixel], S.map_data[index], 
+                zi = mlab.griddata(map_x[index] - gx[pixel], 
+                                   map_y[index] - gy[pixel], map_data[index], 
                                    xi, yi, interp='linear')
-                wi = mlab.griddata(S.map_x[index] - gx[pixel], 
-                                   S.map_y[index] - gy[pixel], wdata, xi, yi, 
+                wi = mlab.griddata(map_x[index] - gx[pixel], 
+                                   map_y[index] - gy[pixel], wdata, xi, yi, 
                                    interp='linear')
             zi_sum = zi_sum + zi
             wi_sum = wi_sum + wi
         pl.imshow(zi_sum / wi_sum, clim=plot_range, interpolation='bicubic', 
                   cmap=pl.cm.jet, origin='lower', extent=map_region)
+        pl.plot(map_x[index], map_y[index])
         pl.axis(map_region)
         pl.xlabel('dAz (")')
         pl.ylabel('dEl (")')
