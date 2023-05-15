@@ -640,12 +640,6 @@ class IFProcData(IFProc):
         self.lmap = (self.nc.variables['Data.TelescopeBackend.SourceLAct'][:] - self.source_L) * np.cos(self.source_B) * 206264.8
         self.bmap = (self.nc.variables['Data.TelescopeBackend.SourceBAct'][:] - self.source_B) * 206264.8
 
-        # do this to compare different ra/dec: file vs interp vs astropy
-        if self.source_coord_sys != 2:
-            self.lmap = self.ramap_astropy
-            self.bmap = self.decmap_astropy
-
-
         if self.map_coord == 1:
             self.xmap = self.ramap
             self.ymap = self.decmap
