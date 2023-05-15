@@ -646,6 +646,16 @@ class IFProcData(IFProc):
             self.bmap = self.decmap_astropy
 
 
+        if self.map_coord == 1:
+            self.xmap = self.ramap
+            self.ymap = self.decmap
+        elif self.map_coord == 2:
+            self.xmap = self.lmap
+            self.ymap = self.bmap
+        else:
+            self.xmap = self.azmap
+            self.ymap = self.elmap
+            
         if False:
             def stat_change(d, d_orig, unit, name):
                 #dd = (d - d_orig).to_value(unit)
@@ -771,21 +781,14 @@ class IFProcData(IFProc):
         self.map_p = []
         print('PJT map_coord',self.map_coord)
         for i in range(self.npix):
+            self.map_x.append(self.xmap)
+            self.map_y.append(self.ymap)
             self.map_az.append(self.azmap)
             self.map_el.append(self.elmap)
             self.map_ra.append(self.ramap)
             self.map_dec.append(self.decmap)
             self.map_l.append(self.lmap)
             self.map_b.append(self.bmap)
-            if self.map_coord == 1:
-                self.map_x.append(self.ramap)
-                self.map_y.append(self.decmap)
-            elif self.map_coord == 2:
-                self.map_x.append(self.lmap)
-                self.map_y.append(self.bmap)
-            else:
-                self.map_x.append(self.azmap)
-                self.map_y.append(self.elmap)
             self.map_p.append(self.parang)
             self.map_n.append(self.nsamp)
             self.map_data.append(self.caldata[i,:] - self.bias[i])
@@ -800,10 +803,6 @@ class IFProcData(IFProc):
         self.map_p = np.array(self.map_p)
         self.map_n = np.array(self.map_n)
         self.map_data = np.array(self.map_data)
-        import pickle as pkl
-        with open('d.pkl', 'wb') as f:
-            pkl.dump([self.map_x, self.map_y, self.map_data], f)
-            
 
 class IFProcCal(IFProc):
     """
@@ -834,10 +833,12 @@ class IFProcCal(IFProc):
         self.time = self.nc.variables['Data.TelescopeBackend.TelTime'][:]
         self.azmap = self.nc.variables['Data.TelescopeBackend.TelAzMap'][:]
         self.elmap = self.nc.variables['Data.TelescopeBackend.TelElMap'][:]
-        self.ramap = self.nc.variables['Data.TelescopeBackend.TelAzMap'][:]
-        self.decmap = self.nc.variables['Data.TelescopeBackend.TelElMap'][:]
-        self.lmap = self.nc.variables['Data.TelescopeBackend.TelAzMap'][:]
-        self.bmap = self.nc.variables['Data.TelescopeBackend.TelElMap'][:]
+        self.xmap = self.azmap
+        self.ymap = self.elmap
+        self.ramap =  np.zeros(len(self.azmap))
+        self.decmap =  np.zeros(len(self.azmap))
+        self.lmap =  np.zeros(len(self.azmap))
+        self.bmap =  np.zeros(len(self.azmap))
         self.parang = np.zeros(len(self.azmap))
         self.galang = np.zeros(len(self.azmap))
         self.bufpos = self.nc.variables['Data.TelescopeBackend.BufPos'][:]
