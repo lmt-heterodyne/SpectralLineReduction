@@ -722,9 +722,9 @@ class SpecBank():
         self.bank = bank
         
         self.x_interpolation_function = interpolate.interp1d(self.ifproc.time,
-            self.ifproc.azmap, bounds_error=False)
+            self.ifproc.xmap, bounds_error=False)
         self.y_interpolation_function = interpolate.interp1d(self.ifproc.time,
-            self.ifproc.elmap, bounds_error=False)
+            self.ifproc.ymap, bounds_error=False)
         self.az_interpolation_function = interpolate.interp1d(self.ifproc.time,
             self.ifproc.azmap, bounds_error=False)
         self.el_interpolation_function = interpolate.interp1d(self.ifproc.time,
