@@ -40,9 +40,17 @@ def lookup_ifproc_file(obsnum,path='/data_lmt/ifproc/'):
     return(filename)
 """
 
-def MapCoord(map_coord):
+def MapCoord(map_coord, obsgoal, source_coord_sys, obsnum):
     """   translate ascii MapCoord to an index  (0,1,2)
     """
+    import sys
+    print(map_coord, obsgoal, source_coord_sys, obsnum)
+    if obsgoal == "Science":
+        if source_coord_sys == 2:
+            return 2
+        return 1
+    if obsgoal == "Pointing":
+        return 0
     if "Az"  in map_coord: return 0
     if "El"  in map_coord: return 0
     if "Ra"  in map_coord: return 1
@@ -70,6 +78,7 @@ class IFProcQuick():
         if os.path.isfile(self.filename):
             self.nc = netCDF4.Dataset(self.filename)
             self.obspgm = b''.join(self.nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
+            self.obsgoal = b''.join(self.nc.variables['Header.Dcs.ObsGoal'][:]).decode().strip()
             self.obsnum = self.nc.variables['Header.Dcs.ObsNum'][0]
             self.receiver = b''.join(self.nc.variables['Header.Dcs.Receiver'][:]).decode().strip()
             self.nc.close()
@@ -133,6 +142,7 @@ class IFProc():
             self.source_L = self.nc.variables['Header.Source.L'][0]
             self.source_B = self.nc.variables['Header.Source.B'][0]            
             self.obspgm = b''.join(self.nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
+            self.obsgoal = b''.join(self.nc.variables['Header.Dcs.ObsGoal'][:]).decode().strip()
             if 'ifproc' in filename:
                 self.calobsnum = self.nc.variables['Header.IfProc.CalObsNum'][0]
             elif 'lmttpm' in filename:
@@ -246,7 +256,7 @@ class IFProc():
                 self.rows = self.nc.variables['Header.Map.RowsPerScan'][0]
                 # check the coordinate system AzEl = 0; RaDec = 1; LatLon = 2; default =0
                 test_map_coord = b''.join(self.nc.variables['Header.Map.MapCoord'][:]).decode().strip()
-                self.map_coord = MapCoord(test_map_coord)
+                self.map_coord = MapCoord(test_map_coord, self.obsgoal, self.source_coord_sys, self.obsnum)
                 if self.map_coord < 0:
                     print("Warning: unknown map_coord ",test_map_coord)
                     self.map_coord = 0
@@ -256,7 +266,8 @@ class IFProc():
                 print('Map Parameters: %s %s'%(test_map_coord, self.map_motion))
                 print('HPBW=%5.1f XLength=%8.1f YLength=%8.1f XStep=%6.2f YStep=%6.2f ScanAngle=%6.2f'
                       %(self.hpbw, self.xlength, self.ylength, self.xstep, self.ystep, self.scanang))
-            except:
+            except Exception as e:
+                print(e)
                 self.map_motion = None
                 print('%s does not have map parameters'%(self.filename))
 
@@ -501,13 +512,14 @@ class IFProcData(IFProc):
                 self.rows = self.nc.variables['Header.Map.RowsPerScan'][0]
                 # check the coordinate system Az = 0; Ra = 1; default =0
                 test_map_coord = b''.join(self.nc.variables['Header.Map.MapCoord'][:]).decode().strip()
-                self.map_coord = MapCoord(test_map_coord)
+                self.map_coord = MapCoord(test_map_coord, self.obsgoal, self.source_coord_sys, self.obsnum)
                 if self.map_coord < 0:
                     print("Warning: unknown map_coord ",test_map_coord)
                     self.map_coord = 0
 
                 self.map_motion = b''.join(self.nc.variables['Header.Map.MapMotion'][:]).decode().strip()
-            except:
+            except Exception as e:
+                print('e1', e)
                 print('%s does not have map parameters'%(self.filename))
 
         elif self.obspgm == 'Cal':
