@@ -328,8 +328,8 @@ class SpecBankViewer(SpecViewer):
         Returns:
             none
         """
-        map_x = S.map_ra
-        map_y = S.map_dec
+        map_x = S.map_x
+        map_y = S.map_y
         map_data = S.map_data
         if True or not map_region:
             map_region = [0, 0, 0, 0]
@@ -382,8 +382,8 @@ class SpecBankViewer(SpecViewer):
         print('azel', gx, gy)
         gx, gy = g.radec(S.elev / 180 * np.pi, np.mean(S.map_p), S.tracking_beam)
         print('radec', gx, gy)
-        map_x = S.map_ra
-        map_y = S.map_dec
+        map_x = S.map_x
+        map_y = S.map_y
         map_data = S.map_data
         if True or not map_region:
             map_region = [0, 0, 0, 0]
