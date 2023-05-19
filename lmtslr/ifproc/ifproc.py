@@ -552,101 +552,8 @@ class IFProcData(IFProc):
         self.sky_time = np.array([dparser.parse(str(utdate)+' '+str(datetime.timedelta(hours=self.tel_utc[i]))+' UTC', fuzzy=True).timestamp() for i in range(len(self.tel_utc))])
 
         # RaDec map
-        self.ramap_file = (self.nc.variables['Data.TelescopeBackend.SourceRaAct'][:] - self.source_RA) * np.cos(self.source_Dec) * 206264.8
-        self.decmap_file = (self.nc.variables['Data.TelescopeBackend.SourceDecAct'][:] - self.source_Dec) * 206264.8
-
-        # interpolate ra/dec based on tel time
-        if True:
-            sl = slice(0, len(self.time), 1)
-            ra_file = self.nc.variables['Data.TelescopeBackend.SourceRaAct'][:]
-            dec_file = self.nc.variables['Data.TelescopeBackend.SourceDecAct'][:]
-            self.ra_interpolation_function = interpolate.interp1d(self.sky_time[sl],
-                                                                  ra_file[sl],
-                                                                  bounds_error=False,
-                                                                  kind='previous',
-                                                                  fill_value='extrapolate')
-            self.dec_interpolation_function = interpolate.interp1d(self.sky_time[sl],
-                                                                   dec_file[sl],
-                                                                   bounds_error=False,
-                                                                   kind='previous',
-                                                                   fill_value='extrapolate')
-            ra_interp = self.ra_interpolation_function(
-                np.ma.getdata(self.time, subok=False))
-            dec_interp = self.dec_interpolation_function(
-                np.ma.getdata(self.time, subok=False))
-            self.ramap_interp = (ra_interp - self.source_RA) * np.cos(self.source_Dec) * 206264.8
-            self.decmap_interp = (dec_interp - self.source_Dec) * 206264.8
-            if False:
-                print('sky_time-time', self.sky_time-self.time)
-                print('ramap_file', self.ramap_file)
-                print('sky_time', self.sky_time)
-                print('time', self.time)
-                print('ra_interp', ra_interp)
-                print('ramap_interp', self.ramap_interp)
-
-        # compute ra/dec from astropy
-        if True:
-            from astropy.coordinates import SkyCoord
-            import astropy.units as u
-            from astropy.time import Time
-            from astroplan import Observer
-            from astropy import coordinates as coord
-            from pytz import timezone
-
-            _lmt_info = {
-                'instru': 'lmt',
-                'name': 'LMT',
-                'name_long': "Large Millimeter Telescope",
-                'location': {
-                    'lon': '-97d18m52.5s',
-                    'lat': '+18d59m9.6s',
-                    'height': 4640 << u.m,
-                    },
-                'timezone_local': 'America/Mexico_City'
-            }
-
-            lmt_location = coord.EarthLocation.from_geodetic(**_lmt_info['location'])
-            """The local of LMT."""
-
-            lmt_timezone_local = timezone(_lmt_info['timezone_local'])
-            """The local time zone of LMT."""
-
-            lmt_observer = Observer(
-                name=_lmt_info['name_long'],
-                location=lmt_location,
-                timezone=lmt_timezone_local,
-            )
-            
-            observer = lmt_observer
-
-            tel_time = Time(self.nc['Data.TelescopeBackend.TelTime'][:], format='unix', scale='utc', location=lmt_observer.location)
-            tel_az = self.nc['Data.TelescopeBackend.TelAzAct'][:] << u.rad
-            tel_alt = self.nc['Data.TelescopeBackend.TelElAct'][:] << u.rad
-            tel_az_cor = self.nc['Data.TelescopeBackend.TelAzCor'][:] << u.rad
-            tel_alt_cor = self.nc['Data.TelescopeBackend.TelElCor'][:] << u.rad
-            tel_az_tot = tel_az - (tel_az_cor) / np.cos(tel_alt)
-            tel_alt_tot = tel_alt - (tel_alt_cor)
-            altaz_frame = observer.altaz(time=tel_time)
-            tel_icrs_astropy = SkyCoord(tel_az_tot, tel_alt_tot, frame=altaz_frame).transform_to('icrs')
-            # update variables and save
-            parang = observer.parallactic_angle(time=tel_time, target=tel_icrs_astropy)
-            self.parang_astropy = parang.radian
-            self.ramap_astropy = (tel_icrs_astropy.ra.radian - self.source_RA) * np.cos(self.source_Dec) * 206264.8
-            self.decmap_astropy = (tel_icrs_astropy.dec.radian - self.source_Dec) * 206264.8
-
-            az_ = tel_az_tot.value
-            el_ = tel_alt_tot.value
-            ra_ = tel_icrs_astropy.ra.radian
-            dec_ = tel_icrs_astropy.dec.radian
-            ut_ = tel_time.ut1
-            lst_ = tel_time.sidereal_time('apparent')
-
-
-        # set the ra/dec map
-        #self.ramap = self.ramap_interp
-        #self.decmap = self.decmap_interp
-        self.ramap = self.ramap_file
-        self.decmap = self.decmap_file
+        self.ramap = (self.nc.variables['Data.TelescopeBackend.SourceRaAct'][:] - self.source_RA) * np.cos(self.source_Dec) * 206264.8
+        self.decmap = (self.nc.variables['Data.TelescopeBackend.SourceDecAct'][:] - self.source_Dec) * 206264.8
 
         # set the l/b map
         self.lmap = (self.nc.variables['Data.TelescopeBackend.SourceLAct'][:] - self.source_L) * np.cos(self.source_B) * 206264.8
@@ -662,34 +569,6 @@ class IFProcData(IFProc):
             self.xmap = self.azmap
             self.ymap = self.elmap
             
-        if False:
-            def stat_change(d, d_orig, unit, name):
-                #dd = (d - d_orig).to_value(unit)
-                dd = (d - d_orig)
-                dd = dd[np.isfinite(dd)]
-                print(f"{name} changed with diff ({unit}): min={dd.max()} max={dd.min()} mean={dd.mean()} std={np.std(dd)}")
-            stat_change(self.parang_astropy, self.parang, u.deg, 'ActParAng') 
-            stat_change(self.ramap_file, self.ramap_interp, u.arcsec, 'file-interp') 
-            stat_change(self.decmap_file, self.decmap_interp, u.arcsec, 'file-interp')
-            stat_change(self.ramap_file, self.ramap_astropy, u.arcsec, 'file-astropy') 
-            stat_change(self.decmap_file, self.decmap_astropy, u.arcsec, 'file-astropy')
-            stat_change(self.ramap_interp, self.ramap_astropy, u.arcsec, 'interp-astropy') 
-            stat_change(self.decmap_interp, self.decmap_astropy, u.arcsec, 'interp-astropy')
-                
-        if False:
-            import matplotlib.pyplot as pl
-            sl = np.where(self.bufpos == 0)
-            if False:
-                # traces
-                ax = pl.subplot()
-                ax.plot(self.time[sl],self.ramap_file[sl], 'rx')
-                ax.plot(self.time[sl],self.ramap_interp[sl], 'mx')
-                ax.plot(self.time[sl],self.ramap_astropy[sl], 'yx')
-            pl.show()
-            import sys
-            #sys.exit(0)
-
-
         self.chop_option = 0
         if 'ifproc' in filename:
             self.bb_level = self.nc.variables['Data.IfProc.BasebandLevel'][:]
