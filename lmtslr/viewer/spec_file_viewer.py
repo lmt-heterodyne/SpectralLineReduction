@@ -70,13 +70,16 @@ class SpecFileViewer():
                 rindex = np.where(self.rms[pindex] >= 0)[0]
             else:
                 rindex = np.where(self.rms[pindex] < rms_cut)[0]
-            ax1[np.mod(the_pixel, 4), the_pixel // 4].imshow(
+            im1 = ax1[np.mod(the_pixel, 4), the_pixel // 4].imshow(
                 self.data[pindex[rindex]].transpose(), origin='lower', 
                 extent=[0, float(len(rindex)), self.caxis[0], self.caxis[-1]],
                 clim=plot_range, aspect='auto')
             ax1[np.mod(the_pixel, 4), the_pixel // 4].text(0.05 * len(rindex),
                 self.caxis[0] + 0.85 * (self.caxis[-1] - self.caxis[0]), 
                 '%d'%(the_pixel))
+            if the_pixel == pixel_list[-1]:
+                Plots.colorbar(im1)
+
         Plots.savefig()
 
     def pixel_waterfall_plot(self, the_pixel, rms_cut, plot_range=[-1,1]):
