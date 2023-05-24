@@ -546,6 +546,8 @@ class SpecFileViewer():
             hdr['CRVAL3'] = 0.0
             hdr['CDELT3'] = 1.0
             hdr['CTYPE3'] = 'Beam'
+            # List channel offset
+            hdr['CHAN0']   = self.chan[0]
             # List beams
             hdr['COMMENT'] = 'Waterfall plot (Sample-Velocity-Beam)'
             hdr['COMMENT'] = 'pix_list: %s' % str(pixel_list)
