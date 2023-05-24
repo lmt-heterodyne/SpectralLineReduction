@@ -550,10 +550,12 @@ class SpecFileViewer():
             hdr['COMMENT'] = 'Waterfall plot (Sample-Velocity-Beam)'
             hdr['COMMENT'] = 'pix_list: %s' % str(pixel_list)
             hdr['COMMENT'] = 'binning: %s' % str(binning)
-            hdr['COMMENT'] = 'lmtslr 15-mar-2022'
+            hdr['COMMENT'] = 'chan0: %d' % self.chan[0]
+            hdr['COMMENT'] = 'lmtslr 24-may-2023'
             
         fits.writeto(fits_file, hdu.data, hdr)
         print("Written waterfall cube to %s" % fits_file)
+        print("chan0: %d" % self.chan[0])
 
 
             
