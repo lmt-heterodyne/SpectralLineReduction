@@ -70,13 +70,16 @@ class SpecFileViewer():
                 rindex = np.where(self.rms[pindex] >= 0)[0]
             else:
                 rindex = np.where(self.rms[pindex] < rms_cut)[0]
-            ax1[np.mod(the_pixel, 4), the_pixel // 4].imshow(
+            im1 = ax1[np.mod(the_pixel, 4), the_pixel // 4].imshow(
                 self.data[pindex[rindex]].transpose(), origin='lower', 
                 extent=[0, float(len(rindex)), self.caxis[0], self.caxis[-1]],
                 clim=plot_range, aspect='auto')
             ax1[np.mod(the_pixel, 4), the_pixel // 4].text(0.05 * len(rindex),
                 self.caxis[0] + 0.85 * (self.caxis[-1] - self.caxis[0]), 
                 '%d'%(the_pixel))
+            if the_pixel == pixel_list[-1]:
+                Plots.colorbar(im1)
+
         Plots.savefig()
 
     def pixel_waterfall_plot(self, the_pixel, rms_cut, plot_range=[-1,1]):
@@ -543,14 +546,18 @@ class SpecFileViewer():
             hdr['CRVAL3'] = 0.0
             hdr['CDELT3'] = 1.0
             hdr['CTYPE3'] = 'Beam'
+            # List channel offset
+            hdr['CHAN0']   = self.chan[0]
             # List beams
             hdr['COMMENT'] = 'Waterfall plot (Sample-Velocity-Beam)'
             hdr['COMMENT'] = 'pix_list: %s' % str(pixel_list)
             hdr['COMMENT'] = 'binning: %s' % str(binning)
-            hdr['COMMENT'] = 'lmtslr 15-mar-2022'
+            hdr['COMMENT'] = 'chan0: %d' % self.chan[0]
+            hdr['COMMENT'] = 'lmtslr 24-may-2023'
             
         fits.writeto(fits_file, hdu.data, hdr)
         print("Written waterfall cube to %s" % fits_file)
+        print("chan0: %d" % self.chan[0])
 
 
             

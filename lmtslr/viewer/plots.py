@@ -31,6 +31,7 @@ Module Usage:
 
 import os
 import matplotlib.pyplot as pl
+#import matplotlib.pylab as pl
 
 _plnum = 0
 _plint = 1
@@ -110,6 +111,12 @@ class Plots(object):
         if _plint:
             pl.ioff()
             pl.show()
+            
+    @staticmethod
+    def colorbar(im1):
+        pl.subplots_adjust(right=0.87)
+        cax = pl.axes([0.88, 0.15, 0.04, 0.7])
+        pl.colorbar(im1,cax=cax)
 
     @staticmethod
     def savefig(name=None):
