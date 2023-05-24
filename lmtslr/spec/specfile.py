@@ -50,7 +50,7 @@ class SpecFile():
         
     def velocity_slice(self):
         # make a dummy spectrum to count the channels after processing steps
-        # also reports the vellocity range in the data
+        # also reports the velocity range in the data
         LD = LineData(self.ifproc, self.specbank.bank, self.specbank.nchan,
                       self.specbank.bandwidth, np.zeros(self.specbank.nchan))
         if len(self.vslice) == 2:
@@ -62,7 +62,8 @@ class SpecFile():
             # @todo   a wrong VLSR/RESTFREQ could cause this not to work
         vmin = self.specbank.c2v(self.specbank.nchan-1)
         vmax = self.specbank.c2v(0)
-        print("Spectral Band velocity range: %g  %g km/s" % (vmin,vmax))
+        print("Spectral Band velocity range: %g  %g km/s  (%d)" % (vmin,vmax,self.nchan_to_save))
+        print("Output velocity range: %g  %g km/s" % (self.vslice[0], self.vslice[1]))
             
     def _create_nc_dimensions(self):
         # count the total number of spectra that will be processed and written to file
@@ -117,7 +118,7 @@ class SpecFile():
 
         nc_x_position = self.ncout.createVariable('Header.Obs.XPosition', 'f4')
         nc_y_position = self.ncout.createVariable('Header.Obs.YPosition', 'f4')
-        # PJT:  0=Az/El 1=Ra/Dec   2=Lat/Lon   (0=az/al)
+        # PJT:  0=Az/El 1=Ra/Dec   2=Lat/Lon   (0=az/el)
         if self.specbank.map_coord == 1:
             self.ncout.variables['Header.Obs.XPosition'][0] = self.specbank.ifproc.source_RA/np.pi*180.0
             self.ncout.variables['Header.Obs.YPosition'][0] = self.specbank.ifproc.source_Dec/np.pi*180.0
