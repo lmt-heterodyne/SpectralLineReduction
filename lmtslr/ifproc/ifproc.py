@@ -543,14 +543,6 @@ class IFProcData(IFProc):
         except:
             self.galang = np.zeros(len(self.parang))
 
-        self.tel_utc = 180/15/np.pi*self.nc.variables['Data.TelescopeBackend.TelUtc'][:][:]
-        utdate = self.utdate
-        utdate = datetime.datetime.utcfromtimestamp(self.time[0]).date()
-        print(utdate, self.tel_utc[0])
-        import dateutil.parser as dparser
-        print([dparser.parse(str(utdate)+' '+str(datetime.timedelta(hours=self.tel_utc[0]))+' UTC', fuzzy=True) for i in range(1)])
-        self.sky_time = np.array([dparser.parse(str(utdate)+' '+str(datetime.timedelta(hours=self.tel_utc[i]))+' UTC', fuzzy=True).timestamp() for i in range(len(self.tel_utc))])
-
         # RaDec map
         self.ramap = (self.nc.variables['Data.TelescopeBackend.SourceRaAct'][:] - self.source_RA) * np.cos(self.source_Dec) * 206264.8
         self.decmap = (self.nc.variables['Data.TelescopeBackend.SourceDecAct'][:] - self.source_Dec) * 206264.8
@@ -664,6 +656,7 @@ class IFProcData(IFProc):
         self.map_b = []
         self.map_n = []
         self.map_p = []
+        self.map_g = []
         print('PJT map_coord',self.map_coord)
         for i in range(self.npix):
             self.map_x.append(self.xmap)
@@ -675,6 +668,7 @@ class IFProcData(IFProc):
             self.map_l.append(self.lmap)
             self.map_b.append(self.bmap)
             self.map_p.append(self.parang)
+            self.map_g.append(self.galang)
             self.map_n.append(self.nsamp)
             self.map_data.append(self.caldata[i,:] - self.bias[i])
         self.map_x = np.array(self.map_x)
@@ -686,6 +680,7 @@ class IFProcData(IFProc):
         self.map_l = np.array(self.map_l)
         self.map_b = np.array(self.map_b)
         self.map_p = np.array(self.map_p)
+        self.map_g = np.array(self.map_g)
         self.map_n = np.array(self.map_n)
         self.map_data = np.array(self.map_data)
 
