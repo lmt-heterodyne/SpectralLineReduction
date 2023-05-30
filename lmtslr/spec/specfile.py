@@ -218,6 +218,8 @@ class SpecFile():
                 y_spectra =     self.specbank.roach[i].elmap[self.specbank.roach[i].ons] # y coordinate
                 gx,gy = theGrid.azel(self.specbank.elev/180. * np.pi,
                                      self.ifproc.tracking_beam)
+                print('ho x', np.min(x_spectra), np.max(x_spectra))
+                print('ho y', np.min(y_spectra), np.max(y_spectra))
             elif self.ifproc.map_coord == 1:
                 n_spectra = len(self.specbank.roach[i].ramap[self.specbank.roach[i].ons])
                 x_spectra =     self.specbank.roach[i].ramap[self.specbank.roach[i].ons] # x coordinate
@@ -225,10 +227,14 @@ class SpecFile():
                 parang = np.mean(self.specbank.roach[i].pmap[self.specbank.roach[i].ons]) # average parang
                 gx,gy = theGrid.radec(self.specbank.elev/180. * np.pi, parang,
                                       self.ifproc.tracking_beam)
+                print('eq x', np.min(x_spectra), np.max(x_spectra))
+                print('eq y', np.min(y_spectra), np.max(y_spectra))
             elif self.ifproc.map_coord == 2:
                 n_spectra = len(self.specbank.roach[i].lmap[self.specbank.roach[i].ons])
                 x_spectra =     self.specbank.roach[i].lmap[self.specbank.roach[i].ons] # x coordinate
                 y_spectra =     self.specbank.roach[i].bmap[self.specbank.roach[i].ons] # y coordinate
+                print('ga x', np.min(x_spectra), np.max(x_spectra))
+                print('ga y', np.min(y_spectra), np.max(y_spectra))
                 parang = np.mean(self.specbank.roach[i].pmap[self.specbank.roach[i].ons]) # average parang
                 galang = np.mean(self.specbank.roach[i].gmap[self.specbank.roach[i].ons]) # average galang
                 gx,gy = theGrid.latlon(self.specbank.elev/180. * np.pi, parang, galang,
