@@ -100,11 +100,11 @@ class IFProc():
             date_obs = self.nc.variables['Data.TelescopeBackend.TelTime'][0].tolist()
             self.date_obs = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%dT%H:%M:%S')
             self.date_ymd = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%d')
-            print("%s begin %s" % (self.date_obs, self.filename))
+            print("%s obs-start %s" % (self.date_obs, self.filename))
 
             date_obs2 = self.nc.variables['Data.TelescopeBackend.TelTime'][-1:].tolist()[0]
             date_obs2 = datetime.datetime.fromtimestamp(date_obs2).strftime('%Y-%m-%dT%H:%M:%S')
-            print("%s end   %s" % (date_obs2, self.filename))
+            print("%s obs-stop  %s" % (date_obs2, self.filename))
             delta1 = self.nc.variables['Data.TelescopeBackend.TelTime'][-1:].tolist()[0] - \
                      self.nc.variables['Data.TelescopeBackend.TelTime'][0].tolist()
             print("delta1 %6.1f sec" % delta1)
