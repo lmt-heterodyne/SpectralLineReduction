@@ -31,6 +31,7 @@ class SpecFileViewer():
         self.crval = nc.variables['Header.SpectrumAxis.CRVAL'][0]
         self.ctype = netCDF4.chartostring(nc.variables['Header.SpectrumAxis.CTYPE'][:])
         self.caxis = nc.variables['Header.SpectrumAxis.CAXIS'][:]
+        self.map_coord = nc.variables['Header.Obs.MapCoord'][0]
 
         self.pixel = nc.variables['Data.Pixel'][:]
         self.sequence = nc.variables['Data.Sequence'][:]
@@ -173,9 +174,9 @@ class SpecFileViewer():
         s1 = max(self.sequence)+1
         print("Max sequence=%d" % s1)
         if all:
-            pl.plot(-self.xpos,self.ypos, 'k.', markersize=0.2)
+            pl.plot(self.xpos,self.ypos, 'k.', markersize=0.2)
         else:
-            pl.plot(-self.xpos[s0:s1],self.ypos[s0:s1], 'k.', markersize=0.2)
+            pl.plot(self.xpos[s0:s1],self.ypos[s0:s1], 'k.', markersize=0.2)
         xlim = pl.xlim()
         ylim = pl.ylim()
         pmin = min(xlim[0],ylim[0])
@@ -185,6 +186,8 @@ class SpecFileViewer():
         pl.ylim([-pmax,pmax])
         axes=pl.gca()
         axes.set_aspect("equal")
+        if self.map_coord != 0:
+            axes.invert_xaxis()
         
         pl.title(title)
         pl.xlabel('X offset [arcsec]')
@@ -553,4 +556,8 @@ class SpecFileViewer():
         print("Written waterfall cube to %s" % fits_file)
 
 
+if __name__ == "__main__":
+    import sys
+    v = SpecFileViewer(sys.argv[1])
+    v.xy_position_plot()
             
