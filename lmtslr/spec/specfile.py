@@ -20,7 +20,7 @@ from lmtslr.reduction.line_reduction import LineData, NetCDFLineHeader
 from lmtslr.utils.reader import count_otf_spectra
 from lmtslr.grid.grid import Grid
 
-_version =  "6-oct-2022"         # modify this if anything in the output SpecFile has been changed
+_version =  "6-oct-2022"         # only modify this if anything in the output SpecFile has been changed
 
 class SpecFile():
     def __init__(self, ifproc, specbank, pix_list):
@@ -189,7 +189,7 @@ class SpecFile():
             nchan = len(LL)
             print("NSPEC: %d" % nspec)
             print("NCHAN: %d" % nchan)
-            print("ICHAN: %d" % LL.iarray[0])
+            print("ICHAN: %d" % LL.iarray[0])  # a.k.a. chan0
             tmp_pix = np.zeros(nspec, dtype=int)
             tmp_seq = np.zeros(nspec, dtype=int)
             tmp_pixl= np.zeros(npix,  dtype=int)
@@ -287,6 +287,8 @@ class SpecFile():
                     tmp_seq[count] = j
                     tmp_x[count]   = x_spectra[j]-gx[ipix]
                     tmp_y[count]   = y_spectra[j]-gy[ipix]
+                    if count==0:
+                        print("PJT-pos",x_spectra[j],gx[ipix])
                     
                 count = count + 1                
             if fast_nc:
