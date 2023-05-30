@@ -228,7 +228,7 @@ class SpecFile():
             elif self.ifproc.map_coord == 2:
                 n_spectra = len(self.specbank.roach[i].lmap[self.specbank.roach[i].ons])
                 x_spectra =     self.specbank.roach[i].lmap[self.specbank.roach[i].ons] # x coordinate
-                y_spectra =     self.specbank.roach[i].gmap[self.specbank.roach[i].ons] # y coordinate
+                y_spectra =     self.specbank.roach[i].bmap[self.specbank.roach[i].ons] # y coordinate
                 parang = np.mean(self.specbank.roach[i].pmap[self.specbank.roach[i].ons]) # average parang
                 galang = np.mean(self.specbank.roach[i].gmap[self.specbank.roach[i].ons]) # average galang
                 gx,gy = theGrid.latlon(self.specbank.elev/180. * np.pi, parang, galang,
