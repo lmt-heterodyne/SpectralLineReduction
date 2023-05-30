@@ -952,12 +952,15 @@ class SpecBank():
             read_time = nc.variables['Data.Integrate.read_time'][:]
             datatime = datatime - read_time
 
+            print("deltaR %6.1f" % (datatime[-1]-datatime[0]))
+            print("deltaS %6.1f" % sync_time.sum())
+            print("deltaI %6.1f" % read_time.sum())
             print('read_roach %s     nspec,nchan=%d,%d' %
                   (filename, rawdata.shape[0], rawdata.shape[1]))
             
             # get roach index back from the filename ??? why ???
             # because roach_id is really the index of the roach in the roach array
-            # so we need to which roach from the name
+            # so we need to know which roach from the name
             roach_index = roach_id
             for i in range(8):
                 roach_name = 'roach%d'%i

@@ -162,12 +162,14 @@ class SpecFileViewer():
         pl.title('PIXEL: %d'%(the_pixel))
         Plots.savefig()
         
-    def xy_position_plot(self, all=True, title='Sky Coverage'):
+    def xy_position_plot(self, all=True, first=True, title='Sky Coverage'):
         """
         Makes x-y position plot.   xpos > 0 means larger RA, to the left
                                    ypos > 0 means larger DEC, to the top
         Args:
-            none
+            all      plot all sequence
+            first    if True, also plot the first per sequence in red
+            title
         Returns:
             none
         """
@@ -179,6 +181,14 @@ class SpecFileViewer():
             pl.plot(-self.xpos,self.ypos, 'k.', markersize=0.2)
         else:
             pl.plot(-self.xpos[s0:s1],self.ypos[s0:s1], 'k.', markersize=0.2)
+        if first:
+            # @todo  what if 0 is not present due to masking -> should take the first, then lowest after each highest
+            p0 = np.where(self.sequence==0)
+            xf = -self.xpos[p0]
+            yf =  self.ypos[p0]
+            print("PJT-seq for first",p0)
+            pl.plot(xf,yf,'o',color='red')
+            
         xlim = pl.xlim()
         ylim = pl.ylim()
         pmin = min(xlim[0],ylim[0])

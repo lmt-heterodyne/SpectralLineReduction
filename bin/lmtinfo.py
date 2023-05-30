@@ -15,7 +15,7 @@
 #
 #
 
-_version="21-apr-2023"
+_version="28-may-2023"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -293,8 +293,8 @@ def slr_summary(ifproc, rc=False):
         map_motion = b''.join(nc.variables['Header.Map.MapMotion'][:]).decode().strip() 
         xlen = nc.variables['Header.Map.XLength'][0] * 206264.806
         ylen = nc.variables['Header.Map.YLength'][0] * 206264.806
-        xoff = nc.variables['Header.Map.XOffset'][0] * 206264.806
-        yoff = nc.variables['Header.Map.YOffset'][0] * 206264.806
+        xoff = nc.variables['Header.Map.XOffset'][0] * xlen
+        yoff = nc.variables['Header.Map.YOffset'][0] * ylen
         xram = nc.variables['Header.Map.XRamp'][0]   * 206264.806
         yram = nc.variables['Header.Map.YRamp'][0]   * 206264.806
         hpbw = nc.variables['Header.Map.HPBW'][0]    * 206264.806
