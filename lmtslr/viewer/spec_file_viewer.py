@@ -178,13 +178,13 @@ class SpecFileViewer():
         s1 = max(self.sequence)+1
         print("Max sequence=%d" % s1)
         if all:
-            pl.plot(-self.xpos,self.ypos, 'k.', markersize=0.2)
+            pl.plot(self.xpos, self.ypos, 'k.', markersize=0.2)
         else:
-            pl.plot(-self.xpos[s0:s1],self.ypos[s0:s1], 'k.', markersize=0.2)
+            pl.plot(self.xpos[s0:s1], self.ypos[s0:s1], 'k.', markersize=0.2)
         if first:
             # @todo  what if 0 is not present due to masking -> should take the first, then lowest after each highest
             p0 = np.where(self.sequence==0)
-            xf = -self.xpos[p0]
+            xf =  self.xpos[p0]
             yf =  self.ypos[p0]
             print("PJT-seq for first",p0)
             pl.plot(xf,yf,'o',color='red')
@@ -194,7 +194,7 @@ class SpecFileViewer():
         pmin = min(xlim[0],ylim[0])
         pmax = max(xlim[1],ylim[1])
         pmax = max(abs(pmax),abs(pmin))
-        pl.xlim([-pmax,pmax])
+        pl.xlim([pmax,-pmax])
         pl.ylim([-pmax,pmax])
         axes=pl.gca()
         axes.set_aspect("equal")
