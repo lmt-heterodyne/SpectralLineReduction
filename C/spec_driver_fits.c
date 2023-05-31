@@ -88,6 +88,9 @@ int main(int argc, char *argv[])
   // 
   C.restfreq = S.restfreq;
   C.vlsr = S.vlsr;
+  //
+  C.nchan0 = S.nchan0;
+  C.chan0  = S.chan0;
   // set up convolution array for the gridding process.
   initialize_convolve_function(&CF, OTF.resolution_size, OTF.cell_size, OTF.rmax, OTF.nsamples);
   if(OTF.otf_select == 1) {

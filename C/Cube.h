@@ -20,6 +20,7 @@ typedef struct
   float crval[3], crpix[3], cdelt[3];
   char ctype[3][16], units[3][16];
   int n[3],ncube,nplane;
+  int nchan0, chan0;        // provenance from original cube
   // new for provenance    ; or use a OTF pointer
   // still todo: HISTORY
   double restfreq;
