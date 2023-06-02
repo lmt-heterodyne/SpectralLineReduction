@@ -100,13 +100,17 @@ class IFProc():
             date_obs = self.nc.variables['Data.TelescopeBackend.TelTime'][0].tolist()
             self.date_obs = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%dT%H:%M:%S')
             self.date_ymd = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%d')
-            print("%s begin %s" % (self.date_obs, self.filename))
+            print("%s obs-start %s" % (self.date_obs, self.filename))
 
             date_obs2 = self.nc.variables['Data.TelescopeBackend.TelTime'][-1:].tolist()[0]
             date_obs2 = datetime.datetime.fromtimestamp(date_obs2).strftime('%Y-%m-%dT%H:%M:%S')
-            print("%s end   %s" % (date_obs2, self.filename))
+            print("%s obs-stop  %s" % (date_obs2, self.filename))
+            delta1 = self.nc.variables['Data.TelescopeBackend.TelTime'][-1:].tolist()[0] - \
+                     self.nc.variables['Data.TelescopeBackend.TelTime'][0].tolist()
+            print("delta1 %6.1f sec" % delta1)
             if True:
                 # report on the stats of BufPos
+                delta2 = 0
                 on = self.nc.variables['Header.Dcs.ObsNum'][0]
                 tt = self.nc.variables['Data.TelescopeBackend.TelTime'][:]
                 bp = self.nc.variables['Data.TelescopeBackend.BufPos'][:]            
@@ -116,11 +120,14 @@ class IFProc():
                 for i in range(1,nt):
                     if bp[i] != bp0:
                         print("BufPos %3d  %6.1f sec %s" % (bp0, tt[i] - tt0, on))
+                        delta2 = delta2 + tt[i] - tt0
                         bp0 = bp[i]
                         tt0 = tt[i]
                 print("BufPos %3d  %6.1f sec %s" % (bp[-1], tt[-1] - tt0, on))
+                delta2 = delta2 + tt[-1] - tt0
+                print("delta2 %6.1f sec" % delta2)
             try:
-                # only in newer data
+                # only in newer data (@todo after when?)
                 self.dumptime = self.nc.variables['Header.SpecBackend.DumpTime'][0]
             except:
                 print("Old data, assuming Header.SpecBackend.DumpTime = 0.1")
