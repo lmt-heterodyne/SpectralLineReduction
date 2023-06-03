@@ -13,6 +13,8 @@ typedef struct
 {
   int nspec;                           // number of spectra (see sequence)
   int nchan;                           // number of channels
+  int nchan0;                          // number of channels in original data
+  int chan0;                           // first channel from original data  
   int npix;                            // number of pixels (fixed at 16)
   int ncal;                            // number of Tsys cals
   // data from obs header

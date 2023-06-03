@@ -15,8 +15,9 @@ int read_spec_file(SpecFile *S, char *filename)
   /* for error handling. */
   int retval;
   /* dimensions and varid's */
-  size_t nspec, nchan, ncal, npix;
+  size_t nspec, nchan, nchan0, chan0, ncal, npix;
   int nspec_id, nchan_id, ncal_id, npix_id, npixl_id, data_id, tsys_id, x_id, y_id, pix_id, seq_id, rms_id;
+  int nchan0_id, chan0_id;
   char version[20];
   char history[512];
 
@@ -36,11 +37,19 @@ int read_spec_file(SpecFile *S, char *filename)
     ERR(retval);
   if ((retval = nc_inq_dimid(ncid, "nchan", &nchan_id)))
     ERR(retval);
+  if ((retval = nc_inq_dimid(ncid, "nchan0", &nchan0_id)))
+    ERR(retval);
+  if ((retval = nc_inq_dimid(ncid, "chan0", &chan0_id)))
+    ERR(retval);
   if ((retval = nc_inq_dimid(ncid, "ncal",  &ncal_id)))
     ERR(retval);
   if ((retval = nc_inq_dimid(ncid, "npix",  &npix_id)))
     ERR(retval);
   if ((retval = nc_inq_dimlen(ncid, nspec_id, &nspec)))
+    ERR(retval);
+  if ((retval = nc_inq_dimlen(ncid, nchan0_id, &nchan0)))
+    ERR(retval);
+  if ((retval = nc_inq_dimlen(ncid, chan0_id, &chan0)))
     ERR(retval);
   if ((retval = nc_inq_dimlen(ncid, nchan_id, &nchan)))
     ERR(retval);
@@ -134,6 +143,8 @@ int read_spec_file(SpecFile *S, char *filename)
   printf("file: %s nspec= %zu nchan= %zu npix=%zu ncal=%zu\n",filename,nspec,nchan,npix,ncal);
   S->nspec = nspec;
   S->nchan = nchan;
+  S->nchan0 = nchan0;
+  S->chan0 = chan0;
   S->npix  = npix;
   S->ncal  = ncal;
 

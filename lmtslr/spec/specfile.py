@@ -20,7 +20,7 @@ from lmtslr.reduction.line_reduction import LineData, NetCDFLineHeader
 from lmtslr.utils.reader import count_otf_spectra
 from lmtslr.grid.grid import Grid
 
-_version =  "6-oct-2022"         # only modify this if anything in the output SpecFile has been changed
+_version =  "21-may-2023"        # only modify this if anything in the output SpecFile has been changed
 
 class SpecFile():
     def __init__(self, ifproc, specbank, pix_list):
@@ -60,6 +60,7 @@ class SpecFile():
             self.nchan_to_save = self.specbank.nchan
             self.L = LD.vslice(-10000, 10000) # extreme limits to include whole spectrum
             # @todo   a wrong VLSR/RESTFREQ could cause this not to work
+        self.nchan0 = self.specbank.nchan            
         vmin = self.specbank.c2v(self.specbank.nchan-1)
         vmax = self.specbank.c2v(0)
         print("Spectral Band velocity range: %g  %g km/s  (%d)" % (vmin,vmax,self.nchan_to_save))
@@ -74,7 +75,7 @@ class SpecFile():
     
         # dimension of number of channels in spectrum is from trial reduction step
         nc_dimension_nchan = self.ncout.createDimension('nchan', self.nchan_to_save)
-    
+
         # just doing 20 characters in string
         nc_dimension_nlabel = self.ncout.createDimension('nlabel', 20)
 
@@ -184,6 +185,11 @@ class SpecFile():
                                  self.specbank.nchan, self.specbank.bandwidth,
                                  self.specbank.roach[i].reduced_spectra[0], None)
                     LL = L.vslice(self.vslice[0], self.vslice[1])
+                    self.chan0 = LL.iarray[0]
+                    # original number of channels, and starting channel
+                    nc_nchan0 = self.ncout.createDimension('nchan0', self.nchan0)
+                    nc_chan0  = self.ncout.createDimension('chan0',  self.chan0)        
+                    
                 count = count + len(self.specbank.roach[i].xmap[self.specbank.roach[i].ons])
             nspec = count
             nchan = len(LL)
