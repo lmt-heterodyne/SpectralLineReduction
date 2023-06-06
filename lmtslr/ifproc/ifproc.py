@@ -253,6 +253,8 @@ class IFProc():
                 self.ylength = self.nc.variables['Header.Map.YLength'][0] * 206264.8
                 self.xstep = self.nc.variables['Header.Map.XStep'][0]
                 self.ystep = self.nc.variables['Header.Map.YStep'][0]
+                self.xoffset = self.nc.variables['Header.Map.XOffset'][0]
+                self.yoffset = self.nc.variables['Header.Map.YOffset'][0]
                 self.rows = self.nc.variables['Header.Map.RowsPerScan'][0]
                 # check the coordinate system AzEl = 0; RaDec = 1; LatLon = 2; default =0
                 test_map_coord = b''.join(self.nc.variables['Header.Map.MapCoord'][:]).decode().strip()
@@ -509,6 +511,8 @@ class IFProcData(IFProc):
                     'Header.Map.YLength'][0]*206264.8
                 self.xstep = self.nc.variables['Header.Map.XStep'][0]
                 self.ystep = self.nc.variables['Header.Map.YStep'][0]
+                self.xoffset = self.nc.variables['Header.Map.XOffset'][0]
+                self.yoffset = self.nc.variables['Header.Map.YOffset'][0]
                 self.rows = self.nc.variables['Header.Map.RowsPerScan'][0]
                 # check the coordinate system Az = 0; Ra = 1; default =0
                 test_map_coord = b''.join(self.nc.variables['Header.Map.MapCoord'][:]).decode().strip()
