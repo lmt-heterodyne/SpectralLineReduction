@@ -715,6 +715,17 @@ class SpecBank():
         self.vlsr = self.ifproc.vlsr              # PJT
         self.date_obs = self.ifproc.date_obs      # PJT
         self.map_coord = self.ifproc.map_coord
+        try:
+            self.xlength = self.ifproc.xlength
+            self.ylength = self.ifproc.ylength
+            self.xoffset = self.ifproc.xoffset
+            self.yoffset = self.ifproc.yoffset
+        except:
+            self.xlength = 0
+            self.ylength = 0
+            self.xoffset = 0
+            self.yoffset = 0
+
 
         # timing offsets for each roach board
         self.time_offset = time_offset
