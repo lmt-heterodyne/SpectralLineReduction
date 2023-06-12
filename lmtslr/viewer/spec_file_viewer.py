@@ -31,6 +31,7 @@ class SpecFileViewer():
         self.crval = nc.variables['Header.SpectrumAxis.CRVAL'][0]
         self.ctype = netCDF4.chartostring(nc.variables['Header.SpectrumAxis.CTYPE'][:])
         self.caxis = nc.variables['Header.SpectrumAxis.CAXIS'][:]
+        self.map_coord = nc.variables['Header.Obs.MapCoord'][0]
 
         self.pixel = nc.variables['Data.Pixel'][:]
         self.sequence = nc.variables['Data.Sequence'][:]
@@ -198,6 +199,8 @@ class SpecFileViewer():
         pl.ylim([-pmax,pmax])
         axes=pl.gca()
         axes.set_aspect("equal")
+        if self.map_coord == 0:
+            axes.invert_xaxis()   #  AzEl 
         
         pl.title(title)
         pl.xlabel('X offset [arcsec]')
@@ -570,4 +573,9 @@ class SpecFileViewer():
         print("chan0: %d" % self.chan[0])
 
 
+if __name__ == "__main__":
+    import sys
+    print("Plotting ",sys.argv[1])
+    v = SpecFileViewer(sys.argv[1])
+    v.xy_position_plot()
             
