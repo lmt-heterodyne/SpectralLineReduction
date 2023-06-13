@@ -195,12 +195,12 @@ class SpecFileViewer():
         pmin = min(xlim[0],ylim[0])
         pmax = max(xlim[1],ylim[1])
         pmax = max(abs(pmax),abs(pmin))
-        pl.xlim([pmax,-pmax])
+        pl.xlim([-pmax,pmax])
         pl.ylim([-pmax,pmax])
         axes=pl.gca()
         axes.set_aspect("equal")
-        if self.map_coord == 0:
-            axes.invert_xaxis()   #  AzEl 
+        if self.map_coord != 0:
+            axes.invert_xaxis()
         
         pl.title(title)
         pl.xlabel('X offset [arcsec]')
