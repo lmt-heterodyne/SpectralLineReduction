@@ -42,14 +42,21 @@ def lookup_ifproc_file(obsnum,path='/data_lmt/ifproc/'):
 
 def MapCoord(map_coord, obsgoal, source_coord_sys, obsnum):
     """   translate ascii MapCoord to an index  (0,1,2)
+    
+          Exceptions are for Science (only Ra/Dec or L/B are returned)
+          and for Pointing (Az/El is returned) obsgoal's.
+          The rest returns whatever map_coord implies.
     """
     import sys
-    print(map_coord, obsgoal, source_coord_sys, obsnum)
+    print('MapCoord:',map_coord, obsgoal, source_coord_sys, obsnum)
     if obsgoal == "Science":
         if source_coord_sys == 2:
             return 2
+        if source_coord_sys != 1:
+            print("Warning: science data, assuming Ra/Dec")
         return 1
     if obsgoal == "Pointing":
+        print("Warning: pointing data, assumed Az/El")
         return 0
     if "Az"  in map_coord: return 0
     if "El"  in map_coord: return 0
