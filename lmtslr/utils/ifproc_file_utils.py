@@ -23,6 +23,8 @@ def lookup_ifproc_file(obsnum, path=None, debug=False):
 
     if 'ifproc' not in path:
         paths += ['/data_lmt/ifproc/']
+    if 'ifproc_sim' not in path:
+        paths += ['/data_lmt/ifproc_sim/']
     if 'lmtttpm' not in path:
         paths += ['/data_lmt/lmttpm/']
     if 'tel' not in path:
@@ -73,6 +75,8 @@ def lookup_ifproc_file_all(obsnum, path=None, debug=False):
 
     if 'ifproc' not in path:
         paths += ['/data_lmt/ifproc/']
+    if 'ifproc_sim' not in path:
+        paths += ['/data_lmt/ifproc_sim/']
     if 'lmtttpm' not in path:
         paths += ['/data_lmt/lmttpm/']
     if 'tel' not in path:
