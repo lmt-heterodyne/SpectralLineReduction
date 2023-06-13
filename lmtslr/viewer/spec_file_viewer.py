@@ -202,7 +202,7 @@ class SpecFileViewer():
         if self.map_coord != 0:
             axes.invert_xaxis()
         
-        pl.title(title)
+        pl.title(title + ' [MapCoord %d]' % self.map_coord)
         pl.xlabel('X offset [arcsec]')
         pl.ylabel('Y offset [arcsec]')
         Plots.savefig()        
