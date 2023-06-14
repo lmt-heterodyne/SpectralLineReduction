@@ -40,15 +40,18 @@ def lookup_ifproc_file(obsnum,path='/data_lmt/ifproc/'):
     return(filename)
 """
 
-def MapCoord(map_coord, obsgoal, source_coord_sys, obsnum):
+def MapCoord(map_coord, obsgoal, source_coord_sys, obsnum, map_coord_use=-1):
     """   translate ascii MapCoord to an index  (0,1,2)
     
           Exceptions are for Science (only Ra/Dec or L/B are returned)
           and for Pointing (Az/El is returned) obsgoal's.
           The rest returns whatever map_coord implies.
+          If map_coord_use is set, override all.
     """
     import sys
-    print('MapCoord:',map_coord, obsgoal, source_coord_sys, obsnum)
+    print('MapCoord:',map_coord, obsgoal, source_coord_sys, obsnum, map_coord_use)
+    if map_coord_use >= 0:
+        return map_coord_use
     if obsgoal == "Science":
         if source_coord_sys == 2:
             return 2
@@ -96,7 +99,7 @@ class IFProc():
     """
     Base class for reading generic header information from IFPROC.
     """
-    def __init__(self, filename, instrument='Sequoia'):
+    def __init__(self, filename, instrument='Sequoia', map_coord=-1):
         """
         Constructor for IfProc class.
         Args:
@@ -272,6 +275,7 @@ class IFProc():
                 self.rows = self.nc.variables['Header.Map.RowsPerScan'][0]
                 # check the coordinate system AzEl = 0; RaDec = 1; LatLon = 2; default =0
                 test_map_coord = b''.join(self.nc.variables['Header.Map.MapCoord'][:]).decode().strip()
+                print("PJT IFProc map_coord",test_map_coord)                
                 self.map_coord = MapCoord(test_map_coord, self.obsgoal, self.source_coord_sys, self.obsnum)
                 if self.map_coord < 0:
                     print("Warning: unknown map_coord ",test_map_coord)
@@ -460,7 +464,7 @@ class IFProcData(IFProc):
     Class for reading IFPROC data file to obtain time sequence of total
     power measurements.
     """
-    def __init__(self, filename, npix=16):
+    def __init__(self, filename, npix=16, map_coord=-1):
         """
         Constructor for IFProcData class.
         Args:
@@ -476,7 +480,7 @@ class IFProcData(IFProc):
             return
 
         # identify the obspgm
-        self.map_coord = -1
+        self.map_coord = map_coord
         # PJT  ->  'Az'
 
         if self.obspgm == 'Bs':
@@ -519,10 +523,8 @@ class IFProcData(IFProc):
             # map parameters 
             try:
                 self.hpbw = self.nc.variables['Header.Map.HPBW'][0] * 206264.8
-                self.xlength = self.nc.variables[
-                    'Header.Map.XLength'][0]*206264.8
-                self.ylength = self.nc.variables[
-                    'Header.Map.YLength'][0]*206264.8
+                self.xlength = self.nc.variables['Header.Map.XLength'][0]*206264.8
+                self.ylength = self.nc.variables['Header.Map.YLength'][0]*206264.8
                 self.xstep = self.nc.variables['Header.Map.XStep'][0]
                 self.ystep = self.nc.variables['Header.Map.YStep'][0]
                 self.xoffset = self.nc.variables['Header.Map.XOffset'][0]
@@ -530,10 +532,14 @@ class IFProcData(IFProc):
                 self.rows = self.nc.variables['Header.Map.RowsPerScan'][0]
                 # check the coordinate system Az = 0; Ra = 1; default =0
                 test_map_coord = b''.join(self.nc.variables['Header.Map.MapCoord'][:]).decode().strip()
-                self.map_coord = MapCoord(test_map_coord, self.obsgoal, self.source_coord_sys, self.obsnum)
+                print("PJT IFProcData map_coord",test_map_coord)
+                self.map_coord = MapCoord(test_map_coord, self.obsgoal, self.source_coord_sys, self.obsnum, map_coord_use=map_coord)
                 if self.map_coord < 0:
                     print("Warning: unknown map_coord ",test_map_coord)
                     self.map_coord = 0
+                if map_coord >= 0 and self.map_coord != map_coord:
+                    print("Warning: changing map_coord from %d to %d" % (self.map_coord,map_coord))
+                    self.map_coord = map_coord
 
                 self.map_motion = b''.join(self.nc.variables['Header.Map.MapMotion'][:]).decode().strip()
             except Exception as e:

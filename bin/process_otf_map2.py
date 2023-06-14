@@ -14,6 +14,8 @@
 --save_tsys                        Should tsys (from CAL) be saved in specfile?
 --stype STYPE                      type of spectral line reduction;
                                    0 - median; 1 - single ref spectra; 2 - bracketed ref [Default: 2]
+--map_coord MAP_COORD              Override map_coord for output coordinate system. [Default: -1]
+                                   -1 - default; 0 - Az/El;  1 - Ra/Dec; 2 - L/B
 --x_axis X_AXIS                    select spectral x axis.
                                    options one of VLSR, VSKY, VBARY, VSRC, FLSR, FSKY, FBARY, FSRC [default: VLSR]
 --b_order B_ORDER                  set polynomial baseline order [default: 0]
@@ -93,6 +95,7 @@ def main(argv):
                            use_otf_cal=Opts.use_otf_cal,
                            save_tsys=save_tsys,
                            restfreq=Opts.restfreq,
+                           map_coord=Opts.map_coord,
                            path=Opts.data_path)
 
     specfile = SpecFile(I, S, Opts.pix_list)
