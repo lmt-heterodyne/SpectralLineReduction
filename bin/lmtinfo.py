@@ -15,7 +15,7 @@
 #
 #
 
-_version="28-may-2023"
+_version="15-jun-2023"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -23,6 +23,7 @@ Usage: lmtinfo.py OBSNUM
        lmtinfo.py build
        lmtinfo.py last
        lmtinfo.py new OBSNUM
+       lmtinfo.py lmtot OBSNUM
        lmtinfo.py grep  [TERM1 [TERM2 ...]]
        lmtinfo.py grepw [TERM1 [TERM2 ...]]
        lmtinfo.py find  [TERM1 [TERM2 ...]]
@@ -56,7 +57,8 @@ data:     show the database, no sorting and culling
 build:    rebuild the sorted database (needs write permission in $DATA_LMT)
 last:     report the last known obsnum
 new:      build the database with only new obsnums since the last build
-grep:     search in database, terms are logically AND-ed
+lmtot:    return the LMTOT (observing) file to stdout (SEQ only)
+grep:     search in database, terms are logically AND-ed - partial matches allowed
 grepw:    search in database, terms are logically AND-ed and words need to match exactly
 find:     search in database, terms are logically AND-ed
 
@@ -721,6 +723,11 @@ elif len(sys.argv) == 3:
         seq_find(newer=rawnc)        
         sys.exit(0)
 
+    if sys.argv[1] == "lmtot":
+        obsnum = sys.argv[2]
+        cmd = 'wget -q http://taps.lmtgtm.org/cgi-bin/script/x.cgi?-obsnum=%s -O -' % obsnum
+        os.system(cmd)
+        sys.exit(0)
     # there should be no more options now
     print("Illegal option 3",sys.argv[1])
 
