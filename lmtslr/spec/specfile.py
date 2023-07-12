@@ -20,7 +20,7 @@ from lmtslr.reduction.line_reduction import LineData, NetCDFLineHeader
 from lmtslr.utils.reader import count_otf_spectra
 from lmtslr.grid.grid import Grid
 
-_version =  "21-may-2023"        # only modify this if anything in the output SpecFile has been changed
+_version =  "11-jul-2023"        # only modify this if anything in the output SpecFile has been changed
 
 class SpecFile():
     def __init__(self, ifproc, specbank, pix_list):
@@ -30,6 +30,8 @@ class SpecFile():
         self.pix_list = pix_list
         self.outnc_filename = None
         self.vslice = []
+        self.vrange = list(range(2))
+        self.nchan0 = -1
         self.b_order = 0
         self.b_regions, self.l_regions = [], []
         self.eliminate_list = []
@@ -63,8 +65,12 @@ class SpecFile():
         self.nchan0 = self.specbank.nchan            
         vmin = self.specbank.c2v(self.specbank.nchan-1)
         vmax = self.specbank.c2v(0)
-        print("Spectral Band velocity range: %g  %g km/s  (%d)" % (vmin,vmax,self.nchan_to_save))
-        print("Output velocity range: %g  %g km/s" % (self.vslice[0], self.vslice[1]))
+        if vmax < vmin:
+            (vmin,vmax) = (vmax,vmin)
+        self.vrange[0] = vmin
+        self.vrange[1] = vmax
+        print("Velocity Range rawdata:  %g  %g km/s = %d channels" % (vmin,vmax,self.specbank.nchan))
+        print("Velocity Range selected: %g  %g km/s = %d channels" % (self.vslice[0], self.vslice[1], self.nchan_to_save))
             
     def _create_nc_dimensions(self):
         # count the total number of spectra that will be processed and written to file
@@ -269,7 +275,7 @@ class SpecFile():
                              self.specbank.roach[i].reduced_spectra[j],
                              tsys)
                 LL = L.vslice(self.vslice[0], self.vslice[1])
-                LL.eliminate(self.eliminate_list)
+                LL.eliminate(self.eliminate_list, interpolate=True)
                 bbase, nbase = LL.xlist(self.b_regions)
                 LL.baseline(bbase, nbase, baseline_order=self.b_order)
 
