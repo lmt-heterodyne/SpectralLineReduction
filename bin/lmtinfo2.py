@@ -49,6 +49,8 @@ def specfile_summary(specfile):
     
     vmin = crval - chan0*cdelt
     vmax = vmin + (nchan0-1)*cdelt
+    if vmax < vmin:
+        (vmin,vmax) = (vmax,vmin)
         
     print('# <lmtinfo2>')
     print('# version=%s' % _version)
