@@ -52,11 +52,11 @@ def specfile_summary(specfile):
         
     print('# <lmtinfo2>')
     print('# version=%s' % _version)
-    print('bank=%d' % bank)
-    print('nchan0=%d' % nchan0)
-    print('chan0=%d' % chan0)
-    print('vmin=%g' % vmin)
-    print('vmax=%g' % vmax)
+    print('bank=%d   # 0 or 1' % bank)
+    print('nchan0=%d # raw data size' % nchan0)
+    print('chan0=%d  # first channel in output cube' % chan0)
+    print('vmin=%g   # (km/s) in raw data' % vmin)
+    print('vmax=%g   # (km/s) in raw data' % vmax)
     print("# </lmtinfo2>")
 
     # -end specfile_summary() 
