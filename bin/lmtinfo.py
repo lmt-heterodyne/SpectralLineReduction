@@ -15,7 +15,7 @@
 #
 #
 
-_version="15-jun-2023"
+_version="21-jun-2023"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -57,7 +57,7 @@ data:     show the database, no sorting and culling
 build:    rebuild the sorted database (needs write permission in $DATA_LMT)
 last:     report the last known obsnum
 new:      build the database with only new obsnums since the last build
-lmtot:    return the LMTOT (observing) file to stdout (SEQ only)
+lmtot:    return the LMTOT (observing) file to stdout
 grep:     search in database, terms are logically AND-ed - partial matches allowed
 grepw:    search in database, terms are logically AND-ed and words need to match exactly
 find:     search in database, terms are logically AND-ed
