@@ -36,7 +36,7 @@ We also list the --sample keyword, which is a proposed way to cull
 time-based sections of a selected pixel. Use with care, as the sample
 counter is based on the original RAW ON data. Note that the max number
 of samples can differ per pixel due to their connection to the roach
-board.
+board..
 
 """
 
@@ -82,6 +82,7 @@ def main(argv):
     Opts.parse_options(argv, 'process_otf_map', 1, True)
     save_tsys = True     # until it's a real option
     if Opts.bank < 0:
+        print("Fixing BANK", Opts.bank)
         Opts.bank = 0
     
     # check to see whether output file exists and remove it if it does
