@@ -81,6 +81,8 @@ def main(argv):
     Opts = HandleOTFProcessOptions()
     Opts.parse_options(argv, 'process_otf_map', 1, True)
     save_tsys = True     # until it's a real option
+    if Opts.bank < 0:
+        Opts.bank = 0
     
     # check to see whether output file exists and remove it if it does
     if os.path.isfile(Opts.output_file_name) == True:
