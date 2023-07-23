@@ -64,7 +64,7 @@ class SpecFileViewer():
                                 gridspec_kw={'hspace': 0, 'wspace': 0}, 
                                 figsize=(figsize, figsize))
         fig1.text(0.02, 0.5, self.ctype, va='center', rotation='vertical')
-        fig1.text(0.5, 0.1, 'Sample', ha='center')
+        fig1.text(0.5, 0.05, 'Integration Sample', ha='center')
         for the_pixel in pixel_list:
             pindex = np.where(self.pixel == the_pixel)[0]
             if rms_cut < 0:
@@ -105,7 +105,7 @@ class SpecFileViewer():
                   self.caxis[-1]], clim=plot_range, aspect='auto')
         pl.title('PIXEL: %d'%(the_pixel))
         pl.ylabel(self.ctype)
-        pl.xlabel('Sample')
+        pl.xlabel('Integration Sample')
         pl.colorbar()
         Plots.savefig()
 
@@ -125,8 +125,7 @@ class SpecFileViewer():
                                 gridspec_kw={'hspace': 0, 'wspace': 0}, 
                                 figsize=(figsize,figsize))
         fig2.text(0.02, 0.5, 'RMS', va='center', rotation='vertical')
-        fig2.text(0.5, -0.1, 'Sample', ha='center')
-
+        fig2.text(0.5, 0.05, 'Integration Sample', ha='center')
         for the_pixel in pixel_list:
             pindex = np.where(self.pixel == the_pixel)[0]
             if rms_cut < 0:
@@ -159,7 +158,7 @@ class SpecFileViewer():
         pl.plot(self.rms[pindex[rindex]], 'k.')
         pl.ylim(plot_range)
         pl.ylabel('RMS')
-        pl.xlabel('Sample')
+        pl.xlabel('Integration Sample')
         pl.title('PIXEL: %d'%(the_pixel))
         Plots.savefig()
         
@@ -258,7 +257,7 @@ class SpecFileViewer():
         Plots.figure()
         fig3, ax3 = pl.subplots(4, 4, sharex='col', sharey='row', 
             gridspec_kw={'hspace': 0, 'wspace': 0}, figsize=(figsize,figsize))
-        fig3.text(0.5, -0.1, 'RMS', ha='center')
+        fig3.text(0.5, 0.05, 'RMS', ha='center')
         for the_pixel in pixel_list:
             pindex = np.where(self.pixel == the_pixel)[0]
             if rms_cut < 0:
@@ -308,7 +307,7 @@ class SpecFileViewer():
                                 gridspec_kw={'hspace': 0, 'wspace': 0},
                                 figsize=(figsize,figsize))
         fig4.text(0.02, 0.5, 'TSYS [K]', va='center', rotation='vertical')
-        fig4.text(0.5, -0.1, self.ctype, ha='center')
+        fig4.text(0.5, 0.05, self.ctype, ha='center')
         (ncal,npix,nchan) = self.tsys.shape
         for the_pixel in pixel_list:
             pindex = np.where(self.pixel == the_pixel)[0]
@@ -357,7 +356,7 @@ class SpecFileViewer():
         fig4, ax4 = pl.subplots(4, 4, sharex='col', sharey='row', 
             gridspec_kw={'hspace': 0, 'wspace': 0}, figsize=(figsize,figsize))
         fig4.text(0.02, 0.5, 'TA*', va='center', rotation='vertical')
-        fig4.text(0.5, -0.1, self.ctype, ha='center')
+        fig4.text(0.5, 0.05, self.ctype, ha='center')
         for the_pixel in pixel_list:
             pindex = np.where(self.pixel == the_pixel)[0]
             if rms_cut < 0:
@@ -552,7 +551,7 @@ class SpecFileViewer():
             hdr['CRPIX2'] = 0.5 + 0.5/binning[1]
             hdr['CRVAL2'] = float(self.crval.data) 
             hdr['CDELT2'] = float(self.cdelt.data) * binning[1]  
-            hdr['CTYPE2'] = 'VELO-LSR'
+            hdr['CTYPE2'] = 'VELO-LSR'    # wing it, self.ctype isn't quite FITS like
             hdr['CUNIT2'] = 'km/s'
             # Beam
             hdr['CRPIX3'] = 1.0
