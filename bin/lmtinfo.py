@@ -15,7 +15,7 @@
 #
 #
 
-_version="21-jun-2023"
+_version="24-jun-2023"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -399,7 +399,8 @@ def slr_summary(ifproc, rc=False):
             for k in dv.keys():
                 print('%s="%s"' % (k,dv[k]))
         else:
-            print("# no dataverse info")                
+            print("# no dataverse info")
+        print("config=%s__SEQ__%s__%s__%s" % (pid,obspgm,src,alist(restfreq)))
         print("# </lmtinfo>")
     else:
         print("%-20s %7s  %-10s %-12s %-11s %-25s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %
@@ -536,6 +537,7 @@ def rsr_summary(rsr_file, rc=False):
                 print('%s="%s"' % (k,dv[k]))
         else:
             print("# no dataverse info")
+        print("config=%s__RSR__%s__%s" % (pid,obspgm,src))
         print("# </lmtinfo>")
 
     else:     # one line summary
