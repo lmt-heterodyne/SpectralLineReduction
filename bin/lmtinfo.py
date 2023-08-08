@@ -382,6 +382,9 @@ def slr_summary(ifproc, rc=False):
         print('vlsr=%g        # km/s' % vlsr)
         print('skyfreq=%s     # GHz' % alist(skyfreq))
         print('restfreq=%s    # Ghz' % alist(restfreq))
+        if numbands == 2 and restfreq[1] == 0.0:
+            print('numbands=1   # overriding')
+            print('restfreq=%s' % repr(restfreq[0]))
         print('src="%s"' % src)
         resolution = 1.0 * 299792458 / skyfreq[0] / 1e9 / 50.0 * 206264.806
         # why is this an integer again?
