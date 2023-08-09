@@ -74,8 +74,8 @@ class RoachSpec():
         self.pmap = pmap
         self.gmap = gmap
         self.bufpos = bufpos
-        self.tsys_aver = False
-        self.tsyscal = None
+        self.tsys_aver = False    # @todo should be True (july-2023 discussion)
+        self.tsyscal = None       # never used ?
         self.ncal = 0
         self.pixel = 4*self.roach_id + self.roach_input
 
@@ -85,7 +85,7 @@ class RoachSpec():
         self.hots, self.hot_ranges, self.nhots = self.get_ranges(3)
 
         if False:
-            # some debugging on times when bufpos changed and how many
+            # PJT: debugging on times when bufpos changed and how many
             nt = len(spec_time)
             print("RoachSpec: %d %d - %d %d %d %d" % (roach_id,nt,self.nons,self.nrefs,self.nskys,self.nhots))
             time0 = spec_time[0]
@@ -195,13 +195,14 @@ class RoachSpec():
         for ihot in range(self.nhots):
             hot_spectrum = np.median(self.raw_spec[self.hot_ranges[ihot][0]:self.hot_ranges[ihot][1], :], axis=0)
             sky_spectrum = np.median(self.raw_spec[self.sky_ranges[ihot][0]:self.sky_ranges[ihot][1], :], axis=0)
-            # @todo why 280, and not a measured ambient?            
+            # @todo why 280, and not a measured ambient?
+            # ? Header.Sequoia.LoadAmbientTemp  
             tsys_spec = 280.0 * sky_spectrum/(hot_spectrum - sky_spectrum)
             # find the index where tsys_spec is finite
             indx_fin = np.where(np.isfinite(tsys_spec))
             # compute tsys as mean of tsys_spec
             tsys[ihot] = np.mean(tsys_spec[indx_fin][bdrop:self.nchan-edrop])
-            # find index where tsys_spec is infinte
+            # find index where tsys_spec is infinite
             indx_inf = np.where(np.isinf(tsys_spec))
             # replace with mean
             tsys_spec[indx_inf] = tsys[ihot]
@@ -987,7 +988,7 @@ class SpecBank():
             print('read_roach %s     nspec,nchan=%d,%d' %
                   (filename, rawdata.shape[0], rawdata.shape[1]))
             
-            # get roach index back from the filename ??? why ???
+            # get roach index back from the filename 
             # because roach_id is really the index of the roach in the roach array
             # so we need to know which roach from the name
             roach_index = roach_id
@@ -1016,35 +1017,22 @@ class SpecBank():
                 spec_time = datatime[ilist0] + \
                     self.time_offset[roach_pixels_all[roach_index][input_chan]]
                 nspec = len(spec_time)
-                # use the interpolation functions to find map positions,\
+                # use the interpolation functions to find map positions,
                 # paralactic angle, galactic angle, and bufpos
-                # in python 3 we must fix spec_time which was a masked \
-                # array
-                xmap = self.x_interpolation_function(
-                    np.ma.getdata(spec_time, subok=False))
-                ymap = self.y_interpolation_function(
-                    np.ma.getdata(spec_time, subok=False))
-                azmap = self.az_interpolation_function(
-                    np.ma.getdata(spec_time, subok=False))
-                elmap = self.el_interpolation_function(
-                    np.ma.getdata(spec_time, subok=False))
-                ramap = self.ra_interpolation_function(
-                    np.ma.getdata(spec_time, subok=False))
-                decmap = self.dec_interpolation_function(
-                    np.ma.getdata(spec_time, subok=False))
-                lmap = self.l_interpolation_function(
-                    np.ma.getdata(spec_time, subok=False))
-                bmap = self.b_interpolation_function(
-                    np.ma.getdata(spec_time, subok=False))
-                pmap = self.p_interpolation_function(
-                    np.ma.getdata(spec_time, subok=False))
-                gmap = self.g_interpolation_function(
-                    np.ma.getdata(spec_time, subok=False))
-                bufpos = self.bufpos_interpolation_function(
-                    np.ma.getdata(spec_time, subok=False))
+                # in python 3 we must fix spec_time which was a masked array
+                xmap   = self.x_interpolation_function(      np.ma.getdata(spec_time, subok=False))
+                ymap   = self.y_interpolation_function(      np.ma.getdata(spec_time, subok=False))
+                azmap  = self.az_interpolation_function(     np.ma.getdata(spec_time, subok=False))
+                elmap  = self.el_interpolation_function(     np.ma.getdata(spec_time, subok=False))
+                ramap  = self.ra_interpolation_function(     np.ma.getdata(spec_time, subok=False))
+                decmap = self.dec_interpolation_function(    np.ma.getdata(spec_time, subok=False))
+                lmap   = self.l_interpolation_function(      np.ma.getdata(spec_time, subok=False))
+                bmap   = self.b_interpolation_function(      np.ma.getdata(spec_time, subok=False))
+                pmap   = self.p_interpolation_function(      np.ma.getdata(spec_time, subok=False))
+                gmap   = self.g_interpolation_function(      np.ma.getdata(spec_time, subok=False))
+                bufpos = self.bufpos_interpolation_function( np.ma.getdata(spec_time, subok=False))
 
-                # correct the interpolated arrays to remove points not\
-                # in range for interpolation
+                # correct the interpolated arrays to remove points not in range for interpolation
                 l = len(self.time_gaps_1)
                 cond = False
                 for i in range(l):
