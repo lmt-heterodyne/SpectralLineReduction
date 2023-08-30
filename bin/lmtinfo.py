@@ -15,7 +15,7 @@
 #
 #
 
-_version="8-aug-2023"
+_version="14-aug-2023"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -163,6 +163,14 @@ def iau(src):
     if src=="NGC6946_(CO)":   return "NGC6946"
     return src
 
+def pid_sanitize(pid):
+    """
+    sanitize badly formatted ProjectID's
+    """
+    if pid == "2018S1-MU-8":
+        return "2018-S1-MU-8"      # 90648..90666 were mis-labeled
+    return pid
+
 def dataverse_old(pid):
     """
     input:    Projectid (string)
@@ -288,6 +296,7 @@ def slr_summary(ifproc, rc=False):
         pid = b''.join(nc.variables['Header.Dcs.ProjectId'][:]).decode().strip()
     except:
         pid = "Unknown"
+    pid = pid_sanitize(pid)
     
     # the following Map only if obspgm=='Map'
     if obspgm=='Map':
