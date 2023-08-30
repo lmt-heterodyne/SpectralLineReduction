@@ -8,6 +8,7 @@
 -p SHOW_PIXEL --show_pixel SHOW_PIXEL  Show one particular pixel (default is all pixels from pix_list)
 --rms_cut RMS_CUT                      rms threshold for data [Default: 10]
 --plot_range PLOT_RANGE                set plot range for plots [Default: -1,3]
+--box BOX                              Fix boxsize -BOX .. BOX in X and Y. Optional.
 --plots METHOD                         Plotting method for output plot defaults to on screen.
                                        Optional file type extension after a comma, e.g. png or pdf
 --skip_tsys                            Skip the tsys plot [Default: False]
@@ -54,6 +55,7 @@ def main(argv):
     rms_cut         = acv.listf(av['--rms_cut'],    1)
     plot_range      = acv.listf(av['--plot_range'], 2)
     plots           = av['--plots']
+    box             = av['--box']
     skip_tsys       = av['--skip_tsys']
     
     if av['--show_pixel'] != None:
@@ -67,7 +69,7 @@ def main(argv):
     SV = SpecFileViewer(input_file_name)
 
     if show_all_pixels:
-        SV.xy_position_plot()
+        SV.xy_position_plot(box=box)
         #SV.sx_position_plot()
         #SV.sy_position_plot()        
         SV.sequoia_waterfall_plot(pix_list, rms_cut, plot_range=plot_range)
@@ -76,7 +78,7 @@ def main(argv):
         SV.sequoia_mean_spectra_plot(pix_list, rms_cut)
         if not skip_tsys: SV.sequoia_tsys_spectra_plot(pix_list)
     else:
-        SV.xy_position_plot(False)
+        SV.xy_position_plot(False,box=box)
         #SV.sx_position_plot(False)
         #SV.sy_position_plot(False)
         SV.pixel_waterfall_plot(show_pixel, rms_cut, plot_range=plot_range)

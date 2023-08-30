@@ -162,13 +162,14 @@ class SpecFileViewer():
         pl.title('PIXEL: %d'%(the_pixel))
         Plots.savefig()
         
-    def xy_position_plot(self, all=True, first=True, title='Sky Coverage'):
+    def xy_position_plot(self, all=True, first=True, box=None, title='Sky Coverage'):
         """
         Makes x-y position plot.   xpos > 0 means larger RA, to the left
                                    ypos > 0 means larger DEC, to the top
         Args:
             all      plot all sequence
             first    if True, also plot the first per sequence in red
+            box      if set, this will be the (square) size from -box .. box in X and Y
             title
         Returns:
             none
@@ -194,8 +195,13 @@ class SpecFileViewer():
         pmin = min(xlim[0],ylim[0])
         pmax = max(xlim[1],ylim[1])
         pmax = max(abs(pmax),abs(pmin))
-        pl.xlim([-pmax,pmax])
-        pl.ylim([-pmax,pmax])
+        if box == None:
+            pl.xlim([-pmax,pmax])
+            pl.ylim([-pmax,pmax])
+        else:
+            box = float(box)
+            pl.xlim([-box,box])
+            pl.ylim([-box,box])
         axes=pl.gca()
         axes.set_aspect("equal")
         if self.map_coord != 0:
