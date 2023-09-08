@@ -15,7 +15,7 @@
 #
 #
 
-_version="14-aug-2023"
+_version="8-sep-2023"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -255,6 +255,8 @@ def slr_summary(ifproc, rc=False):
     
     nc = netCDF4.Dataset(ifproc)
     obsnum = nc.variables['Header.Dcs.ObsNum'][0]
+    subobsnum = nc.variables['Header.Dcs.SubObsNum'][0]
+    scannum = nc.variables['Header.Dcs.ScanNum'][0]    
     receiver = b''.join(nc.variables['Header.Dcs.Receiver'][:]).decode().strip()
     tau = nc.variables['Header.Radiometer.Tau'][0]
     
@@ -369,6 +371,8 @@ def slr_summary(ifproc, rc=False):
         print('skytime=%g' % tsky)
         print('inttime=%g' % tint)
         print('obsnum=%s' % obsnum)
+        print('subobsnum=%s' % subobsnum)
+        print('scannum=%s' % scannum)
         print('calobsnum=%s' % calobsnum)
         print('obspgm="%s"' % obspgm)
         if obspgm=='Map':
@@ -466,6 +470,8 @@ def rsr_summary(rsr_file, rc=False):
         
     # Header.Dcs.ObsNum = 33551 ;
     obsnum = nc.variables['Header.Dcs.ObsNum'][0]
+    subobsnum = nc.variables['Header.Dcs.SubObsNum'][0]
+    scannum = nc.variables['Header.Dcs.ScanNum'][0]    
     receiver = b''.join(nc.variables['Header.Dcs.Receiver'][:]).decode().strip()
     instrument = "RSR"
     # yuck, with the RSR filenameconvention this is the trick to find the chassic
@@ -523,6 +529,8 @@ def rsr_summary(rsr_file, rc=False):
         # print('# skytime=%g sec' % tsky)
         print('inttime=%g # sec' % tint)
         print('obsnum=%s' % obsnum)
+        print('subobsnum=%s' % subobsnum)
+        print('scannum=%s' % scannum)
         print('calobsnum=%s' % calobsnum)
         print('obspgm="%s"' % obspgm)
         print('obsgoal="%s"' % obsgoal)
