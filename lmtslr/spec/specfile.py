@@ -20,7 +20,7 @@ from lmtslr.reduction.line_reduction import LineData, NetCDFLineHeader
 from lmtslr.utils.reader import count_otf_spectra
 from lmtslr.grid.grid import Grid
 
-_version =  "21-may-2023"        # only modify this if anything in the output SpecFile has been changed
+_version =  "11-jul-2023"        # only modify this if anything in the output SpecFile has been changed
 
 class SpecFile():
     def __init__(self, ifproc, specbank, pix_list):
@@ -30,6 +30,8 @@ class SpecFile():
         self.pix_list = pix_list
         self.outnc_filename = None
         self.vslice = []
+        self.vrange = list(range(2))
+        self.nchan0 = -1
         self.b_order = 0
         self.b_regions, self.l_regions = [], []
         self.eliminate_list = []
@@ -63,8 +65,12 @@ class SpecFile():
         self.nchan0 = self.specbank.nchan            
         vmin = self.specbank.c2v(self.specbank.nchan-1)
         vmax = self.specbank.c2v(0)
-        print("Spectral Band velocity range: %g  %g km/s  (%d)" % (vmin,vmax,self.nchan_to_save))
-        print("Output velocity range: %g  %g km/s" % (self.vslice[0], self.vslice[1]))
+        if vmax < vmin:
+            (vmin,vmax) = (vmax,vmin)
+        self.vrange[0] = vmin
+        self.vrange[1] = vmax
+        print("Velocity Range rawdata:  %g  %g km/s = %d channels" % (vmin,vmax,self.specbank.nchan))
+        print("Velocity Range selected: %g  %g km/s = %d channels" % (self.vslice[0], self.vslice[1], self.nchan_to_save))
             
     def _create_nc_dimensions(self):
         # count the total number of spectra that will be processed and written to file
@@ -219,17 +225,29 @@ class SpecFile():
         for ipix in self.pix_list:
             count0 = count
             i = self.specbank.find_pixel_index(ipix)
-            n_spectra = len(self.specbank.roach[i].xmap[self.specbank.roach[i].ons])
-            x_spectra =     self.specbank.roach[i].xmap[self.specbank.roach[i].ons] # x coordinate
-            y_spectra =     self.specbank.roach[i].ymap[self.specbank.roach[i].ons] # y coordinate
             if self.ifproc.map_coord == 0:
+                n_spectra = len(self.specbank.roach[i].azmap[self.specbank.roach[i].ons])
+                x_spectra =     self.specbank.roach[i].azmap[self.specbank.roach[i].ons] # x coordinate
+                y_spectra =     self.specbank.roach[i].elmap[self.specbank.roach[i].ons] # y coordinate
                 gx,gy = theGrid.azel(self.specbank.elev/180. * np.pi,
                                      self.ifproc.tracking_beam)
+                print('ho x', np.min(x_spectra), np.max(x_spectra))
+                print('ho y', np.min(y_spectra), np.max(y_spectra))
             elif self.ifproc.map_coord == 1:
+                n_spectra = len(self.specbank.roach[i].ramap[self.specbank.roach[i].ons])
+                x_spectra =     self.specbank.roach[i].ramap[self.specbank.roach[i].ons] # x coordinate
+                y_spectra =     self.specbank.roach[i].decmap[self.specbank.roach[i].ons] # y coordinate
                 parang = np.mean(self.specbank.roach[i].pmap[self.specbank.roach[i].ons]) # average parang
                 gx,gy = theGrid.radec(self.specbank.elev/180. * np.pi, parang,
                                       self.ifproc.tracking_beam)
+                print('eq x', np.min(x_spectra), np.max(x_spectra))
+                print('eq y', np.min(y_spectra), np.max(y_spectra))
             elif self.ifproc.map_coord == 2:
+                n_spectra = len(self.specbank.roach[i].lmap[self.specbank.roach[i].ons])
+                x_spectra =     self.specbank.roach[i].lmap[self.specbank.roach[i].ons] # x coordinate
+                y_spectra =     self.specbank.roach[i].bmap[self.specbank.roach[i].ons] # y coordinate
+                print('ga x', np.min(x_spectra), np.max(x_spectra))
+                print('ga y', np.min(y_spectra), np.max(y_spectra))
                 parang = np.mean(self.specbank.roach[i].pmap[self.specbank.roach[i].ons]) # average parang
                 galang = np.mean(self.specbank.roach[i].gmap[self.specbank.roach[i].ons]) # average galang
                 gx,gy = theGrid.latlon(self.specbank.elev/180. * np.pi, parang, galang,
@@ -257,7 +275,7 @@ class SpecFile():
                              self.specbank.roach[i].reduced_spectra[j],
                              tsys)
                 LL = L.vslice(self.vslice[0], self.vslice[1])
-                LL.eliminate(self.eliminate_list)
+                LL.eliminate(self.eliminate_list, interpolate=True)
                 bbase, nbase = LL.xlist(self.b_regions)
                 LL.baseline(bbase, nbase, baseline_order=self.b_order)
 

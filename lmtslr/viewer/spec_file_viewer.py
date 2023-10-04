@@ -31,6 +31,7 @@ class SpecFileViewer():
         self.crval = nc.variables['Header.SpectrumAxis.CRVAL'][0]
         self.ctype = netCDF4.chartostring(nc.variables['Header.SpectrumAxis.CTYPE'][:])
         self.caxis = nc.variables['Header.SpectrumAxis.CAXIS'][:]
+        self.map_coord = nc.variables['Header.Obs.MapCoord'][0]
 
         self.pixel = nc.variables['Data.Pixel'][:]
         self.sequence = nc.variables['Data.Sequence'][:]
@@ -63,7 +64,7 @@ class SpecFileViewer():
                                 gridspec_kw={'hspace': 0, 'wspace': 0}, 
                                 figsize=(figsize, figsize))
         fig1.text(0.02, 0.5, self.ctype, va='center', rotation='vertical')
-        fig1.text(0.5, 0.1, 'Sample', ha='center')
+        fig1.text(0.5, 0.05, 'Integration Sample', ha='center')
         for the_pixel in pixel_list:
             pindex = np.where(self.pixel == the_pixel)[0]
             if rms_cut < 0:
@@ -104,7 +105,7 @@ class SpecFileViewer():
                   self.caxis[-1]], clim=plot_range, aspect='auto')
         pl.title('PIXEL: %d'%(the_pixel))
         pl.ylabel(self.ctype)
-        pl.xlabel('Sample')
+        pl.xlabel('Integration Sample')
         pl.colorbar()
         Plots.savefig()
 
@@ -124,8 +125,7 @@ class SpecFileViewer():
                                 gridspec_kw={'hspace': 0, 'wspace': 0}, 
                                 figsize=(figsize,figsize))
         fig2.text(0.02, 0.5, 'RMS', va='center', rotation='vertical')
-        fig2.text(0.5, -0.1, 'Sample', ha='center')
-
+        fig2.text(0.5, 0.05, 'Integration Sample', ha='center')
         for the_pixel in pixel_list:
             pindex = np.where(self.pixel == the_pixel)[0]
             if rms_cut < 0:
@@ -158,17 +158,18 @@ class SpecFileViewer():
         pl.plot(self.rms[pindex[rindex]], 'k.')
         pl.ylim(plot_range)
         pl.ylabel('RMS')
-        pl.xlabel('Sample')
+        pl.xlabel('Integration Sample')
         pl.title('PIXEL: %d'%(the_pixel))
         Plots.savefig()
         
-    def xy_position_plot(self, all=True, first=True, title='Sky Coverage'):
+    def xy_position_plot(self, all=True, first=True, box=None, title='Sky Coverage'):
         """
         Makes x-y position plot.   xpos > 0 means larger RA, to the left
                                    ypos > 0 means larger DEC, to the top
         Args:
             all      plot all sequence
             first    if True, also plot the first per sequence in red
+            box      if set, this will be the (square) size from -box .. box in X and Y
             title
         Returns:
             none
@@ -194,12 +195,19 @@ class SpecFileViewer():
         pmin = min(xlim[0],ylim[0])
         pmax = max(xlim[1],ylim[1])
         pmax = max(abs(pmax),abs(pmin))
-        pl.xlim([pmax,-pmax])
-        pl.ylim([-pmax,pmax])
+        if box == None:
+            pl.xlim([-pmax,pmax])
+            pl.ylim([-pmax,pmax])
+        else:
+            box = float(box)
+            pl.xlim([-box,box])
+            pl.ylim([-box,box])
         axes=pl.gca()
         axes.set_aspect("equal")
+        if self.map_coord != 0:
+            axes.invert_xaxis()
         
-        pl.title(title)
+        pl.title(title + ' [MapCoord %d]' % self.map_coord)
         pl.xlabel('X offset [arcsec]')
         pl.ylabel('Y offset [arcsec]')
         Plots.savefig()        
@@ -255,7 +263,7 @@ class SpecFileViewer():
         Plots.figure()
         fig3, ax3 = pl.subplots(4, 4, sharex='col', sharey='row', 
             gridspec_kw={'hspace': 0, 'wspace': 0}, figsize=(figsize,figsize))
-        fig3.text(0.5, -0.1, 'RMS', ha='center')
+        fig3.text(0.5, 0.05, 'RMS', ha='center')
         for the_pixel in pixel_list:
             pindex = np.where(self.pixel == the_pixel)[0]
             if rms_cut < 0:
@@ -305,7 +313,7 @@ class SpecFileViewer():
                                 gridspec_kw={'hspace': 0, 'wspace': 0},
                                 figsize=(figsize,figsize))
         fig4.text(0.02, 0.5, 'TSYS [K]', va='center', rotation='vertical')
-        fig4.text(0.5, -0.1, self.ctype, ha='center')
+        fig4.text(0.5, 0.05, self.ctype, ha='center')
         (ncal,npix,nchan) = self.tsys.shape
         for the_pixel in pixel_list:
             pindex = np.where(self.pixel == the_pixel)[0]
@@ -354,7 +362,7 @@ class SpecFileViewer():
         fig4, ax4 = pl.subplots(4, 4, sharex='col', sharey='row', 
             gridspec_kw={'hspace': 0, 'wspace': 0}, figsize=(figsize,figsize))
         fig4.text(0.02, 0.5, 'TA*', va='center', rotation='vertical')
-        fig4.text(0.5, -0.1, self.ctype, ha='center')
+        fig4.text(0.5, 0.05, self.ctype, ha='center')
         for the_pixel in pixel_list:
             pindex = np.where(self.pixel == the_pixel)[0]
             if rms_cut < 0:
@@ -549,7 +557,7 @@ class SpecFileViewer():
             hdr['CRPIX2'] = 0.5 + 0.5/binning[1]
             hdr['CRVAL2'] = float(self.crval.data) 
             hdr['CDELT2'] = float(self.cdelt.data) * binning[1]  
-            hdr['CTYPE2'] = 'VELO-LSR'
+            hdr['CTYPE2'] = 'VELO-LSR'    # wing it, self.ctype isn't quite FITS like
             hdr['CUNIT2'] = 'km/s'
             # Beam
             hdr['CRPIX3'] = 1.0
@@ -570,4 +578,9 @@ class SpecFileViewer():
         print("chan0: %d" % self.chan[0])
 
 
+if __name__ == "__main__":
+    import sys
+    print("Plotting ",sys.argv[1])
+    v = SpecFileViewer(sys.argv[1])
+    v.xy_position_plot()
             

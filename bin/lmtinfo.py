@@ -15,7 +15,7 @@
 #
 #
 
-_version="28-may-2023"
+_version="8-sep-2023"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -23,6 +23,7 @@ Usage: lmtinfo.py OBSNUM
        lmtinfo.py build
        lmtinfo.py last
        lmtinfo.py new OBSNUM
+       lmtinfo.py lmtot OBSNUM
        lmtinfo.py grep  [TERM1 [TERM2 ...]]
        lmtinfo.py grepw [TERM1 [TERM2 ...]]
        lmtinfo.py find  [TERM1 [TERM2 ...]]
@@ -56,7 +57,8 @@ data:     show the database, no sorting and culling
 build:    rebuild the sorted database (needs write permission in $DATA_LMT)
 last:     report the last known obsnum
 new:      build the database with only new obsnums since the last build
-grep:     search in database, terms are logically AND-ed
+lmtot:    return the LMTOT (observing) file to stdout
+grep:     search in database, terms are logically AND-ed - partial matches allowed
 grepw:    search in database, terms are logically AND-ed and words need to match exactly
 find:     search in database, terms are logically AND-ed
 
@@ -161,6 +163,14 @@ def iau(src):
     if src=="NGC6946_(CO)":   return "NGC6946"
     return src
 
+def pid_sanitize(pid):
+    """
+    sanitize badly formatted ProjectID's
+    """
+    if pid == "2018S1-MU-8":
+        return "2018-S1-MU-8"      # 90648..90666 were mis-labeled
+    return pid
+
 def dataverse_old(pid):
     """
     input:    Projectid (string)
@@ -245,6 +255,8 @@ def slr_summary(ifproc, rc=False):
     
     nc = netCDF4.Dataset(ifproc)
     obsnum = nc.variables['Header.Dcs.ObsNum'][0]
+    subobsnum = nc.variables['Header.Dcs.SubObsNum'][0]
+    scannum = nc.variables['Header.Dcs.ScanNum'][0]    
     receiver = b''.join(nc.variables['Header.Dcs.Receiver'][:]).decode().strip()
     tau = nc.variables['Header.Radiometer.Tau'][0]
     
@@ -286,6 +298,7 @@ def slr_summary(ifproc, rc=False):
         pid = b''.join(nc.variables['Header.Dcs.ProjectId'][:]).decode().strip()
     except:
         pid = "Unknown"
+    pid = pid_sanitize(pid)
     
     # the following Map only if obspgm=='Map'
     if obspgm=='Map':
@@ -358,6 +371,8 @@ def slr_summary(ifproc, rc=False):
         print('skytime=%g' % tsky)
         print('inttime=%g' % tint)
         print('obsnum=%s' % obsnum)
+        print('subobsnum=%s' % subobsnum)
+        print('scannum=%s' % scannum)
         print('calobsnum=%s' % calobsnum)
         print('obspgm="%s"' % obspgm)
         if obspgm=='Map':
@@ -380,6 +395,9 @@ def slr_summary(ifproc, rc=False):
         print('vlsr=%g        # km/s' % vlsr)
         print('skyfreq=%s     # GHz' % alist(skyfreq))
         print('restfreq=%s    # Ghz' % alist(restfreq))
+        if numbands == 2 and restfreq[1] == 0.0:
+            print('numbands=1   # overriding')
+            print('restfreq=%s' % repr(restfreq[0]))
         print('src="%s"' % src)
         resolution = 1.0 * 299792458 / skyfreq[0] / 1e9 / 50.0 * 206264.806
         # why is this an integer again?
@@ -397,7 +415,8 @@ def slr_summary(ifproc, rc=False):
             for k in dv.keys():
                 print('%s="%s"' % (k,dv[k]))
         else:
-            print("# no dataverse info")                
+            print("# no dataverse info")
+        print("config=%s__SEQ__%s__%s__%s" % (pid,obspgm,src,alist(restfreq)))
         print("# </lmtinfo>")
     else:
         print("%-20s %7s  %-10s %-12s %-11s %-25s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %
@@ -451,6 +470,8 @@ def rsr_summary(rsr_file, rc=False):
         
     # Header.Dcs.ObsNum = 33551 ;
     obsnum = nc.variables['Header.Dcs.ObsNum'][0]
+    subobsnum = nc.variables['Header.Dcs.SubObsNum'][0]
+    scannum = nc.variables['Header.Dcs.ScanNum'][0]    
     receiver = b''.join(nc.variables['Header.Dcs.Receiver'][:]).decode().strip()
     instrument = "RSR"
     # yuck, with the RSR filenameconvention this is the trick to find the chassic
@@ -508,6 +529,8 @@ def rsr_summary(rsr_file, rc=False):
         # print('# skytime=%g sec' % tsky)
         print('inttime=%g # sec' % tint)
         print('obsnum=%s' % obsnum)
+        print('subobsnum=%s' % subobsnum)
+        print('scannum=%s' % scannum)
         print('calobsnum=%s' % calobsnum)
         print('obspgm="%s"' % obspgm)
         print('obsgoal="%s"' % obsgoal)
@@ -534,6 +557,7 @@ def rsr_summary(rsr_file, rc=False):
                 print('%s="%s"' % (k,dv[k]))
         else:
             print("# no dataverse info")
+        print("config=%s__RSR__%s__%s" % (pid,obspgm,src))
         print("# </lmtinfo>")
 
     else:     # one line summary
@@ -721,6 +745,11 @@ elif len(sys.argv) == 3:
         seq_find(newer=rawnc)        
         sys.exit(0)
 
+    if sys.argv[1] == "lmtot":
+        obsnum = sys.argv[2]
+        cmd = 'wget -q http://taps.lmtgtm.org/cgi-bin/script/x.cgi?-obsnum=%s -O -' % obsnum
+        os.system(cmd)
+        sys.exit(0)
     # there should be no more options now
     print("Illegal option 3",sys.argv[1])
 

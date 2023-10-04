@@ -75,12 +75,15 @@ class HandleOTFProcessOptions(HandleOptions):
                             default=250.0,
                             help="If use_cal is False, value of Tsys to use")
         self.parser.add_argument("--restfreq", dest="restfreq", type=float,
-                                 default=-1,
+                            default=-1,
                             help="Override rest frequency (in GHz) - experimental")
+        self.parser.add_argument("--map_coord", dest="map_coord", type=int,
+                            default=-1,
+                            help="Override map_coord - experimental")
         self.parser.add_argument("--use_otf_cal", dest="use_otf_cal",
-                                 action="store_true", default=False, help="Use calibration within OTF scan")
+                            action="store_true", default=False, help="Use calibration within OTF scan")
         self.parser.add_argument("--stype", dest="stype", type=int,
-                                 default=1, help="type of spectral line reduction; 0 - median; 1 - single ref spectra; 2 - bracketed ref")
+                            default=1, help="type of spectral line reduction; 0 - median; 1 - single ref spectra; 2 - bracketed ref")
         self.parser.add_argument("--x_axis", dest="x_axis",
                             default='VLSR',
                             help="select spectral x axis. options one of VLSR, VSKY, VBARY, VSRC, FLSR, FSKY, FBARY, FSRC")
