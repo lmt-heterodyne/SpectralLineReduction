@@ -15,7 +15,7 @@
 #
 #
 
-_version="15-nov-2023"
+_version="16-nov-2023"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -239,6 +239,25 @@ def dataverse(pid):
     return db
 
 
+def date_obs_utdate(date):
+    """ convert from a Header.TimePlace.UTDate fractional year 
+            this is a hack until we know how they got this UTDate
+    """
+    y1 = int(date)
+    e0=datetime.datetime(1970,1,1,0,0,0)        
+    e1=datetime.datetime(y1,1,1,0,0,0)
+    e2=datetime.datetime(y1+1,1,1,0,0,0)
+    ys=(e2-e1).total_seconds()
+    yd=(date-y1)*ys
+    y70 = (e1-e0).total_seconds() + yd
+    #print('PJT0 secs',ys,ys/24/3600)
+    #print('PJT0 secs1970',(e1-e0).total_seconds())
+    #print('PJT0 secs-now',yd)
+    #print('PJT0 secs-all',y70)
+    date_obs = datetime.datetime.fromtimestamp(y70).strftime('%Y-%m-%dT%H:%M:%S')
+    #print('PJT0 date_obs',date_obs)
+    return date_obs
+
     
 #  Examples:
 #  ifproc/ifproc_2018-06-29_078085_00_0001.nc
@@ -328,8 +347,19 @@ def slr_summary(ifproc, rc=False):
         ystep= 0
         tsamp= 0
 
-    date_obs = nc.variables['Data.TelescopeBackend.TelTime'][0].tolist()
-    date_obs = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%dT%H:%M:%S')
+    try:
+        # @todo   this variable can be missing, e.g. 108778
+        date_obs = nc.variables['Data.TelescopeBackend.TelTime'][0].tolist()
+        date_obs = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%dT%H:%M:%S')
+    except:
+        pass
+
+    # Header.TimePlace.UTDate
+    date_obs = nc.variables['Header.TimePlace.UTDate'][0].tolist()
+    #print('PJT Header.TimePlace.UTDate',date_obs)
+    date_obs = date_obs_utdate(date_obs)
+    #print('PJT0 date_obs',date_obs)        
+    
 
     ra  = nc.variables['Header.Source.Ra'][0]  * 57.2957795131
     dec = nc.variables['Header.Source.Dec'][0] * 57.2957795131
@@ -456,25 +486,6 @@ def rsr_summary(rsr_file, rc=False):
         # uncaught cases
         return date
 
-    def date_obs_utdate(date):
-        """ convert from a Header.TimePlace.UTDate fractional year 
-            this is a hack until we know how they got this UTDate
-        """
-        y1 = int(date)
-        e0=datetime.datetime(1970,1,1,0,0,0)        
-        e1=datetime.datetime(y1,1,1,0,0,0)
-        e2=datetime.datetime(y1+1,1,1,0,0,0)
-        ys=(e2-e1).total_seconds()
-        yd=(date-y1)*ys
-        y70 = (e1-e0).total_seconds() + yd
-        #print('PJT0 secs',ys,ys/24/3600)
-        #print('PJT0 secs1970',(e1-e0).total_seconds())
-        #print('PJT0 secs-now',yd)
-        #print('PJT0 secs-all',y70)
-        date_obs = datetime.datetime.fromtimestamp(y70).strftime('%Y-%m-%dT%H:%M:%S')
-        #print('PJT0 date_obs',date_obs)
-        return date_obs
-        
                 
     # RedshiftChassis2/RedshiftChassis2_2015-01-22_033551_00_0001.nc
     nc = netCDF4.Dataset(rsr_file)
@@ -514,21 +525,24 @@ def rsr_summary(rsr_file, rc=False):
     date_obs = b''.join(nc.variables['Header.Radiometer.UpdateDate'][:]).decode().strip()
     date_obs = new_date_obs(date_obs)
     #print('# Header.Radiometer.UpdateDate',date_obs)
-    date_obs = nc.variables['Data.Sky.Time'][0].tolist()
-    #print('# Data.Sky.Time',date_obs)
-    if date_obs < 1000000:
-        #print('PJT  bad time, this was < 2015 when it was "since boot"')
+
+    try:
+        # @todo   e.g. 108991 misses this variable
+        date_obs = nc.variables['Data.Sky.Time'][0].tolist()
+        #print('# Data.Sky.Time',date_obs)
+        if date_obs < 1000000:
+            #print('PJT  bad time, this was < 2015 when it was "since boot"')
+            pass
+        date_obs = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%dT%H:%M:%S')
+        #print('# date_obs',date_obs)
+    except:
         pass
-    date_obs = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%dT%H:%M:%S')
-    #print('# date_obs',date_obs)
 
     # Header.TimePlace.UTDate
     date_obs = nc.variables['Header.TimePlace.UTDate'][0].tolist()
     #print('PJT Header.TimePlace.UTDate',date_obs)
     date_obs = date_obs_utdate(date_obs)
     #print('PJT0 date_obs',date_obs)        
-
-    
 
     tau = nc.variables['Header.Radiometer.Tau'][0]    
     
