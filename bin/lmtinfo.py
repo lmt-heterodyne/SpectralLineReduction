@@ -568,8 +568,8 @@ def rsr_summary(rsr_file, rc=False):
     try:
         tint = nc.variables['Header.Dcs.IntegrationTime'][0]
     except:
-        # older data (e.g. 28190) missing this???
-        tint = 30.0
+        # older data (e.g. 28190) missing this??? - mark it with 30.1 so we know it's "fake"
+        tint = 30.1
 
     nc.close()
 
