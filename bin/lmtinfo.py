@@ -15,7 +15,7 @@
 #
 #
 
-_version="16-nov-2023"
+_version="30-nov-2023"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -564,8 +564,12 @@ def rsr_summary(rsr_file, rc=False):
         tint = 1
     else:
         tint = 0
-    # Header.Dcs.IntegrationTime
-    tint = nc.variables['Header.Dcs.IntegrationTime'][0]
+
+    try:
+        tint = nc.variables['Header.Dcs.IntegrationTime'][0]
+    except:
+        # older data (e.g. 28190) missing this???
+        tint = 30.0
 
     nc.close()
 
