@@ -40,9 +40,27 @@ def lookup_ifproc_file(obsnum,path='/data_lmt/ifproc/'):
     return(filename)
 """
 
-def MapCoord(map_coord):
+def MapCoord(map_coord, obsgoal, source_coord_sys, obsnum, map_coord_use=-1):
     """   translate ascii MapCoord to an index  (0,1,2)
+    
+          Exceptions are for Science (only Ra/Dec or L/B are returned)
+          and for Pointing (Az/El is returned) obsgoal's.
+          The rest returns whatever map_coord implies.
+          If map_coord_use is set, override all.
     """
+    import sys
+    print('MapCoord:',map_coord, obsgoal, source_coord_sys, obsnum, map_coord_use)
+    if map_coord_use >= 0:
+        return map_coord_use
+    if obsgoal == "Science":
+        if source_coord_sys == 2:
+            return 2
+        if source_coord_sys != 1:
+            print("Warning: science data, assuming Ra/Dec")
+        return 1
+    if obsgoal == "Pointing":
+        print("Warning: pointing data, assumed Az/El")
+        return 0
     if "Az"  in map_coord: return 0
     if "El"  in map_coord: return 0
     if "Ra"  in map_coord: return 1
@@ -70,6 +88,7 @@ class IFProcQuick():
         if os.path.isfile(self.filename):
             self.nc = netCDF4.Dataset(self.filename)
             self.obspgm = b''.join(self.nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
+            self.obsgoal = b''.join(self.nc.variables['Header.Dcs.ObsGoal'][:]).decode().strip()
             self.obsnum = self.nc.variables['Header.Dcs.ObsNum'][0]
             self.receiver = b''.join(self.nc.variables['Header.Dcs.Receiver'][:]).decode().strip()
             self.nc.close()
@@ -80,7 +99,7 @@ class IFProc():
     """
     Base class for reading generic header information from IFPROC.
     """
-    def __init__(self, filename, instrument='Sequoia'):
+    def __init__(self, filename, instrument='Sequoia', map_coord=-1):
         """
         Constructor for IfProc class.
         Args:
@@ -95,18 +114,23 @@ class IFProc():
 
             # header information
             self.source = b''.join(self.nc.variables['Header.Source.SourceName'][:]).decode().strip()
+            self.source_coord_sys = self.nc.variables['Header.Source.CoordSys'][0]
             self.vlsr = self.nc.variables['Header.Source.Velocity'][0]
 
             date_obs = self.nc.variables['Data.TelescopeBackend.TelTime'][0].tolist()
             self.date_obs = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%dT%H:%M:%S')
             self.date_ymd = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%d')
-            print("%s begin %s" % (self.date_obs, self.filename))
+            print("%s obs-start %s" % (self.date_obs, self.filename))
 
             date_obs2 = self.nc.variables['Data.TelescopeBackend.TelTime'][-1:].tolist()[0]
             date_obs2 = datetime.datetime.fromtimestamp(date_obs2).strftime('%Y-%m-%dT%H:%M:%S')
-            print("%s end   %s" % (date_obs2, self.filename))
+            print("%s obs-stop  %s" % (date_obs2, self.filename))
+            delta1 = self.nc.variables['Data.TelescopeBackend.TelTime'][-1:].tolist()[0] - \
+                     self.nc.variables['Data.TelescopeBackend.TelTime'][0].tolist()
+            print("delta1 %6.1f sec" % delta1)
             if True:
                 # report on the stats of BufPos
+                delta2 = 0
                 on = self.nc.variables['Header.Dcs.ObsNum'][0]
                 tt = self.nc.variables['Data.TelescopeBackend.TelTime'][:]
                 bp = self.nc.variables['Data.TelescopeBackend.BufPos'][:]            
@@ -116,11 +140,14 @@ class IFProc():
                 for i in range(1,nt):
                     if bp[i] != bp0:
                         print("BufPos %3d  %6.1f sec %s" % (bp0, tt[i] - tt0, on))
+                        delta2 = delta2 + tt[i] - tt0
                         bp0 = bp[i]
                         tt0 = tt[i]
                 print("BufPos %3d  %6.1f sec %s" % (bp[-1], tt[-1] - tt0, on))
+                delta2 = delta2 + tt[-1] - tt0
+                print("delta2 %6.1f sec" % delta2)
             try:
-                # only in newer data
+                # only in newer data (@todo after when?)
                 self.dumptime = self.nc.variables['Header.SpecBackend.DumpTime'][0]
             except:
                 print("Old data, assuming Header.SpecBackend.DumpTime = 0.1")
@@ -132,6 +159,7 @@ class IFProc():
             self.source_L = self.nc.variables['Header.Source.L'][0]
             self.source_B = self.nc.variables['Header.Source.B'][0]            
             self.obspgm = b''.join(self.nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
+            self.obsgoal = b''.join(self.nc.variables['Header.Dcs.ObsGoal'][:]).decode().strip()
             if 'ifproc' in filename:
                 self.calobsnum = self.nc.variables['Header.IfProc.CalObsNum'][0]
             elif 'lmttpm' in filename:
@@ -242,19 +270,24 @@ class IFProc():
                 self.ylength = self.nc.variables['Header.Map.YLength'][0] * 206264.8
                 self.xstep = self.nc.variables['Header.Map.XStep'][0]
                 self.ystep = self.nc.variables['Header.Map.YStep'][0]
+                self.xoffset = self.nc.variables['Header.Map.XOffset'][0]
+                self.yoffset = self.nc.variables['Header.Map.YOffset'][0]
                 self.rows = self.nc.variables['Header.Map.RowsPerScan'][0]
                 # check the coordinate system AzEl = 0; RaDec = 1; LatLon = 2; default =0
                 test_map_coord = b''.join(self.nc.variables['Header.Map.MapCoord'][:]).decode().strip()
-                self.map_coord = MapCoord(test_map_coord)
+                print("PJT IFProc map_coord",test_map_coord)                
+                self.map_coord = MapCoord(test_map_coord, self.obsgoal, self.source_coord_sys, self.obsnum)
                 if self.map_coord < 0:
                     print("Warning: unknown map_coord ",test_map_coord)
                     self.map_coord = 0
 
                 self.map_motion = b''.join(self.nc.variables['Header.Map.MapMotion'][:]).decode().strip()
+                self.scanang = self.nc.variables['Header.Map.ScanAngle'][0] * 206264.8/3600.
                 print('Map Parameters: %s %s'%(test_map_coord, self.map_motion))
-                print('HPBW=%5.1f XLength=%8.1f YLength=%8.1f XStep=%6.2f YStep=%6.2f'
-                      %(self.hpbw, self.xlength, self.ylength, self.xstep, self.ystep))
-            except:
+                print('HPBW=%5.1f XLength=%8.1f YLength=%8.1f XStep=%6.2f YStep=%6.2f ScanAngle=%6.2f'
+                      %(self.hpbw, self.xlength, self.ylength, self.xstep, self.ystep, self.scanang))
+            except Exception as e:
+                print(e)
                 self.map_motion = None
                 print('%s does not have map parameters'%(self.filename))
 
@@ -431,7 +464,7 @@ class IFProcData(IFProc):
     Class for reading IFPROC data file to obtain time sequence of total
     power measurements.
     """
-    def __init__(self, filename, npix=16):
+    def __init__(self, filename, npix=16, map_coord=-1):
         """
         Constructor for IFProcData class.
         Args:
@@ -447,7 +480,7 @@ class IFProcData(IFProc):
             return
 
         # identify the obspgm
-        self.map_coord = -1
+        self.map_coord = map_coord
         # PJT  ->  'Az'
 
         if self.obspgm == 'Bs':
@@ -491,22 +524,27 @@ class IFProcData(IFProc):
             # map parameters 
             try:
                 self.hpbw = self.nc.variables['Header.Map.HPBW'][0] * 206264.8
-                self.xlength = self.nc.variables[
-                    'Header.Map.XLength'][0]*206264.8
-                self.ylength = self.nc.variables[
-                    'Header.Map.YLength'][0]*206264.8
+                self.xlength = self.nc.variables['Header.Map.XLength'][0]*206264.8
+                self.ylength = self.nc.variables['Header.Map.YLength'][0]*206264.8
                 self.xstep = self.nc.variables['Header.Map.XStep'][0]
                 self.ystep = self.nc.variables['Header.Map.YStep'][0]
+                self.xoffset = self.nc.variables['Header.Map.XOffset'][0]
+                self.yoffset = self.nc.variables['Header.Map.YOffset'][0]
                 self.rows = self.nc.variables['Header.Map.RowsPerScan'][0]
                 # check the coordinate system Az = 0; Ra = 1; default =0
                 test_map_coord = b''.join(self.nc.variables['Header.Map.MapCoord'][:]).decode().strip()
-                self.map_coord = MapCoord(test_map_coord)
+                print("PJT IFProcData map_coord",test_map_coord)
+                self.map_coord = MapCoord(test_map_coord, self.obsgoal, self.source_coord_sys, self.obsnum, map_coord_use=map_coord)
                 if self.map_coord < 0:
                     print("Warning: unknown map_coord ",test_map_coord)
                     self.map_coord = 0
+                if map_coord >= 0 and self.map_coord != map_coord:
+                    print("Warning: changing map_coord from %d to %d" % (self.map_coord,map_coord))
+                    self.map_coord = map_coord
 
                 self.map_motion = b''.join(self.nc.variables['Header.Map.MapMotion'][:]).decode().strip()
-            except:
+            except Exception as e:
+                print('e1', e)
                 print('%s does not have map parameters'%(self.filename))
 
         elif self.obspgm == 'Cal':
@@ -520,36 +558,34 @@ class IFProcData(IFProc):
 
         # data arrays
         self.time = self.nc.variables['Data.TelescopeBackend.TelTime'][:]
-        print('PJT map_coord',self.map_coord)
-        if self.map_coord == 0:
-            # AzEl map
-            self.azmap = self.nc.variables['Data.TelescopeBackend.TelAzMap'][:]* 206264.8
-            self.elmap = self.nc.variables['Data.TelescopeBackend.TelElMap'][:]* 206264.8
-            self.parang = self.nc.variables['Data.TelescopeBackend.ActParAng'][:]
-            self.galang = np.zeros(len(self.azmap))  # @todo
-        elif self.map_coord == 1:
-            # RaDec map
-            self.azmap = (self.nc.variables['Data.TelescopeBackend.SourceRaAct'][:] - self.source_RA) * np.cos(self.source_Dec) * 206264.8
-            self.elmap = (self.nc.variables['Data.TelescopeBackend.SourceDecAct'][:] - self.source_Dec) * 206264.8
-            self.parang = self.nc.variables['Data.TelescopeBackend.ActParAng'][:]
-            self.galang = np.zeros(len(self.azmap))   # @todo            
-        elif self.map_coord == 2:
-            # LatLon map   PJT
-            self.azmap = (self.nc.variables['Data.TelescopeBackend.SourceRaAct'][:] - self.source_RA) * np.cos(self.source_Dec) * 206264.8
-            self.elmap = (self.nc.variables['Data.TelescopeBackend.SourceDecAct'][:] - self.source_Dec) * 206264.8
-            self.parang = self.nc.variables['Data.TelescopeBackend.ActParAng'][:]
-            self.galang = self.nc.variables['Data.TelescopeBackend.ActGalAng'][:]
-            print('PJT parang,galang',self.parang.mean()*180/np.pi, self.galang.mean()*180/np.pi,'deg')
-        else:
-            # should never happen....
-            print("Unknown MapCoord", self.map_coord)
-            self.map_coord = 0
-            self.azmap = self.nc.variables['Data.TelescopeBackend.TelAzMap'][:] * 206264.8
-            self.elmap = self.nc.variables['Data.TelescopeBackend.TelElMap'][:] * 206264.8
-            self.parang = np.zeros(len(self.azmap))
-            self.galang = np.zeros(len(self.azmap))
-            
         self.bufpos = self.nc.variables['Data.TelescopeBackend.BufPos'][:]
+        # AzEl map
+        self.azmap = self.nc.variables['Data.TelescopeBackend.TelAzMap'][:]* 206264.8
+        self.elmap = self.nc.variables['Data.TelescopeBackend.TelElMap'][:]* 206264.8
+        self.parang = self.nc.variables['Data.TelescopeBackend.ActParAng'][:]
+        try:
+            self.galang = self.nc.variables['Data.TelescopeBackend.ActGalAng'][:]
+        except:
+            self.galang = np.zeros(len(self.parang))
+
+        # RaDec map
+        self.ramap = (self.nc.variables['Data.TelescopeBackend.SourceRaAct'][:] - self.source_RA) * np.cos(self.source_Dec) * 206264.8
+        self.decmap = (self.nc.variables['Data.TelescopeBackend.SourceDecAct'][:] - self.source_Dec) * 206264.8
+
+        # set the l/b map
+        self.lmap = (self.nc.variables['Data.TelescopeBackend.SourceLAct'][:] - self.source_L) * np.cos(self.source_B) * 206264.8
+        self.bmap = (self.nc.variables['Data.TelescopeBackend.SourceBAct'][:] - self.source_B) * 206264.8
+
+        if self.map_coord == 1:
+            self.xmap = self.ramap
+            self.ymap = self.decmap
+        elif self.map_coord == 2:
+            self.xmap = self.lmap
+            self.ymap = self.bmap
+        else:
+            self.xmap = self.azmap
+            self.ymap = self.elmap
+            
         self.chop_option = 0
         if 'ifproc' in filename:
             self.bb_level = self.nc.variables['Data.IfProc.BasebandLevel'][:]
@@ -637,17 +673,39 @@ class IFProcData(IFProc):
         self.map_data = []
         self.map_x = []
         self.map_y = []
+        self.map_az = []
+        self.map_el = []
+        self.map_ra = []
+        self.map_dec = []
+        self.map_l = []
+        self.map_b = []
         self.map_n = []
         self.map_p = []
+        self.map_g = []
+        print('PJT map_coord',self.map_coord)
         for i in range(self.npix):
-            self.map_x.append(self.azmap)
-            self.map_y.append(self.elmap)
+            self.map_x.append(self.xmap)
+            self.map_y.append(self.ymap)
+            self.map_az.append(self.azmap)
+            self.map_el.append(self.elmap)
+            self.map_ra.append(self.ramap)
+            self.map_dec.append(self.decmap)
+            self.map_l.append(self.lmap)
+            self.map_b.append(self.bmap)
             self.map_p.append(self.parang)
+            self.map_g.append(self.galang)
             self.map_n.append(self.nsamp)
             self.map_data.append(self.caldata[i,:] - self.bias[i])
         self.map_x = np.array(self.map_x)
         self.map_y = np.array(self.map_y)
+        self.map_az = np.array(self.map_az)
+        self.map_el = np.array(self.map_el)
+        self.map_ra = np.array(self.map_ra)
+        self.map_dec = np.array(self.map_dec)
+        self.map_l = np.array(self.map_l)
+        self.map_b = np.array(self.map_b)
         self.map_p = np.array(self.map_p)
+        self.map_g = np.array(self.map_g)
         self.map_n = np.array(self.map_n)
         self.map_data = np.array(self.map_data)
 
@@ -680,6 +738,12 @@ class IFProcCal(IFProc):
         self.time = self.nc.variables['Data.TelescopeBackend.TelTime'][:]
         self.azmap = self.nc.variables['Data.TelescopeBackend.TelAzMap'][:]
         self.elmap = self.nc.variables['Data.TelescopeBackend.TelElMap'][:]
+        self.xmap = self.azmap
+        self.ymap = self.elmap
+        self.ramap =  np.zeros(len(self.azmap))
+        self.decmap =  np.zeros(len(self.azmap))
+        self.lmap =  np.zeros(len(self.azmap))
+        self.bmap =  np.zeros(len(self.azmap))
         self.parang = np.zeros(len(self.azmap))
         self.galang = np.zeros(len(self.azmap))
         self.bufpos = self.nc.variables['Data.TelescopeBackend.BufPos'][:]

@@ -15,7 +15,7 @@
 #
 #
 
-_version="21-apr-2023"
+_version="30-nov-2023"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -23,6 +23,7 @@ Usage: lmtinfo.py OBSNUM
        lmtinfo.py build
        lmtinfo.py last
        lmtinfo.py new OBSNUM
+       lmtinfo.py lmtot OBSNUM
        lmtinfo.py grep  [TERM1 [TERM2 ...]]
        lmtinfo.py grepw [TERM1 [TERM2 ...]]
        lmtinfo.py find  [TERM1 [TERM2 ...]]
@@ -56,7 +57,8 @@ data:     show the database, no sorting and culling
 build:    rebuild the sorted database (needs write permission in $DATA_LMT)
 last:     report the last known obsnum
 new:      build the database with only new obsnums since the last build
-grep:     search in database, terms are logically AND-ed
+lmtot:    return the LMTOT (observing) file to stdout
+grep:     search in database, terms are logically AND-ed - partial matches allowed
 grepw:    search in database, terms are logically AND-ed and words need to match exactly
 find:     search in database, terms are logically AND-ed
 
@@ -161,6 +163,14 @@ def iau(src):
     if src=="NGC6946_(CO)":   return "NGC6946"
     return src
 
+def pid_sanitize(pid):
+    """
+    sanitize badly formatted ProjectID's
+    """
+    if pid == "2018S1-MU-8":
+        return "2018-S1-MU-8"      # 90648..90666 were mis-labeled
+    return pid
+
 def dataverse_old(pid):
     """
     input:    Projectid (string)
@@ -229,6 +239,25 @@ def dataverse(pid):
     return db
 
 
+def date_obs_utdate(date):
+    """ convert from a Header.TimePlace.UTDate fractional year 
+            this is a hack until we know how they got this UTDate
+    """
+    y1 = int(date)
+    e0=datetime.datetime(1970,1,1,0,0,0)        
+    e1=datetime.datetime(y1,1,1,0,0,0)
+    e2=datetime.datetime(y1+1,1,1,0,0,0)
+    ys=(e2-e1).total_seconds()
+    yd=(date-y1)*ys
+    y70 = (e1-e0).total_seconds() + yd
+    #print('PJT0 secs',ys,ys/24/3600)
+    #print('PJT0 secs1970',(e1-e0).total_seconds())
+    #print('PJT0 secs-now',yd)
+    #print('PJT0 secs-all',y70)
+    date_obs = datetime.datetime.fromtimestamp(y70).strftime('%Y-%m-%dT%H:%M:%S')
+    #print('PJT0 date_obs',date_obs)
+    return date_obs
+
     
 #  Examples:
 #  ifproc/ifproc_2018-06-29_078085_00_0001.nc
@@ -245,6 +274,8 @@ def slr_summary(ifproc, rc=False):
     
     nc = netCDF4.Dataset(ifproc)
     obsnum = nc.variables['Header.Dcs.ObsNum'][0]
+    subobsnum = nc.variables['Header.Dcs.SubObsNum'][0]
+    scannum = nc.variables['Header.Dcs.ScanNum'][0]    
     receiver = b''.join(nc.variables['Header.Dcs.Receiver'][:]).decode().strip()
     tau = nc.variables['Header.Radiometer.Tau'][0]
     
@@ -286,6 +317,7 @@ def slr_summary(ifproc, rc=False):
         pid = b''.join(nc.variables['Header.Dcs.ProjectId'][:]).decode().strip()
     except:
         pid = "Unknown"
+    pid = pid_sanitize(pid)
     
     # the following Map only if obspgm=='Map'
     if obspgm=='Map':
@@ -293,8 +325,8 @@ def slr_summary(ifproc, rc=False):
         map_motion = b''.join(nc.variables['Header.Map.MapMotion'][:]).decode().strip() 
         xlen = nc.variables['Header.Map.XLength'][0] * 206264.806
         ylen = nc.variables['Header.Map.YLength'][0] * 206264.806
-        xoff = nc.variables['Header.Map.XOffset'][0] * 206264.806
-        yoff = nc.variables['Header.Map.YOffset'][0] * 206264.806
+        xoff = nc.variables['Header.Map.XOffset'][0] * xlen
+        yoff = nc.variables['Header.Map.YOffset'][0] * ylen
         xram = nc.variables['Header.Map.XRamp'][0]   * 206264.806
         yram = nc.variables['Header.Map.YRamp'][0]   * 206264.806
         hpbw = nc.variables['Header.Map.HPBW'][0]    * 206264.806
@@ -315,8 +347,19 @@ def slr_summary(ifproc, rc=False):
         ystep= 0
         tsamp= 0
 
-    date_obs = nc.variables['Data.TelescopeBackend.TelTime'][0].tolist()
-    date_obs = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%dT%H:%M:%S')
+    try:
+        # @todo   this variable can be missing, e.g. 108778
+        date_obs = nc.variables['Data.TelescopeBackend.TelTime'][0].tolist()
+        date_obs = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%dT%H:%M:%S')
+    except:
+        pass
+
+    # Header.TimePlace.UTDate
+    date_obs = nc.variables['Header.TimePlace.UTDate'][0].tolist()
+    #print('PJT Header.TimePlace.UTDate',date_obs)
+    date_obs = date_obs_utdate(date_obs)
+    #print('PJT0 date_obs',date_obs)        
+    
 
     ra  = nc.variables['Header.Source.Ra'][0]  * 57.2957795131
     dec = nc.variables['Header.Source.Dec'][0] * 57.2957795131
@@ -358,6 +401,8 @@ def slr_summary(ifproc, rc=False):
         print('skytime=%g' % tsky)
         print('inttime=%g' % tint)
         print('obsnum=%s' % obsnum)
+        print('subobsnum=%s' % subobsnum)
+        print('scannum=%s' % scannum)
         print('calobsnum=%s' % calobsnum)
         print('obspgm="%s"' % obspgm)
         if obspgm=='Map':
@@ -380,6 +425,9 @@ def slr_summary(ifproc, rc=False):
         print('vlsr=%g        # km/s' % vlsr)
         print('skyfreq=%s     # GHz' % alist(skyfreq))
         print('restfreq=%s    # Ghz' % alist(restfreq))
+        if numbands == 2 and restfreq[1] == 0.0:
+            print('numbands=1   # overriding')
+            print('restfreq=%s' % repr(restfreq[0]))
         print('src="%s"' % src)
         resolution = 1.0 * 299792458 / skyfreq[0] / 1e9 / 50.0 * 206264.806
         # why is this an integer again?
@@ -397,7 +445,8 @@ def slr_summary(ifproc, rc=False):
             for k in dv.keys():
                 print('%s="%s"' % (k,dv[k]))
         else:
-            print("# no dataverse info")                
+            print("# no dataverse info")
+        print("config=%s__SEQ__%s__%s__%s" % (pid,obspgm,src,alist(restfreq)))
         print("# </lmtinfo>")
     else:
         print("%-20s %7s  %-10s %-12s %-11s %-25s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %
@@ -411,7 +460,8 @@ def rsr_summary(rsr_file, rc=False):
     """
     def new_date_obs(date):
         """
-        date_obs from RSR have a few common non-ISO formats:
+        - not used anymore - 
+        date_obs from RSR have a few common non-ISO formats:   (see Data.Sky.Time)
         date = '30/03/2016 03:50:08'   case-1
         date = '2013-12-16 21:10:07'   case-2
         date = '05-03-2020 02:19:06'   case-3
@@ -435,7 +485,7 @@ def rsr_summary(rsr_file, rc=False):
                 return '%s-%s-%sT%s' % (dmy[2],dmy[1],dmy[0],d[1])
         # uncaught cases
         return date
-        
+
                 
     # RedshiftChassis2/RedshiftChassis2_2015-01-22_033551_00_0001.nc
     nc = netCDF4.Dataset(rsr_file)
@@ -451,6 +501,8 @@ def rsr_summary(rsr_file, rc=False):
         
     # Header.Dcs.ObsNum = 33551 ;
     obsnum = nc.variables['Header.Dcs.ObsNum'][0]
+    subobsnum = nc.variables['Header.Dcs.SubObsNum'][0]
+    scannum = nc.variables['Header.Dcs.ScanNum'][0]    
     receiver = b''.join(nc.variables['Header.Dcs.Receiver'][:]).decode().strip()
     instrument = "RSR"
     # yuck, with the RSR filenameconvention this is the trick to find the chassic
@@ -470,10 +522,27 @@ def rsr_summary(rsr_file, rc=False):
     obsgoal = b''.join(nc.variables['Header.Dcs.ObsGoal'][:]).decode().strip()
 
     # Header.Radiometer.UpdateDate = "21/01/2015 23:12:07
-    #date_obs = b''.join(nc.variables['Header.Radiometer.UpdateDate'][:]).decode().strip()
-    #date_obs = new_date_obs(date_obs)
-    date_obs = nc.variables['Data.Sky.Time'][0].tolist()
-    date_obs = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%dT%H:%M:%S')
+    date_obs = b''.join(nc.variables['Header.Radiometer.UpdateDate'][:]).decode().strip()
+    date_obs = new_date_obs(date_obs)
+    #print('# Header.Radiometer.UpdateDate',date_obs)
+
+    try:
+        # @todo   e.g. 108991 misses this variable
+        date_obs = nc.variables['Data.Sky.Time'][0].tolist()
+        #print('# Data.Sky.Time',date_obs)
+        if date_obs < 1000000:
+            #print('PJT  bad time, this was < 2015 when it was "since boot"')
+            pass
+        date_obs = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%dT%H:%M:%S')
+        #print('# date_obs',date_obs)
+    except:
+        pass
+
+    # Header.TimePlace.UTDate
+    date_obs = nc.variables['Header.TimePlace.UTDate'][0].tolist()
+    #print('PJT Header.TimePlace.UTDate',date_obs)
+    date_obs = date_obs_utdate(date_obs)
+    #print('PJT0 date_obs',date_obs)        
 
     tau = nc.variables['Header.Radiometer.Tau'][0]    
     
@@ -495,8 +564,12 @@ def rsr_summary(rsr_file, rc=False):
         tint = 1
     else:
         tint = 0
-    # Header.Dcs.IntegrationTime
-    tint = nc.variables['Header.Dcs.IntegrationTime'][0]
+
+    try:
+        tint = nc.variables['Header.Dcs.IntegrationTime'][0]
+    except:
+        # older data (e.g. 28190) missing this??? - mark it with 30.1 so we know it's "fake"
+        tint = 30.1
 
     nc.close()
 
@@ -508,6 +581,8 @@ def rsr_summary(rsr_file, rc=False):
         # print('# skytime=%g sec' % tsky)
         print('inttime=%g # sec' % tint)
         print('obsnum=%s' % obsnum)
+        print('subobsnum=%s' % subobsnum)
+        print('scannum=%s' % scannum)
         print('calobsnum=%s' % calobsnum)
         print('obspgm="%s"' % obspgm)
         print('obsgoal="%s"' % obsgoal)
@@ -534,6 +609,7 @@ def rsr_summary(rsr_file, rc=False):
                 print('%s="%s"' % (k,dv[k]))
         else:
             print("# no dataverse info")
+        print("config=%s__RSR__%s__%s" % (pid,obspgm,src))
         print("# </lmtinfo>")
 
     else:     # one line summary
@@ -721,6 +797,11 @@ elif len(sys.argv) == 3:
         seq_find(newer=rawnc)        
         sys.exit(0)
 
+    if sys.argv[1] == "lmtot":
+        obsnum = sys.argv[2]
+        cmd = 'wget -q http://taps.lmtgtm.org/cgi-bin/script/x.cgi?-obsnum=%s -O -' % obsnum
+        os.system(cmd)
+        sys.exit(0)
     # there should be no more options now
     print("Illegal option 3",sys.argv[1])
 

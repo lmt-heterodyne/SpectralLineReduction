@@ -190,7 +190,7 @@ def read_obsnum_bs(obsnum, list_of_pixels, bank,
 def read_obsnum_otf(obsnum, list_of_pixels, bank,
                     use_calibration, tsys=150., stype=1, restfreq=-1,
                     use_otf_cal=False, save_tsys=False,
-                    path=None):
+                    path=None, map_coord=-1):
     """
     Reads the spectral line data from WARES spectrometer for a 
     particular obsnum.
@@ -213,10 +213,13 @@ def read_obsnum_otf(obsnum, list_of_pixels, bank,
         use_otf_cal (bool):  (also use?) if CAL is embedded in observation
         path (str): path to the top of the data_lmt directory (usually 
             '/data_lmt/',  or use $DATA_LMT)
+        map_coord (int):  use the default (-1) or forced set to
+             0 (Az/El), 1 (Ra/Dec) or 2 (L/B)
     Returns:
         ifproc (obj): ifproc_data object with IF Processor parameters
         specbank (obj): spec_bank_data object with the actual spectral data
     """
+    print("PJT map_coord",map_coord)
     path = get_data_lmt(path)    
     # look up files to match pixel list
     roach_list = create_roach_list(list_of_pixels,bank)
@@ -224,7 +227,7 @@ def read_obsnum_otf(obsnum, list_of_pixels, bank,
                                        path=os.path.join(path, 'spectrometer'))
     ifproc_file = lookup_ifproc_file(obsnum,
                                      path=os.path.join(path, 'ifproc'))
-    ifproc = IFProcData(ifproc_file)
+    ifproc = IFProcData(ifproc_file,map_coord=map_coord)
     
     ifproc_cal_file = lookup_ifproc_file(ifproc.calobsnum, path=os.path.join(path, 'ifproc'))
     ifproc_cal = IFProcCal(ifproc_cal_file)

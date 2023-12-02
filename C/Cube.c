@@ -507,6 +507,20 @@ void write_fits_cube(Cube *C, char *filename)
     }
   
 
+  strcpy(comment,"number of channels of original cube");
+  if((retval=fits_update_key(fptr, TINT,  "NCHAN0", &C->nchan0, comment, &status)) != 0)
+    {
+      printf("NCHAN0 %d\n", C->nchan0);
+      print_fits_error(status);
+    }
+  strcpy(comment,"first channel from original cube");
+  if((retval=fits_update_key(fptr, TINT,  "CHAN0", &C->chan0, comment, &status)) != 0)
+    {
+      printf("NCHAN0 %d\n", C->chan0);
+      print_fits_error(status);
+    }
+  
+
   // @todo this is assumed here, but should be fixed if upstream not VELO-LSR was choosen
   // LSRK vs. LSRD
   strcpy(cunit,"LSRK");

@@ -62,13 +62,23 @@ class Line(object):
         Returns:
             none
         """
+        # ensure elements of the list fall in the range of selected channels
+        i0 = self.iarray[0]
+        i1 = self.iarray[len(self.iarray)-1]
         if interpolate:
             for i in list:
-                if i<=0: continue
-                j = np.where(self.iarray == i)[0][0]                
-                self.yarray[j] = (self.yarray[j-1] + self.yarray[j+1])/2.0
+                if i<=i0 or i >=i1: continue
+                j = np.where(self.iarray == i)[0][0]
+                if True:
+                    self.yarray[j] = (self.yarray[j-1] + self.yarray[j+1])/2.0
+                else:
+                    self.yarray[j] = (self.yarray[j-2] + self.yarray[j+2])/2.0
+                    self.yarray[j-1] = self.yarray[j]
+                    self.yarray[j-2] = self.yarray[j]
+                    
         else:
             for i in list:
+                if i<=i0 or i >=i1: continue                
                 self.yarray[np.where(self.iarray == i)] = np.nan
 
     def baseline(self, list, n, baseline_order=0):
