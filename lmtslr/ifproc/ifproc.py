@@ -478,10 +478,11 @@ class IFProcData(IFProc):
                 param = 'Header.Ps.NSamp'
                 self.nsamp = self.nc.variables[param][0]
                 param = 'Header.Ps.Mode'
-                self.mode = ''.join(self.nc.variables[param][:]).strip()
+                self.mode = b''.join(self.nc.variables[param][:]).decode().strip()
                 param = 'Header.Ps.RefSwitch'
-                self.refswitch = ''.join(self.nc.variables[param][:]).strip()
-            except:
+                self.refswitch = b''.join(self.nc.variables[param][:]).decode().strip()
+            except Exception as eps:
+                print(eps)
                 print('%s does not have Ps parameters %s'%(self.filename, 
                                                            param))
 
