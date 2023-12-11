@@ -590,6 +590,7 @@ class IFProcData(IFProc):
             self.bb_level = self.nc.variables['Data.IfProc.BasebandLevel'][:]
             try:
                 print('get chop')
+                # @todo may be absent
                 self.chop = self.nc.variables['Data.Msip1mm.BeamChopperActPos'][:]
                 self.chop_option = self.nc.variables['Header.Msip1mm.BeamChopperActState'][0]
                 self.level = self.process_chopped_signal(self.bb_level, self.chop, self.chop_option)
@@ -751,6 +752,7 @@ class IFProcCal(IFProc):
             self.bb_level = self.nc.variables['Data.IfProc.BasebandLevel'][:]
             try:
                 print('get chop cal')
+                # @todo may be absent
                 self.chop = self.nc.variables['Data.Msip1mm.BeamChopperActPos'][:]
                 self.chop_option = self.nc.variables['Header.Msip1mm.BeamChopperActState'][0]
                 self.level = self.process_chopped_signal(self.bb_level, self.chop, self.chop_option)
