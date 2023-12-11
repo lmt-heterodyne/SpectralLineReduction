@@ -22,7 +22,6 @@ from lmtslr.utils.reader import read_obsnum_ps
 from lmtslr.utils.argparser import HandlePSProcessOptions
 
 def main(argv):
-    
     Opts = HandlePSProcessOptions()
     result = Opts.parse_options(argv, 'process_ps', 1, True)
     #if result == 0:
@@ -55,8 +54,25 @@ def main(argv):
         #pl.axis([-20,20,-1,1])
         #pl.xlabel('VSRC')
         pl.xlabel(Opts.x_axis)
-    pl.show()
+    if Opts.show:
+        pl.show()
+    else:
+        print("gotta print figures here")
 
+    # show all the plots just to illustrate reduction
+    # this will be replaced by write out of spectra to FITS file.
+    edge = 64
+    if len(LineList) >  0:
+        fp = open(Opts.output,"w")
+        fp.write("# vlsr  TA(K) (average of %d beams)\n" % len(LineList))
+        for i in range(edge,len(LineList[0].xarray)-edge):
+            ysum = 0.0
+            for j in range(len(LineList)):
+                ysum = ysum + LineList[j].yarray[i]
+            ysum = ysum / len(LineList);
+            fp.write("%g %g\n" %
+                     (LineList[0].xarray[i],ysum))
+        fp.close()
 
 if __name__ == '__main__':
     main(sys.argv[1:])
