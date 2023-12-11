@@ -528,6 +528,7 @@ def rsr_summary(rsr_file, rc=False):
     except:
         obsgoal = "Unknown"
 
+    # this variable isn't present in old data (e.g. 11654)
     # Header.Radiometer.UpdateDate = "21/01/2015 23:12:07
     date_obs = b''.join(nc.variables['Header.Radiometer.UpdateDate'][:]).decode().strip()
     date_obs = new_date_obs(date_obs)
