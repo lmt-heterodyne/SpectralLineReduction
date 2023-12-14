@@ -31,6 +31,9 @@ def main(argv):
     nscans = len(Opts.obs_list)
     npixels = len(Opts.pix_list)
 
+    # for 1MM:   0 for pix_list=0,2 and 1 for pix_list=1,3
+    bank_hack = -1
+
     for obs in Opts.obs_list:
 
         I,S = read_obsnum_ps(obs,
@@ -39,12 +42,26 @@ def main(argv):
                              Opts.use_cal,
                              tsys=Opts.tsys,
                              path=Opts.data_path)
-
+        #   set bank_hack on the first time
+        if bank_hack < 0:
+            if I.receiver == 'Msip1mm':
+                if Opts.pix_list[0] == 0:
+                    bank_hack = 0
+                elif Opts.pix_list[0] == 1:
+                    bank_hack = 1
+                else:
+                    print("Something odd with your 1MM pix_list",Opts.pix_list)
+                    bank_hack = Opts.bank
+            else:
+                bank_hack = Opts.bank
+            print("PJT:  bank_hack=:",bank_hack)
+            
         # create a LineData object for each "pixel" in pix_list
         # we could do processing here...
         for i in range(npixels):
-            LD = LineData(I,Opts.bank,S.nchan,S.bandwidth,S.roach[i].ps_spectrum)
+            LD = LineData(I,bank_hack,S.nchan,S.bandwidth,S.roach[i].ps_spectrum)
             LD.set_x_axis(Opts.x_axis)
+            print("PJT",LD.xarray[0],LD.xarray[-1],S.nchan,S.bandwidth)
             LineList.append(LD)
 
     # show all the plots just to illustrate reduction
