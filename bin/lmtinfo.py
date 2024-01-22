@@ -15,7 +15,7 @@
 #
 #
 
-_version="30-nov-2023"
+_version="5-dec-2023"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -311,8 +311,12 @@ def slr_summary(ifproc, rc=False):
         calobsnum = -1
         
     obspgm  = b''.join(nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
-    #  ObsGoal is in Dcs as well as IfProc
-    obsgoal = b''.join(nc.variables['Header.Dcs.ObsGoal'][:]).decode().strip()    
+    #  ObsGoal is in Dcs as well as IfProc, but only after 2014-10-14
+    try:
+        obsgoal = b''.join(nc.variables['Header.Dcs.ObsGoal'][:]).decode().strip()
+    except:
+        obsgoal = "Unknown"
+    # ProjectId was not used before some date ?
     try:
         pid = b''.join(nc.variables['Header.Dcs.ProjectId'][:]).decode().strip()
     except:
@@ -519,8 +523,12 @@ def rsr_summary(rsr_file, rc=False):
     if obspgm=='Map':
         map_coord = b''.join(nc.variables['Header.Map.MapCoord'][:]).decode().strip()
     # ObsGoal
-    obsgoal = b''.join(nc.variables['Header.Dcs.ObsGoal'][:]).decode().strip()
+    try:
+        obsgoal = b''.join(nc.variables['Header.Dcs.ObsGoal'][:]).decode().strip()
+    except:
+        obsgoal = "Unknown"
 
+    # this variable isn't present in old data (e.g. 11654)
     # Header.Radiometer.UpdateDate = "21/01/2015 23:12:07
     date_obs = b''.join(nc.variables['Header.Radiometer.UpdateDate'][:]).decode().strip()
     date_obs = new_date_obs(date_obs)
@@ -568,8 +576,8 @@ def rsr_summary(rsr_file, rc=False):
     try:
         tint = nc.variables['Header.Dcs.IntegrationTime'][0]
     except:
-        # older data (e.g. 28190) missing this??? - mark it with 30.1 so we know it's "fake"
-        tint = 30.1
+        # older data (e.g. 28190) missing this??? - mark it with 300.1 so we know it's "fake"
+        tint = 300.1
 
     nc.close()
 

@@ -25,9 +25,8 @@ def get_data_lmt(path):
     return None
            
 
-def read_obsnum_ps(obsnum, list_of_pixels, bank, use_calibration,
-                   tsys=150., stype=2, 
-                   path=None):
+def read_obsnum_ps(obsnum, list_of_pixels, bank,
+                   use_calibration, tsys=150., stype=2, path=None):
     """
     Reads the spectral line data from WARES spectrometer for a 
     particular obsnum.
@@ -56,6 +55,7 @@ def read_obsnum_ps(obsnum, list_of_pixels, bank, use_calibration,
     path = get_data_lmt(path)
     # look up files to match pixel list
     roach_list = create_roach_list(list_of_pixels,bank)
+    print("PJT2",roach_list)
     files, nfiles = lookup_roach_files(obsnum, roach_list,
                                        path=os.path.join(path, 'spectrometer'))
     ifproc_file = lookup_ifproc_file(obsnum, path=os.path.join(path, 'ifproc'))
@@ -111,7 +111,7 @@ def read_obsnum_bs(obsnum, list_of_pixels, bank,
             spectrometer are to be read - for BS observation this is 
             just the two pixels used for the switch
             @todo For "Bs" this ought to be Header.Bs.Beam from ifproc
-        bank
+        bank (int):  which IF bank (0 or 1) of the spectrometer
         use_calibration (bool): set True if we are to use calibration 
             scan for cal. 
             False just multiplies by system temperature
@@ -137,9 +137,11 @@ def read_obsnum_bs(obsnum, list_of_pixels, bank,
     ifproc_cal_file = lookup_ifproc_file(ifproc.calobsnum, path=os.path.join(path, 'ifproc'))
     ifproc_cal = IFProcCal(ifproc_cal_file)
     ifproc_cal.compute_tsys()
+    print("Bs beams:",ifproc.bs_beams)
     if list_of_pixels is None:
         list_of_pixels = ifproc.bs_beams
     roach_list = create_roach_list(list_of_pixels,bank)
+    print("PJT2",roach_list)
     files, nfiles = lookup_roach_files(obsnum, roach_list,
                                        path=os.path.join(path, 'spectrometer'))
     
@@ -164,11 +166,17 @@ def read_obsnum_bs(obsnum, list_of_pixels, bank,
         if check_cal > 0:
             print('WARNING: CAL MAY NOT BE CORRECT')
 
-        # reduce the two spectra - calibrated 
-        specbank.roach[dict_pix[list_of_pixels[0]]].reduce_ps_spectrum(stype=stype, block=block, normal_ps=True, 
-                                             calibrate=True, tsys_spectrum=specbank_cal.roach[dict_pix[list_of_pixels[0]]].tsys_spectrum)
-        specbank.roach[dict_pix[list_of_pixels[1]]].reduce_ps_spectrum(stype=stype, block=block, normal_ps=False, 
-                                             calibrate=True, tsys_spectrum=specbank_cal.roach[dict_pix[list_of_pixels[1]]].tsys_spectrum)
+        # reduce the two spectra - calibrated
+        if True:
+            print("PJT4 alternative path for bank=1")
+            for ipix in range(specbank.npix):
+                specbank.roach[ipix].reduce_ps_spectrum(stype=stype, block=block, normal_ps=True, 
+                                                        calibrate=True, tsys_spectrum=specbank_cal.roach[ipix].tsys_spectrum)
+        else:
+            specbank.roach[dict_pix[list_of_pixels[0]]].reduce_ps_spectrum(stype=stype, block=block, normal_ps=True, 
+                                                                           calibrate=True, tsys_spectrum=specbank_cal.roach[dict_pix[list_of_pixels[0]]].tsys_spectrum)
+            specbank.roach[dict_pix[list_of_pixels[1]]].reduce_ps_spectrum(stype=stype, block=block, normal_ps=False, 
+                                                                           calibrate=True, tsys_spectrum=specbank_cal.roach[dict_pix[list_of_pixels[1]]].tsys_spectrum)
         if True:
             print("Warning: now saving Tsys spectrum")
             specbank.roach[0].tsys_spectrum = specbank_cal.roach[0].tsys_spectrum
