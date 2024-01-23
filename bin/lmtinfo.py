@@ -15,7 +15,7 @@
 #
 #
 
-_version="5-dec-2023"
+_version="19-jan-2024"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -287,12 +287,14 @@ def slr_summary(ifproc, rc=False):
         numbands = nc.variables['Header.Sequoia.NumBands'][0]        
         skyfreq  = nc.variables['Header.Sequoia.SkyFreq'][:numbands]
         restfreq = nc.variables['Header.Sequoia.LineFreq'][:numbands]
+        bandwidth = nc.variables['Header.SpecBackend.Bandwidth'][:numbands]
         bbtime = nc.variables['Data.IfProc.BasebandTime'][:]
     elif receiver == 'Msip1mm':
         instrument = '1MM'        
         numbands = nc.variables['Header.Msip1mm.NumBands'][0]
         skyfreq  = nc.variables['Header.Msip1mm.SkyFreq'][:numbands]
         restfreq = nc.variables['Header.Msip1mm.LineFreq'][:numbands]
+        bandwidth = nc.variables['Header.SpecBackend.Bandwidth'][:numbands]        
         bbtime = nc.variables['Data.IfProc.BasebandTime'][:]
         if len(bbtime.shape) > 1:
             # For the 1mm receiver, some signals are sampled 5 times faster to better sample the chopped beam.
@@ -429,6 +431,8 @@ def slr_summary(ifproc, rc=False):
         print('vlsr=%g        # km/s' % vlsr)
         print('skyfreq=%s     # GHz' % alist(skyfreq))
         print('restfreq=%s    # Ghz' % alist(restfreq))
+        print('bandwidth=%s   # Ghz' % alist(bandwidth))        
+        # Header.SpecBackend.Bandwidth
         if numbands == 2 and restfreq[1] == 0.0:
             print('numbands=1   # overriding')
             print('restfreq=%s' % repr(restfreq[0]))
