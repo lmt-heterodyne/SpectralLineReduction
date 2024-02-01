@@ -267,9 +267,9 @@ def seq_bandwidth(nchan):
     if nchan==2048:  return 0.8
     if nchan==4096:  return 0.4
     if nchan==8192:  return 0.2
-    print("WARNING: unknown nchan=%d for SEQ" % nchan)
-    # return some non-zero as not to upset too much code
-    return 0.7999
+    bw = 0.7999
+    print("# WARNING: unknown nchan=%d for SEQ - probably old data and assuming bandwidth=%g" % (nchan,bw))
+    return bw
     
 #  Examples:
 #  ifproc/ifproc_2018-06-29_078085_00_0001.nc
@@ -302,7 +302,7 @@ def slr_summary(ifproc, rc=False):
         try:
             bandwidth = nc.variables['Header.SpecBackend.Bandwidth'][:numbands]
         except:
-            bandwidth = [seq_bandwidth(0)]
+            bandwidth = [seq_bandwidth(1)]
             if numbands > 1:
                 print("Warning: numbands=%d and Header.SpecBackend.Bandwidth missing" % numbands)
                 bandwidth.append(bandwidth[0])
