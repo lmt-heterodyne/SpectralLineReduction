@@ -15,7 +15,7 @@
 #
 #
 
-_version="30-nov-2023"
+_version="1-feb-2024"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -258,6 +258,18 @@ def date_obs_utdate(date):
     #print('PJT0 date_obs',date_obs)
     return date_obs
 
+
+def seq_bandwidth(nchan):
+    """  older data don't store the 'Header.SpecBackend.Bandwidth' variable
+    so we need to retrieve is via nchan.... but neither do we have nchan,
+    so this routine isn't used (yet) at the moment
+    """
+    if nchan==2048:  return 0.8
+    if nchan==4096:  return 0.4
+    if nchan==8192:  return 0.2
+    bw = 0.7999
+    print("# WARNING: unknown nchan=%d for SEQ - probably old data and assuming bandwidth=%g" % (nchan,bw))
+    return bw
     
 #  Examples:
 #  ifproc/ifproc_2018-06-29_078085_00_0001.nc
@@ -287,12 +299,21 @@ def slr_summary(ifproc, rc=False):
         numbands = nc.variables['Header.Sequoia.NumBands'][0]        
         skyfreq  = nc.variables['Header.Sequoia.SkyFreq'][:numbands]
         restfreq = nc.variables['Header.Sequoia.LineFreq'][:numbands]
+        try:
+            bandwidth = nc.variables['Header.SpecBackend.Bandwidth'][:numbands]
+        except:
+            bandwidth = [seq_bandwidth(1)]
+            if numbands > 1:
+                print("Warning: numbands=%d and Header.SpecBackend.Bandwidth missing" % numbands)
+                bandwidth.append(bandwidth[0])
+            
         bbtime = nc.variables['Data.IfProc.BasebandTime'][:]
     elif receiver == 'Msip1mm':
         instrument = '1MM'        
         numbands = nc.variables['Header.Msip1mm.NumBands'][0]
         skyfreq  = nc.variables['Header.Msip1mm.SkyFreq'][:numbands]
         restfreq = nc.variables['Header.Msip1mm.LineFreq'][:numbands]
+        bandwidth = nc.variables['Header.SpecBackend.Bandwidth'][:numbands]        
         bbtime = nc.variables['Data.IfProc.BasebandTime'][:]
         if len(bbtime.shape) > 1:
             # For the 1mm receiver, some signals are sampled 5 times faster to better sample the chopped beam.
@@ -311,8 +332,12 @@ def slr_summary(ifproc, rc=False):
         calobsnum = -1
         
     obspgm  = b''.join(nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
-    #  ObsGoal is in Dcs as well as IfProc
-    obsgoal = b''.join(nc.variables['Header.Dcs.ObsGoal'][:]).decode().strip()    
+    #  ObsGoal is in Dcs as well as IfProc, but only after 2014-10-14
+    try:
+        obsgoal = b''.join(nc.variables['Header.Dcs.ObsGoal'][:]).decode().strip()
+    except:
+        obsgoal = "Unknown"
+    # ProjectId was not used before some date ?
     try:
         pid = b''.join(nc.variables['Header.Dcs.ProjectId'][:]).decode().strip()
     except:
@@ -425,6 +450,8 @@ def slr_summary(ifproc, rc=False):
         print('vlsr=%g        # km/s' % vlsr)
         print('skyfreq=%s     # GHz' % alist(skyfreq))
         print('restfreq=%s    # Ghz' % alist(restfreq))
+        print('bandwidth=%s   # Ghz' % alist(bandwidth))        
+        # Header.SpecBackend.Bandwidth
         if numbands == 2 and restfreq[1] == 0.0:
             print('numbands=1   # overriding')
             print('restfreq=%s' % repr(restfreq[0]))
@@ -519,8 +546,12 @@ def rsr_summary(rsr_file, rc=False):
     if obspgm=='Map':
         map_coord = b''.join(nc.variables['Header.Map.MapCoord'][:]).decode().strip()
     # ObsGoal
-    obsgoal = b''.join(nc.variables['Header.Dcs.ObsGoal'][:]).decode().strip()
+    try:
+        obsgoal = b''.join(nc.variables['Header.Dcs.ObsGoal'][:]).decode().strip()
+    except:
+        obsgoal = "Unknown"
 
+    # this variable isn't present in old data (e.g. 11654)
     # Header.Radiometer.UpdateDate = "21/01/2015 23:12:07
     date_obs = b''.join(nc.variables['Header.Radiometer.UpdateDate'][:]).decode().strip()
     date_obs = new_date_obs(date_obs)
@@ -568,8 +599,8 @@ def rsr_summary(rsr_file, rc=False):
     try:
         tint = nc.variables['Header.Dcs.IntegrationTime'][0]
     except:
-        # older data (e.g. 28190) missing this??? - mark it with 30.1 so we know it's "fake"
-        tint = 30.1
+        # older data (e.g. 28190) missing this??? - mark it with 300.1 so we know it's "fake"
+        tint = 300.1
 
     nc.close()
 
