@@ -629,6 +629,13 @@ class SpecCalViewer(SpecViewer):
             plot_scale = plot_scale / nscale
         plot_order = [1,5,9,13,2,6,10,14,3,7,11,15,4,8,12,16];
         nrows = int(S.npix/4)
+        # set nrows to 4 always for sequoia in case we're missing some roach files
+        if S.receiver == 'Sequoia':
+            nrows = 4
+            ncols = 4
+        elif S.receiver == 'Msip1mm':
+            nrows = 1
+            ncols = 2
         if nrows == 0: nrows = 1
         for ipix in range(S.npix):
             pixel_id = S.roach_pixel_ids[ipix]
@@ -636,8 +643,9 @@ class SpecCalViewer(SpecViewer):
                 ipix1 = ipix+1
             else:
                 ipix1 = plot_order[pixel_id]
-                ipix1 = plot_order[(pixel_id%len(plot_order))]+int(ipix/len(plot_order))*len(plot_order)
-            ax = pl.subplot(nrows, 4, ipix1)
+                #ipix1 = plot_order[(pixel_id%len(plot_order))]+int(ipix/len(plot_order))*len(plot_order)
+            print(nrows, ncols, ipix, pixel_id, ipix1)
+            ax = pl.subplot(nrows, ncols, ipix1)
             ax.tick_params(axis='both', which='major', labelsize=6)
             ax.tick_params(axis='both', which='minor', labelsize=6)
             indx_fin = np.where(np.isfinite(S.roach[ipix].tsys_spectrum))
