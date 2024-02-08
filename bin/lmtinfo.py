@@ -15,7 +15,7 @@
 #
 #
 
-_version="19-jan-2024"
+_version="1-feb-2024"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -258,6 +258,18 @@ def date_obs_utdate(date):
     #print('PJT0 date_obs',date_obs)
     return date_obs
 
+
+def seq_bandwidth(nchan):
+    """  older data don't store the 'Header.SpecBackend.Bandwidth' variable
+    so we need to retrieve is via nchan.... but neither do we have nchan,
+    so this routine isn't used (yet) at the moment
+    """
+    if nchan==2048:  return 0.8
+    if nchan==4096:  return 0.4
+    if nchan==8192:  return 0.2
+    bw = 0.7999
+    print("# WARNING: unknown nchan=%d for SEQ - probably old data and assuming bandwidth=%g" % (nchan,bw))
+    return bw
     
 #  Examples:
 #  ifproc/ifproc_2018-06-29_078085_00_0001.nc
@@ -287,7 +299,14 @@ def slr_summary(ifproc, rc=False):
         numbands = nc.variables['Header.Sequoia.NumBands'][0]        
         skyfreq  = nc.variables['Header.Sequoia.SkyFreq'][:numbands]
         restfreq = nc.variables['Header.Sequoia.LineFreq'][:numbands]
-        bandwidth = nc.variables['Header.SpecBackend.Bandwidth'][:numbands]
+        try:
+            bandwidth = nc.variables['Header.SpecBackend.Bandwidth'][:numbands]
+        except:
+            bandwidth = [seq_bandwidth(1)]
+            if numbands > 1:
+                print("Warning: numbands=%d and Header.SpecBackend.Bandwidth missing" % numbands)
+                bandwidth.append(bandwidth[0])
+            
         bbtime = nc.variables['Data.IfProc.BasebandTime'][:]
     elif receiver == 'Msip1mm':
         instrument = '1MM'        
