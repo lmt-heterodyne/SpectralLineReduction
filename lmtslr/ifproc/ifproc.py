@@ -205,7 +205,7 @@ class IFProc():
                         self.npix = len(self.nc.dimensions['Data.IfProc.BasebandLevel_ylen'])
                     else:
                         self.npix = len(self.nc.dimensions['Data.IfProc.BasebandLevel_xlen'])
-                    if 'Data.IfProc.DetectorLevel_ylen' in self.nc.dimensions:
+                    if False and 'Data.IfProc.DetectorLevel_ylen' in self.nc.dimensions:
                         self.npix += len(self.nc.dimensions['Data.IfProc.DetectorLevel_ylen'])
                 elif 'lmttpm' in filename:
                     self.npix = len(self.nc.dimensions['Data.LmtTpm.Signal_xlen'])
@@ -591,10 +591,11 @@ class IFProcData(IFProc):
             self.bb_level = self.nc.variables['Data.IfProc.BasebandLevel'][:]
             try:
                 print('get chop')
+                # @todo may be absent
                 self.chop = self.nc.variables['Data.Msip1mm.BeamChopperActPos'][:]
                 self.chop_option = self.nc.variables['Header.Msip1mm.BeamChopperActState'][0]
                 self.level = self.process_chopped_signal(self.bb_level, self.chop, self.chop_option)
-                if 'Data.IfProc.DetectorLevel' in self.nc.variables:
+                if False and 'Data.IfProc.DetectorLevel' in self.nc.variables:
                     self.detector_level = self.nc.variables['Data.IfProc.DetectorLevel'][:]
                     self.detector = self.process_chopped_signal(self.detector_level, self.chop, self.chop_option)
                     self.bb_level = np.concatenate((self.bb_level, self.detector_level), axis=2)
@@ -752,10 +753,11 @@ class IFProcCal(IFProc):
             self.bb_level = self.nc.variables['Data.IfProc.BasebandLevel'][:]
             try:
                 print('get chop cal')
+                # @todo may be absent
                 self.chop = self.nc.variables['Data.Msip1mm.BeamChopperActPos'][:]
                 self.chop_option = self.nc.variables['Header.Msip1mm.BeamChopperActState'][0]
                 self.level = self.process_chopped_signal(self.bb_level, self.chop, self.chop_option)
-                if 'Data.IfProc.DetectorLevel' in self.nc.variables:
+                if False and 'Data.IfProc.DetectorLevel' in self.nc.variables:
                     self.detector_level = self.nc.variables['Data.IfProc.DetectorLevel'][:]
                     self.detector = self.process_chopped_signal(self.detector_level, self.chop, self.chop_option)
                     self.bb_level = np.concatenate((self.bb_level, self.detector_level), axis=2)

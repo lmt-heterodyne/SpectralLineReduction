@@ -25,8 +25,9 @@ log=$DATA_LMT/data_lmt.log
 
 
 if [ $# = 0  ]; then
-    echo Usage: lmtar tarfile OBSNUM [OBSNUM ...]
-    echo Find all RAW data with given OBSNUM in the tarfile
+    echo "Usage: lmtar tarfile OBSNUM [OBSNUM ...]"
+    echo "  Find all RAW data with given OBSNUM and place them in the tarfile"
+    echo "  You probably want to use lmtinfo.py to match up the obsnum= and calobsnum="
     exit 0
 fi
 
