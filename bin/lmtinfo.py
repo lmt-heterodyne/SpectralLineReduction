@@ -15,7 +15,7 @@
 #
 #
 
-_version="1-feb-2024"
+_version="3-mar-2024"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -166,9 +166,14 @@ def iau(src):
 def pid_sanitize(pid):
     """
     sanitize badly formatted ProjectID's
+    For regular projects,   YYYY-S1-XX-YY
+    For commisioning:       YYYY{S1}{Instrument}Commissioning
     """
     if pid == "2018S1-MU-8":
         return "2018-S1-MU-8"      # 90648..90666 were mis-labeled
+    if pid == "2024MSIP1mmCommissioning":
+        return "2024S1MSIP1mmCommissioning"
+
     return pid
 
 def dataverse_old(pid):
@@ -418,6 +423,7 @@ def slr_summary(ifproc, rc=False):
     nc.close()
         
     if rc:
+        # SEQ
         nppb = 2.0
         print('# <lmtinfo>')
         print('# version=%s' % _version)
@@ -605,6 +611,7 @@ def rsr_summary(rsr_file, rc=False):
     nc.close()
 
     if rc:
+        # RSR
         print('# <lmtinfo>')
         print('# version=%s' % _version)
         print('rawnc="%s"' % rsr_file)
