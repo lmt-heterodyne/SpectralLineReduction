@@ -15,7 +15,7 @@
 #
 #
 
-_version="3-mar-2024"
+_version="9-mar-2024"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -171,6 +171,8 @@ def pid_sanitize(pid):
     """
     if pid == "2018S1-MU-8":
         return "2018-S1-MU-8"      # 90648..90666 were mis-labeled
+    if pid == "2022MSIP1mmCommissioning":
+        return "2022S1MSIP1mmCommissioning"
     if pid == "2024MSIP1mmCommissioning":
         return "2024S1MSIP1mmCommissioning"
 
@@ -556,6 +558,15 @@ def rsr_summary(rsr_file, rc=False):
         obsgoal = b''.join(nc.variables['Header.Dcs.ObsGoal'][:]).decode().strip()
     except:
         obsgoal = "Unknown"
+    # Header.Bs.Beam
+    try:
+        #bsbeam = b''.join(nc.variables['Header.Bs.Beam'][:]).decode().strip()
+        bsbeam1 =  nc.variables['Header.Bs.Beam'][0]
+        bsbeam2 =  nc.variables['Header.Bs.Beam'][1]
+        bsbeam = [bsbeam1,bsbeam2]
+        print("PJT",bsbeam)
+    except:
+        bsbeam = [-1,-1]
 
     # this variable isn't present in old data (e.g. 11654)
     # Header.Radiometer.UpdateDate = "21/01/2015 23:12:07
@@ -640,6 +651,7 @@ def rsr_summary(rsr_file, rc=False):
         #print('x_extent=%g   # arcsec' % xlen)
         #print('y_extent=%g   # arcsec' % ylen)
         print('instrument="RSR"')
+        print('bsbeam=%d,%d' % (bsbeam[0],bsbeam[1]))
         print('tau=%g' % tau)
         dv = dataverse(pid)
         if dv != None:
