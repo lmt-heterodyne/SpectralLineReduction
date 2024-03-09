@@ -564,7 +564,6 @@ def rsr_summary(rsr_file, rc=False):
         bsbeam1 =  nc.variables['Header.Bs.Beam'][0]
         bsbeam2 =  nc.variables['Header.Bs.Beam'][1]
         bsbeam = [bsbeam1,bsbeam2]
-        print("PJT",bsbeam)
     except:
         bsbeam = [-1,-1]
 
