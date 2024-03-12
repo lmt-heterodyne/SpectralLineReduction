@@ -15,7 +15,7 @@
 #
 #
 
-_version="9-mar-2024"
+_version="12-mar-2024"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -567,6 +567,12 @@ def rsr_summary(rsr_file, rc=False):
     except:
         bsbeam = [-1,-1]
 
+    # NumBeams should be 2
+    try:
+        numbeams = nc.variables['Header.RedshiftReceiver.NumBeams'][0]
+    except:
+        numbeams = -2    # old data didn't have it 
+
     # this variable isn't present in old data (e.g. 11654)
     # Header.Radiometer.UpdateDate = "21/01/2015 23:12:07
     date_obs = b''.join(nc.variables['Header.Radiometer.UpdateDate'][:]).decode().strip()
@@ -651,6 +657,7 @@ def rsr_summary(rsr_file, rc=False):
         #print('y_extent=%g   # arcsec' % ylen)
         print('instrument="RSR"')
         print('bsbeam=%d,%d' % (bsbeam[0],bsbeam[1]))
+        print('numbeams=%d' % numbeams)
         print('tau=%g' % tau)
         dv = dataverse(pid)
         if dv != None:
