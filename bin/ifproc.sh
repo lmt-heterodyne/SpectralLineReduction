@@ -13,6 +13,10 @@ tmp=/tmp/tmp$$.rc
 
 ifproc="obsnum $obsnum"
 lmtinfo.py $obsnum > $tmp.rc
+if [ $? -ne 0 ]; then
+    echo "ifproc.sh:   $obsnum not a valid obsnum"
+    exit 0
+fi
 source $tmp.rc
 rm $tmp.rc
 
