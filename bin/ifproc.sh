@@ -5,7 +5,8 @@ obsnum=$1
 
 if [ -z "$obsnum" ]; then
     echo usage: $0 obsnum
-    echo Reports the ifproc Header variables
+    echo "Reports the ifproc Header variables for SEQ."
+    echo "For RSR it actually also reports the netCDF variables of the RedshiftChassis0 file"
     exit 0
 fi
 
