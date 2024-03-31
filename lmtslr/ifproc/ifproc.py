@@ -188,6 +188,8 @@ class IFProc():
             self.m2xPcor = self.nc.variables['Header.M2.XPcor'][0]
             self.m2yPcor = self.nc.variables['Header.M2.YPcor'][0]
             self.m2zPcor = self.nc.variables['Header.M2.ZPcor'][0]
+            self.m2tipPcor = self.nc.variables['Header.M2.TipPcor'][0]
+            self.m2tiltPcor = self.nc.variables['Header.M2.TiltPcor'][0]
 
             # rotation about X
             self.m2tip = self.nc.variables['Header.M2.TipReq'][0]
