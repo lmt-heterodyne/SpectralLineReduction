@@ -15,7 +15,7 @@
 #
 #
 
-_version="12-mar-2024"
+_version="31-mar-2024"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -121,7 +121,7 @@ def last():
     fn = data_lmt + '/last.obsnum'
     if os.path.exists(fn):
         lines = open(fn).readlines()
-        return int(lines[0])
+        return int(lines[-1])
     print("Warning: no %s found" % fn)
     return -1
 
