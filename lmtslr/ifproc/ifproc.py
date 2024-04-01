@@ -183,14 +183,19 @@ class IFProc():
             self.m2x = self.nc.variables['Header.M2.XReq'][0]
             self.m2y = self.nc.variables['Header.M2.YReq'][0]
             self.m2z = self.nc.variables['Header.M2.ZReq'][0]
+            self.m2tip = self.nc.variables['Header.M2.TipReq'][0]
+            self.m2tilt = self.nc.variables['Header.M2.TiltReq'][0]
             self.m2xPcor = self.nc.variables['Header.M2.XPcor'][0]
             self.m2yPcor = self.nc.variables['Header.M2.YPcor'][0]
             self.m2zPcor = self.nc.variables['Header.M2.ZPcor'][0]
+            self.m2tipPcor = self.nc.variables['Header.M2.TipPcor'][0]
+            self.m2tiltPcor = self.nc.variables['Header.M2.TiltPcor'][0]
 
             # rotation about X
-            self.m2tip = self.nc.variables['Header.M2.TipCmd'][0]
+            self.m2tip = self.nc.variables['Header.M2.TipReq'][0]
             # rotation about Y
-            self.m2tilt = self.nc.variables['Header.M2.TiltCmd'][0]
+            self.m2tilt = self.nc.variables['Header.M2.TiltReq'][0]
+            
             self.zc0 = self.nc.variables['Header.M1.ZernikeC'][0]
             self.zc_enabled = self.nc.variables['Header.M1.ZernikeEnabled'][0]
 

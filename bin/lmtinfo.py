@@ -15,7 +15,7 @@
 #
 #
 
-_version="12-mar-2024"
+_version="31-mar-2024"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -83,7 +83,7 @@ else:
 
 arguments = docopt(_help,options_first=True, version=_version)
 
-header = "# Y-M-D   T H:M:S     ObsNum  Receiver   ObsGoal      ObgPgm      SourceName                ProjectId                   RestFreq      VLSR    TINT    RA          DEC        AZ     EL"
+header = "# Y-M-D_T_H:M:S       ObsNum  Receiver   ObsGoal      ObgPgm      SourceName                ProjectId                   RestFreq      VLSR    TINT    RA          DEC        AZ     EL   A1 E1"
 
 def grep(terms, flags=""):
     """
@@ -121,7 +121,7 @@ def last():
     fn = data_lmt + '/last.obsnum'
     if os.path.exists(fn):
         lines = open(fn).readlines()
-        return int(lines[0])
+        return int(lines[-1])
     print("Warning: no %s found" % fn)
     return -1
 
@@ -672,7 +672,8 @@ def rsr_summary(rsr_file, rc=False):
         #import pdb; pdb.set_trace()
         #print(date_obs, obsnum, obsgoal, obspgm, src,  pid,         tint,   ra,    dec,   az,   el)
         if True:
-            print("%-20s %7d  %-10s %-12s %-11s %-25s %-30s              0    %6.1f  %10.6f %10.6f  %5.1f %5.1f" %
+            #print("%-20s %7s  %-10s %-12s %-11s %-25s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %
+            print("%-20s %7d  %-10s %-12s %-11s %-25s %-30s      0.0     0    %6.1f  %10.6f %10.6f  %5.1f %5.1f  0 0" %
               (date_obs, obsnum, instrument, obsgoal, obspgm+(('('+map_coord+')') if obspgm=='Map' else ''), src,  pid,         tint,   ra,    dec,   az,   el))
 
     # -end  rsr_summary()
