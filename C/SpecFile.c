@@ -7,6 +7,8 @@
 #include "OTFParameters.h"
 #include "SpecFile.h"
 
+static int nfiles = 0;
+
 int read_spec_file(SpecFile *S, char *filename)
 {
   int i,j,k;
@@ -27,10 +29,16 @@ int read_spec_file(SpecFile *S, char *filename)
     printf("SpecFile file \"%s\" does not exist\n",filename);    
     return -1;
   }
+  
+  nfiles++;
+  printf("specfile %d: %s\n",nfiles,filename);
+  S->nfiles = nfiles;
  
   /* Open the file. NC_NOWRITE tells netCDF we want read-only access to the file.*/
   if ((retval = nc_open(filename, NC_NOWRITE, &ncid)))
     ERR(retval);
+
+  
 
   /* Get the dimensions */
   if ((retval = nc_inq_dimid(ncid, "nspec", &nspec_id)))
@@ -154,10 +162,12 @@ int read_spec_file(SpecFile *S, char *filename)
     ERR(retval);
   if((retval = nc_get_var(ncid,source_id, S->source)) != NC_NOERR)
     ERR(retval);
-  if((retval = nc_get_var_double(ncid, source_x, &S->x_position)) != NC_NOERR)
+  if((retval = nc_get_var_double(ncid, source_x, &S->x_positionN)) != NC_NOERR)
     ERR(retval);
-  if((retval = nc_get_var_double(ncid, source_y, &S->y_position)) != NC_NOERR)
+  if (nfiles == 1) S->x_position = S->x_positionN;
+  if((retval = nc_get_var_double(ncid, source_y, &S->y_positionN)) != NC_NOERR)
     ERR(retval);
+  if (nfiles == 1) S->y_position = S->y_positionN;
   if((retval = nc_get_var_double(ncid, rf_id, &S->restfreq)) != NC_NOERR)
     ERR(retval);
   if((retval = nc_get_var_float(ncid, vlsr_id, &S->vlsr)) != NC_NOERR)
@@ -221,6 +231,17 @@ int read_spec_file(SpecFile *S, char *filename)
     ERR(retval);
   if ((retval = nc_get_var_int(ncid, seq_id, S->Sequence)))
     ERR(retval);
+  if (S->x_positionN != S->x_position ||
+      S->y_positionN != S->y_position) {
+    // @todo  correct the XPos and YPos for a new center, using SFL projection rule
+    double dx = (S->x_positionN - S->x_position) * cos(S->y_position/57.2958) * 3600;
+    double dy = (S->x_positionN - S->x_position) * 3600;
+    printf("Fixing offsets by adding dx=%f dy=%f arcsec for specfile %d\n", dx, dy, S->nfiles);
+    for (i=0; i<nspec; i++) {
+      S->XPos[i] += dx;
+      S->YPos[i] += dy;
+    }
+  }
 
   for (i=0; i<nspec; i++)
     S->use[i] = 1;
