@@ -235,7 +235,7 @@ int read_spec_file(SpecFile *S, char *filename)
       S->y_positionN != S->y_position) {
     // @todo  correct the XPos and YPos for a new center, using SFL projection rule
     double dx = (S->x_positionN - S->x_position) * cos(S->y_position/57.2958) * 3600;
-    double dy = (S->x_positionN - S->x_position) * 3600;
+    double dy = (S->y_positionN - S->y_position) * 3600;
     printf("Fixing offsets by adding dx=%f dy=%f arcsec for specfile %d\n", dx, dy, S->nfiles);
     for (i=0; i<nspec; i++) {
       S->XPos[i] += dx;
