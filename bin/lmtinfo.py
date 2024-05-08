@@ -15,7 +15,7 @@
 #
 #
 
-_version="31-mar-2024"
+_version="8-may-2024"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -91,7 +91,7 @@ def grep(terms, flags=""):
     """
     logfile = "%s/%s" % (data_lmt, "data_lmt.log")
     if not os.path.exists(logfile):
-        print("Logfile %s does not exist, use the build option to create it" % logfile)
+        print("# Logfile %s does not exist, use the build option to create it" % logfile)
         sys.exit(1)
 
     if len(terms) == 0:
@@ -110,7 +110,7 @@ def grep(terms, flags=""):
         cmd = "grep %s -i %s %s | grep %s -i %s | grep %s -i %s | grep %s -i %s" %\
         (flags,terms[0],logfile,flags,terms[1],flags,terms[2],flags,terms[3])
     else:
-        print("too many arguments for now")
+        print("# Too many arguments for now")
         sys.exit(1)        
     os.system(cmd)
 
@@ -122,7 +122,7 @@ def last():
     if os.path.exists(fn):
         lines = open(fn).readlines()
         return int(lines[-1])
-    print("Warning: no %s found" % fn)
+    print("# Warning: no %s found" % fn)
     return -1
 
 def build():
@@ -311,7 +311,7 @@ def slr_summary(ifproc, rc=False):
         except:
             bandwidth = [seq_bandwidth(1)]
             if numbands > 1:
-                print("Warning: numbands=%d and Header.SpecBackend.Bandwidth missing" % numbands)
+                print("# Warning: numbands=%d and Header.SpecBackend.Bandwidth missing" % numbands)
                 bandwidth.append(bandwidth[0])
             
         bbtime = nc.variables['Data.IfProc.BasebandTime'][:]
@@ -327,7 +327,7 @@ def slr_summary(ifproc, rc=False):
             # print('# Warning: PJT bbtime',bbtime.shape,'for obsnum',obsnum)
             bbtime = bbtime[:,0]
     else:
-        print('receiver %s not supported yet' % receiver)
+        print('# receiver %s not supported yet' % receiver)
         sys.exit(1)
 
     bufpos = nc.variables['Data.TelescopeBackend.BufPos'][:]
