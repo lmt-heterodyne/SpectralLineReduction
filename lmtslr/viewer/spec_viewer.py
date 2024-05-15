@@ -12,12 +12,12 @@ import matplotlib
 gui_env = ['TKAgg','Agg','GTKAgg','Qt4Agg','WXAgg']
 for gui in gui_env:
     try:
-        print("testing", gui)
+        print("SV Testing", gui)
         #matplotlib.use(gui,warn=False)
         matplotlib.use(gui)
         from matplotlib import pyplot as pl
         from matplotlib import mlab as mlab
-        print("Using:", matplotlib.get_backend())
+        print("SV Using:", matplotlib.get_backend())
         break
     except Exception as e:
         print(e)
