@@ -76,6 +76,8 @@ class SpecViewer():
         """
         pl.close(self.figure)
 
+    def savefig(self, fname):
+        pl.savefig(fname, bbox_inches='tight')
 
 class SpecBankViewer(SpecViewer):
     """
