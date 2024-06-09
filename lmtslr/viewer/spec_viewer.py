@@ -176,11 +176,11 @@ class SpecBankViewer(SpecViewer):
         x = S.roach[index].reduced_spectra[ispec]
         baseline = np.sum(x[baseline_list]) / n_baseline_list
         v = S.create_velocity_scale()
-        prange = np.where(np.logical_and(v >= plot_axis[0], v <= plot_axis[1])
-                         )
+        prange = np.where(np.logical_and(v >= plot_axis[0], v <= plot_axis[1]))
         plot_axis[2] = (x - baseline)[prange].min() * 1.1
         plot_axis[3] = (x - baseline)[prange].max() * 1.1
-        legend_label = 'Pixel %d\nPeak Spectrum %d'%(pixel, ispec)
+        mx = np.max((x-baseline)[prange])
+        legend_label = 'Pixel %d\nPeak Spectrum[%d] = %0.2f'%(pixel, ispec, mx)
         pl.plot(v, (x - baseline), label=legend_label)
         
         if plot_line_list is not None:
@@ -192,8 +192,8 @@ class SpecBankViewer(SpecViewer):
             
         legend = pl.legend(fontsize='x-small')
         pl.xlabel('Velocity (km/s)')
-        pl.suptitle('ObsNum %d: %s %s %sGHz\n Pixel %d Peak Spectrum %d'%(
-            S.obsnum, S.receiver, S.source, S.line_rest_frequency, pixel, ispec))
+        pl.suptitle('ObsNum %d: %s %s %sGHz\n Pixel %d Peak Spectrum[%d] = %0.2f'%(
+            S.obsnum, S.receiver, S.source, S.line_rest_frequency, pixel, ispec, mx))
         pl.axis(plot_axis)
 
     def plot_all_spectra(self, S, pixel, plot_axis, baseline_list, 
