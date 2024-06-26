@@ -7,7 +7,7 @@ grid_data.py is the python front-end that calls the gridder.  We have two gridde
 1. spec_driver_fits  - reads SpecFile (netCDF) format (will eventually be deprecated)
 2. slgridder - reads SDFITS, and optionally the SpecFile
 
-
+```
    grid_data.py               G   details
    ------------              ---  -------
 -p PP --program_path PP       -   Executable [Default: spec_driver_fits]
@@ -30,13 +30,14 @@ grid_data.py is the python front-end that calls the gridder.  We have two gridde
 --sample P,S0,S1,P,...        b   Blank sample S0 to S1 for pixel P, etc. [Default: -1,0,0]
 
 -h --help                     h   show some help
-
+```
 
 
 ## gbtgridder
 
 For good measure, here are the options for gbtgridder (their development branch)
 
+```
 -c  --channels         Optional channel range to use.  '<start>:<end>' counting from 0.
 
 -a  --average
@@ -95,6 +96,8 @@ For good measure, here are the options for gbtgridder (their development branch)
 	
 -V  --version          show gbtgridder version
 
+```
+
 ## gbtgridder - old python2 version
 
 
@@ -103,6 +106,7 @@ For good measure, here are the options for gbtgridder (their development branch)
 
 optional arguments:
 
+```
   -h, --help            show this help message and exit
   -c CHANNELS, --channels CHANNELS
                         Optional channel range to use. '<start>:<end>'
@@ -154,13 +158,15 @@ optional arguments:
                         set the verbosity level-- 0-1:none, 2:errors only,
                         3:+warnings, 4(default):+user info, 5:+debug
   -V, --version         show program's version number and exit
-
+```
 
 
 ## todo
 
 there will be more selections needed
 
+```
 band:      select one band, or allow band-merge
 pol:       select one pol, or allow averaging, or diff to see problems?
 beam:      presumably for OTF, but the -u flag already selects them.
+```
