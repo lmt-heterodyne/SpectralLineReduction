@@ -15,7 +15,7 @@
 #
 #
 
-_version="8-may-2024"
+_version="5-aug-2024"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -109,6 +109,9 @@ def grep(terms, flags=""):
     elif len(terms) == 4:
         cmd = "grep %s -i %s %s | grep %s -i %s | grep %s -i %s | grep %s -i %s" %\
         (flags,terms[0],logfile,flags,terms[1],flags,terms[2],flags,terms[3])
+    elif len(terms) == 5:
+        cmd = "grep %s -i %s %s | grep %s -i %s | grep %s -i %s | grep %s -i %s | grep %s -i %s" %\
+        (flags,terms[0],logfile,flags,terms[1],flags,terms[2],flags,terms[3],flags,terms[4])
     else:
         print("# Too many arguments for now")
         sys.exit(1)        
