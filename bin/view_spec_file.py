@@ -35,16 +35,11 @@ Plot files are silently overwritten if they existed before.
 
 # Python Imports
 import sys
-import matplotlib.pyplot as pl
 
 # command line parsing
 from docopt import docopt
 import lmtslr.utils.convert as acv
 
-#from lmtslr.utils.parser import HandleViewSpecFileOptions
-from lmtslr.utils.argparser import HandleViewSpecFileOptions
-from lmtslr.viewer.spec_file_viewer import SpecFileViewer
-from lmtslr.viewer.plots import Plots
 
 def main(argv):
     av = docopt(__doc__,options_first=True, version='0.1')
@@ -57,7 +52,19 @@ def main(argv):
     plots           = av['--plots']
     box             = av['--box']
     skip_tsys       = av['--skip_tsys']
-    
+
+    import matplotlib
+    if plots == None:
+        matplotlib.use('qt5agg')
+    else:
+        matplotlib.use('agg')
+    import matplotlib.pyplot as pl
+
+    #from lmtslr.utils.parser import HandleViewSpecFileOptions
+    from lmtslr.utils.argparser import HandleViewSpecFileOptions
+    from lmtslr.viewer.spec_file_viewer import SpecFileViewer
+    from lmtslr.viewer.plots import Plots
+        
     if av['--show_pixel'] != None:
         show_all_pixels = False        
         show_pixel  = acv.listi(av['--show_pixel'], 1)
