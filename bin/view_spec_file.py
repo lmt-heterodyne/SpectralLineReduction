@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 #
 
-"""Usage: view_spec_file.py -i INPUT [options]
+_version = "31-aug-2024"
+
+_doc = """Usage: view_spec_file.py -i INPUT [options]
 
 -i INPUT --input INPUT                 Input SpecFile filename (default: None)
 --pix_list PIX_LIST                    list of pixels [Default: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
@@ -31,23 +33,20 @@ creates M51.1.png (and .2., .3. etc. as many as there are). But
  would produce M31.3.pdf (and .4., .5., etc. as many as there are).
 Plot files are silently overwritten if they existed before.
 
-"""
+Version: %s
+
+""" % _version
 
 # Python Imports
 import sys
-import matplotlib.pyplot as pl
 
 # command line parsing
 from docopt import docopt
 import lmtslr.utils.convert as acv
 
-#from lmtslr.utils.parser import HandleViewSpecFileOptions
-from lmtslr.utils.argparser import HandleViewSpecFileOptions
-from lmtslr.viewer.spec_file_viewer import SpecFileViewer
-from lmtslr.viewer.plots import Plots
 
 def main(argv):
-    av = docopt(__doc__,options_first=True, version='0.1')
+    av = docopt(_doc, options_first=True, version=_version)
     print(av)   # debug
 
     input_file_name = av['--input']
@@ -57,7 +56,19 @@ def main(argv):
     plots           = av['--plots']
     box             = av['--box']
     skip_tsys       = av['--skip_tsys']
-    
+
+    import matplotlib
+    if plots == None:
+        matplotlib.use('qt5agg')
+    else:
+        matplotlib.use('agg')
+    import matplotlib.pyplot as pl
+
+    #from lmtslr.utils.parser import HandleViewSpecFileOptions
+    from lmtslr.utils.argparser import HandleViewSpecFileOptions
+    from lmtslr.viewer.spec_file_viewer import SpecFileViewer
+    from lmtslr.viewer.plots import Plots
+        
     if av['--show_pixel'] != None:
         show_all_pixels = False        
         show_pixel  = acv.listi(av['--show_pixel'], 1)
