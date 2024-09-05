@@ -75,7 +75,7 @@ class RoachSpec():
         self.gmap = gmap
         self.bufpos = bufpos
         self.tsys_aver = False    # @todo should be True (july-2023 discussion)
-        self.tsyscal = None       # never used ?
+        self.tsyscal = None
         self.ncal = 0
         self.pixel = 4*self.roach_id + self.roach_input
 
@@ -189,6 +189,7 @@ class RoachSpec():
     def compute_tsys_spectra(self, bdrop=100, edrop=100):
         """
         Computes the TSYS, typically for an otf_cal=1
+        See also compute_tsys_spectrum()
         """
         self.tsys_spectra = np.zeros((self.nhots, self.nchan))
         tsys = np.zeros(self.nhots)
@@ -372,10 +373,8 @@ class RoachSpec():
                         0: use the median spectrum for the whole thing
                         1: use a single reference spectra which is 
                            average of all refs
-                        2: use the average of refs which bracket the 
-                           ons
-                        3: use weighted average of refs which bracket the
-                           ons
+                        2: use the average of refs which bracket the ons
+                        3: use weighted average of refs which bracket the ons
             calibrate (bool): option to calibrate ps_spectrum (default 
                 is False)
             tsys_spectrum (float): tsys value for calibration when 
@@ -475,13 +474,18 @@ class RoachSpec():
             spectrum (array): array of spectrum data
             baseline_list (list): list of channels to use
             n_baseline_list (int): number of channels
-            baseline_order (int): order of fitting function (default is
-                0)
+            baseline_order (int): order of fitting function (default is 0).
+                Use -1 to skip baseline subtraction.
         Returns:
             (baseline (array), rms (array)): baseline is the array of 
                 computed baseline values, rms is the array of root-
                 mean-square error
         """
+        if baseline_order < 0:
+            print("RoachSpec: Skipping baseline subtraction")
+            baseline = 0.0 * spectrum
+            rms = 1.0  # @todo 
+            return (baseline,rms)
         baseline_list = [i for i in baseline_list if i < len(spectrum)]
         params = np.polyfit(baseline_list, spectrum[baseline_list], 
                             baseline_order)
@@ -573,6 +577,7 @@ class RoachSpec():
                 spectrum
         Returns:
             none
+        See also compute_tsys_spectra()
         """
         if ((self.nhots>0) and (self.nskys>0)):
             hot_spectrum = np.median(self.raw_spec[self.hots,:], axis=0)
@@ -599,8 +604,7 @@ class RoachSpec():
             #print("TSYS: ",self.tsys_spectrum[:])
             print("SPEC TSYS[%d] = %g +/- %g (%d channels)" % (self.pixel,self.tsys, tsysstd, len(self.tsys_spectrum)))
         else:
-            print('ObsNum %d Roach %d does not have calibration data'%(
-                self.obsnum, self.roach_id))
+            print('ObsNum %d Roach %d does not have calibration data'%(self.obsnum, self.roach_id))
             self.tsys_spectrum = np.zeros(self.nchan)
             self.tsys = 0.
 
@@ -870,6 +874,7 @@ class SpecBank():
         for i in range(nregions):
             c0 = self.v2c(velocity_regions[i][0])
             c1 = self.v2c(velocity_regions[i][1])+1
+            # @todo assert c1 > c0 ?
             # python 3 requires range to be converted to list
             if c1>c0:
                 channel_list = channel_list + list(range(c0, c1))
