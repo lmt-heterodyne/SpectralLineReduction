@@ -788,7 +788,6 @@ class SpecBank():
             self.line_rest_frequency = restfreq
         self.sky_frequency = self.ifproc.sky_frequency
         self.receiver = self.ifproc.receiver
-        self.sky_frequency = self.ifproc.sky_frequency
         self.sideband = self.ifproc.sideband[bank]
         self.tracking_beam = self.ifproc.tracking_beam
 
