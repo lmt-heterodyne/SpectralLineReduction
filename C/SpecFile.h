@@ -11,6 +11,7 @@
 
 typedef struct
 {
+  int nfiles;                          // count how many files accumulated
   int nspec;                           // number of spectra (see sequence)
   int nchan;                           // number of channels
   int nchan0;                          // number of channels in original data
@@ -21,7 +22,8 @@ typedef struct
   int obsnum;
   int map_coord;                       // 0=azel 1=radec 2=latlon
   char source[40];                     // what is enough?
-  double x_position, y_position;       // degrees ?
+  double x_positionN, y_positionN;     // degrees (position for this file)
+  double x_position,  y_position;      // degrees (position for the first file, nfiles=1)
   double restfreq;                     //
   float vlsr;                          // km/s
   float zsource;
@@ -37,8 +39,8 @@ typedef struct
   float *RMS_cut;  
   int *Sequence;
   int *use;
-  float *XPos;                         // arcsec
-  float *YPos;                         // arcsec
+  float *XPos;                         // arcsec offset w.r.t. x_position
+  float *YPos;                         // arcsec offset w.r.t. y_position
   float *RMS;                          // K
   float deltaf;                        // deltaFreq * deltaTime for radiometer equation
   float deltat;                        // deltaFreq * deltaTime for radiometer equation

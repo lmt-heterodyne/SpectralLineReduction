@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
+_version = "31-aug-2024"
 
-"""Usage: view_spec_point.py  -i INPUT [options]
+_doc = """Usage: view_spec_point.py  -i INPUT [options]
 
 -i INPUT --input INPUT        Input SpecFile (no default)
 --pix_list PIX_LIST           Comma separated list of pixels [Default: 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
@@ -32,18 +33,17 @@ creates M51.1.png (and .2., .3. etc. as many as there are). But
  would produce M31.3.pdf (and .4., .5., etc. as many as there are).
 Plot files are silently overwritten if they existed before.
 
-"""
+Version: %s
+
+""" % _version
 
 import sys
 from docopt import docopt
-import matplotlib.pyplot as pl
-from lmtslr.utils.argparser import HandleViewSpecFileOptions
-from lmtslr.viewer.spec_file_viewer import SpecFileViewer
-from lmtslr.viewer.plots import Plots
 import lmtslr.utils.convert as acv
 
+
 def main(argv):
-    av = docopt(__doc__,options_first=True, version='0.3')
+    av = docopt(_doc, options_first=True, version=_version)
 
     nc_file    = av['--input']
     pix_list   = acv.listi(av['--pix_list'],  16)
@@ -55,6 +55,18 @@ def main(argv):
     plots      = av['--plots']
     use_mean   = av['--mean']
     use_diff   = av['--diff']
+    
+    import matplotlib
+    if plots == None:
+        matplotlib.use('qt5agg')
+    else:
+        matplotlib.use('agg')
+    import matplotlib.pyplot as pl
+    #
+    from lmtslr.utils.argparser import HandleViewSpecFileOptions
+    from lmtslr.viewer.spec_file_viewer import SpecFileViewer
+    from lmtslr.viewer.plots import Plots
+
 
     Plots.init(plots)
     
