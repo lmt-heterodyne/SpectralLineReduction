@@ -119,7 +119,7 @@ def main(argv):
     #pl.axis([-20,20,-1,1])
     pl.xlabel('VSRC')
     pl.legend()
-    pl.suptitle("%s : block=%d bank=%d" % (I.source,block, Opts.bank))
+    pl.suptitle("%s : bank=%d" % (I.source,Opts.bank))
     if Opts.show:
         pl.show()
     else:
