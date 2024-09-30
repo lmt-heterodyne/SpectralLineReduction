@@ -2,16 +2,9 @@
 '''
 Processes a set of BS spectra
 '''
-
-# Python Imports
+import sys
 import numpy as np
 import matplotlib.pyplot as pl
-import sys
-
-#from lmtslr.utils.roach_file_utils import *
-#from lmtslr.ifproc.ifproc import *
-#from lmtslr.utils.ifproc_file_utils import *
-#from lmtslr.viewer.spec_viewer import *
 
 from lmtslr.reduction.line_reduction import LineData
 from lmtslr.utils.reader import read_obsnum_bs
@@ -38,7 +31,7 @@ def main(argv):
     for obs in Opts.obs_list:
 
             if block == -2:
-                # special loop
+                # special loop, creates waterfall
                 I,S = read_obsnum_bs(obs,
                                      pix_list,
                                      Opts.bank,
@@ -73,6 +66,7 @@ def main(argv):
                     
                 
             else:
+                # creates spectrum
                 nblocks = 1
                 I,S = read_obsnum_bs(obs,
                                      pix_list,
@@ -106,23 +100,26 @@ def main(argv):
         for i in range(edge,len(LineList[0].xarray)-edge):
             fp.write("%g %g  %g %g\n" %
                      (LineList[0].xarray[i],
-                      0.5*(LineList[1].yarray[i] +
-                           LineList[0].yarray[i]),
+                      0.5*(LineList[0].yarray[i] - LineList[1].yarray[i]),    # @todo   should do Tsys weighted
                       S.roach[0].tsys_spectrum[i] if Opts.use_cal else S.roach[0].tsys_spectrum,
                       S.roach[1].tsys_spectrum[i] if Opts.use_cal else S.roach[1].tsys_spectrum))
         fp.close()
         # pl.plot(LineList[0].xarray[edge:-edge], LineList[1].yarray[edge:-edge] - LineList[0].yarray[edge:-edge], label='Diff')
     pl.figure()
     offset = 0.0
+    lscale = -1.0
     for i in range(len(LineList)):
         if nblocks > 1:
             ax = pl.subplot(nblocks,2,i+1)
-        pl.plot(LineList[i].xarray[edge:-edge],LineList[i].yarray[edge:-edge]+offset, label='%s' % label[i])
+        lscale = -lscale
+        pl.plot(LineList[i].xarray[edge:-edge],
+                LineList[i].yarray[edge:-edge]*lscale+offset,
+                label='%s' % label[i])
         # offset = offset + 0.5
     #pl.axis([-20,20,-1,1])
     pl.xlabel('VSRC')
     pl.legend()
-    pl.suptitle("%s : block=%d" % (I.source,block))
+    pl.suptitle("%s : block=%d bank=%d" % (I.source,block, Opts.bank))
     if Opts.show:
         pl.show()
     else:
