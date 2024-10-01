@@ -64,6 +64,11 @@ def main(argv):
             print("PJT",LD.xarray[0],LD.xarray[-1],S.nchan,S.bandwidth)
             LineList.append(LD)
 
+    # prepare for subsetting the line and do a baseline subtraction
+    #print("Line/Baseline:",Opts.b_order, Opts.b_regions, Opts.l_regions)
+    Opts.b_order = 3
+    print("Line/Baseline:",Opts.b_order,Opts.slice)
+
     # show all the plots just to illustrate reduction
     # this will be replaced by write out of spectra to FITS file.
     for i in range(len(LineList)):
@@ -74,10 +79,12 @@ def main(argv):
     if Opts.show:
         pl.show()
     else:
-        print("gotta print figures here")
+        pout = 'ps.png'
+        pl.savefig(pout)
+        print("%s written" % pout)
 
     # show all the plots just to illustrate reduction
-    # this will be replaced by write out of spectra to FITS file.
+    # this will be replaced by write out of spectra to ASCII and FITS file.
     edge = 64
     if len(LineList) >  0:
         fp = open(Opts.output,"w")
