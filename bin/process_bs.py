@@ -4,7 +4,6 @@ Processes a set of BS spectra
 '''
 import sys
 import numpy as np
-import matplotlib.pyplot as pl
 
 from lmtslr.reduction.line_reduction import LineData
 from lmtslr.utils.reader import read_obsnum_bs
@@ -15,6 +14,15 @@ def main(argv):
     Opts = HandlePSProcessOptions()
     result = Opts.parse_options(argv, 'process_bs', 1, True)
     print("D:",Opts.data_path)
+
+    import matplotlib
+    if Opts.show:
+        matplotlib.use('qt5agg')
+    else:
+        matplotlib.use('agg')
+    import matplotlib.pyplot as plt
+    print('mpl backend spectra',matplotlib.get_backend())
+    
     #if result == 0:
     # this will be a list of processed spectral lines
     LineList = []
@@ -104,27 +112,27 @@ def main(argv):
                       S.roach[0].tsys_spectrum[i] if Opts.use_cal else S.roach[0].tsys_spectrum,
                       S.roach[1].tsys_spectrum[i] if Opts.use_cal else S.roach[1].tsys_spectrum))
         fp.close()
-        # pl.plot(LineList[0].xarray[edge:-edge], LineList[1].yarray[edge:-edge] - LineList[0].yarray[edge:-edge], label='Diff')
-    pl.figure()
+        # plt.plot(LineList[0].xarray[edge:-edge], LineList[1].yarray[edge:-edge] - LineList[0].yarray[edge:-edge], label='Diff')
+    plt.figure()
     offset = 0.0
     lscale = -1.0
     for i in range(len(LineList)):
         if nblocks > 1:
-            ax = pl.subplot(nblocks,2,i+1)
+            ax = plt.subplot(nblocks,2,i+1)
         lscale = -lscale
-        pl.plot(LineList[i].xarray[edge:-edge],
-                LineList[i].yarray[edge:-edge]*lscale+offset,
-                label='%s' % label[i])
+        plt.plot(LineList[i].xarray[edge:-edge],
+                 LineList[i].yarray[edge:-edge]*lscale+offset,
+                 label='%s' % label[i])
         # offset = offset + 0.5
     #pl.axis([-20,20,-1,1])
-    pl.xlabel('VSRC')
-    pl.legend()
-    pl.suptitle("%s : bank=%d" % (I.source,Opts.bank))
+    plt.xlabel('VSRC')
+    plt.legend()
+    plt.suptitle("%s : bank=%d" % (I.source,Opts.bank))
     if Opts.show:
-        pl.show()
+        plt.show()
     else:
         pout = 'bs%d.png' % block
-        pl.savefig(pout)
+        plt.savefig(pout)
         print("%s written" % pout)
 
 
