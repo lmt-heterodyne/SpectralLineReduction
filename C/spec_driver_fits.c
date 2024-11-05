@@ -229,8 +229,13 @@ int main(int argc, char *argv[])
       for(i=0;i<S.nspec;i++)
 	S.use[i] = 0;
       S.use[1002] = 1;
-#endif      
+#endif
 
+#if 0
+      // hack only doing actual center cell
+      CF.n_cells = 0;
+#endif
+  
       // now we do the gridding
       for(i=0;i<S.nspec;i++) {
 	if(S.use[i]) {
@@ -297,9 +302,7 @@ int main(int argc, char *argv[])
 		      C.cube[iz+k] = C.cube[iz+k] + weight * spectrum[k];
 		    izp = plane_index(&W, C.caxis[X_AXIS][ix+ii], C.caxis[Y_AXIS][iy+jj]);
 		    W.plane[izp] = W.plane[izp] + weight;
-		    // P: T.plane[izp] = T.plane[izp] + weight / (tsys*tsys);
-		    // M:
-		    T.plane[izp] = T.plane[izp] + weight * tsys;
+		    T.plane[izp] = T.plane[izp] + weight*weight*tsys*tsys;  // radiometer
 		    if (ii==0 && jj==0)
 		      M.plane[izp] = 1;
 		    // if (ii==0 && jj==0) printf("PJT      %d %d %d %d   %g %g\n",ix,iy,iz,izp,x,y);
@@ -336,10 +339,8 @@ int main(int argc, char *argv[])
 	  else                                                  // nothing
 	    for(k=0;k<C.n[Z_AXIS];k++)
 	      C.cube[iz+k] = NAN;
-	  // T.plane[izp] = sqrt(W.plane[izp]/(dfdt*T.plane[izp]));// T  wrong
-	  // T.plane[izp] = sqrt(1/(dfdt*T.plane[izp]));           // T  missing the factor > 1
-	  T.plane[izp] = T.plane[izp]/W.plane[izp];
-	  T.plane[izp] = T.plane[izp]/sqrt(dfdt * W.plane[izp]);   // T
+	  T.plane[izp] = sqrt(T.plane[izp])/W.plane[izp];
+	  T.plane[izp] = T.plane[izp]/sqrt(dfdt);                 // T
 #else
 	  // old style with fuzzy_edge=0 "hardcoded"
           if(M.plane[izp] > 0.0 && W.plane[izp] > 0.0 )         // M
@@ -376,20 +377,20 @@ int main(int argc, char *argv[])
   
   printf("write to %s\n",OTF.o_filename);
   // finally write the data cube as FITS file
-  write_fits_cube(&C, OTF.o_filename);
+  write_fits_cube(&C, OTF.o_filename, "raw cube");
   // and the weight plane @todo need a flag for this, 7 times
   if (strlen(OTF.w_filename) > 0) {
     unlink(OTF.w_filename);
     unlink(OTF.t_filename);
 #if 1
     printf("write weights to %s\n",OTF.w_filename);
-    write_fits_plane(&W, OTF.w_filename);
+    write_fits_plane(&W, OTF.w_filename, "pixel weights");
 #else
     printf("write 0/1 mask to %s\n",OTF.w_filename);    
-    write_fits_plane(&M, OTF.w_filename);
+    write_fits_plane(&M, OTF.w_filename, "masks"); 
 #endif
     printf("write expected RMS to %s\n",OTF.t_filename);
-    write_fits_plane(&T, OTF.t_filename);
+    write_fits_plane(&T, OTF.t_filename, "Expected RMS");
     
   }
 }
