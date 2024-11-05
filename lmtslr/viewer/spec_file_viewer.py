@@ -132,7 +132,7 @@ class SpecFileViewer():
                 rindex = np.where(self.rms[pindex] >= 0)[0]
             else:
                 rindex = np.where(self.rms[pindex] < rms_cut)[0]
-            
+
             ax2[np.mod(the_pixel,4), the_pixel // 4].plot(self.rms[pindex[rindex]], 'k.')
             #ax2[np.mod(the_pixel,4), the_pixel//4].text(0.05*len(rindex),plot_range[0] + 0.9*(plot_range[-1]-plot_range[0]), '%d'%(the_pixel))
             #ax2[np.mod(the_pixel,4), the_pixel//4].ylim(plot_range)
@@ -158,6 +158,71 @@ class SpecFileViewer():
         pl.plot(self.rms[pindex[rindex]], 'k.')
         pl.ylim(plot_range)
         pl.ylabel('RMS')
+        pl.xlabel('Integration Sample')
+        pl.title('PIXEL: %d'%(the_pixel))
+        Plots.savefig()
+        
+    def sequoia_radiometer(self, pixel_list, rms_cut, factor=197.6, figsize=8):
+        """
+        Show radiometer equation adherence
+        Args:
+            pixel_list (list): list of pixel IDs to plot
+        Returns:
+            none
+        """
+        plot_range = [0,10]
+        Plots.figure()
+        fig2, ax2 = pl.subplots(4, 4, sharex='col', sharey='row', 
+                                gridspec_kw={'hspace': 0, 'wspace': 0}, 
+                                figsize=(figsize,figsize))
+        fig2.text(0.02, 0.5, 'Radiometer adherence', va='center', rotation='vertical')
+        fig2.text(0.5, 0.05, 'Integration Sample', ha='center')
+
+        # first compute average TSYS for each pixel
+        tsys = {}
+        (ncal,npix,nchan) = self.tsys.shape
+        for the_pixel in pixel_list:
+            pindex = np.where(self.pixel == the_pixel)[0]
+            if len(pindex) == 0:
+                continue
+            # @todo should average all, if ncal>1
+            t = self.tsys[0][the_pixel]
+            tsys[the_pixel] = t.mean()
+        print("<TSYS>",tsys)
+
+        # ratio RMS/(TSYS/factor)
+        for the_pixel in pixel_list:
+            pindex = np.where(self.pixel == the_pixel)[0]
+            if rms_cut < 0:
+                rindex = np.where(self.rms[pindex] >= 0)[0]
+            else:
+                rindex = np.where(self.rms[pindex] < rms_cut)[0]
+
+            rms = self.rms[pindex[rindex]] / (tsys[the_pixel]/factor);
+            
+            ax2[np.mod(the_pixel,4), the_pixel // 4].plot(rms, 'k.')
+            ax2[np.mod(the_pixel,4), the_pixel // 4].axhline(y=1, color='r')
+            #ax2[np.mod(the_pixel,4), the_pixel//4].text(0.05*len(rindex),plot_range[0] + 0.9*(plot_range[-1]-plot_range[0]), '%d'%(the_pixel))
+            #ax2[np.mod(the_pixel,4), the_pixel//4].ylim(plot_range)
+        Plots.savefig()
+
+    def pixel_radiometer(self, the_pixel, factor=197.6):
+        """
+        Show radiometer equation adherence        (code not finished)
+        Args:
+            the_pixel (int): pixel ID to plot
+        Returns:
+            none
+        """
+        Plots.figure()
+        pindex = np.where(self.pixel == the_pixel)[0]
+        if rms_cut < 0:
+            rindex = np.where(self.rms[pindex] >= 0)[0]
+        else:
+            rindex = np.where(self.rms[pindex] < rms_cut)[0]
+        pl.plot(self.rms[pindex[rindex]], 'k.')
+        pl.ylim(plot_range)
+        pl.ylabel('Radiometer')
         pl.xlabel('Integration Sample')
         pl.title('PIXEL: %d'%(the_pixel))
         Plots.savefig()
@@ -320,7 +385,10 @@ class SpecFileViewer():
             if len(pindex) == 0:
                 continue
             for ical in range(ncal):
+                tsys_mean = self.tsys[ical][the_pixel].mean()
                 ax4[np.mod(the_pixel, 4), the_pixel // 4].plot(self.caxis,self.tsys[ical][the_pixel])
+                ax4[np.mod(the_pixel, 4), the_pixel // 4].axhline(y=tsys_mean, color='r')
+                
                 #ax4[np.mod(the_pixel, 4), the_pixel // 4]   #  .set_xlim([-300,300])
                 #ax4[np.mod(the_pixel, 4), the_pixel // 4]   #  .set_ylim(plot_range)
         Plots.savefig()
