@@ -330,16 +330,16 @@ int main(int argc, char *argv[])
   
   printf("write to %s\n",OTF.o_filename);
   // finally write the data cube as FITS file
-  write_fits_cube(&C, OTF.o_filename);
+  write_fits_cube(&C, OTF.o_filename, "raw cube");
   // and the weight plane @todo need a flag for this, 7 times
   if (strlen(OTF.w_filename) > 0) {
     unlink(OTF.w_filename);
 #if 1
     printf("write weights to %s\n",OTF.w_filename);
-    write_fits_plane(&W, OTF.w_filename);
+    write_fits_plane(&W, OTF.w_filename, "weight");
 #else
     printf("write 0/1 mask to %s\n",OTF.w_filename);    
-    write_fits_plane(&M, OTF.w_filename);
+    write_fits_plane(&M, OTF.w_filename, "mask");
 #endif    
   }
 }
