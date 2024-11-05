@@ -98,7 +98,6 @@ class Line(object):
                 baseline polynomial for baseline_order >= 0
         """
         if baseline_order < 0:
-            print("Line: Skipping baseline subtraction")
             self.baseline = 0.0 * self.yarray
             self.rms      = 1.0
             return
