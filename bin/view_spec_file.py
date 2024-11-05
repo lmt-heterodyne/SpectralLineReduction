@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 
-_version = "31-aug-2024"
+_version = "22-oct-2024"
 
 _doc = """Usage: view_spec_file.py -i INPUT [options]
 
@@ -13,17 +13,26 @@ _doc = """Usage: view_spec_file.py -i INPUT [options]
 --box BOX                              Fix boxsize -BOX .. BOX in X and Y. Optional.
 --plots METHOD                         Plotting method for output plot defaults to on screen.
                                        Optional file type extension after a comma, e.g. png or pdf
---skip_tsys                            Skip the tsys plot [Default: False]
+--skip_tsys                            Skip the tsys plot for specfiles < 6-mar-2021 [Default: False]
+--show_radiometer                      Show RMS/RMS0 radiometer [Default: True]
+--radiometer_factor FACTOR             SQRT(delta_freq*delta_time) in case the header is missing the
+                                       essential variables.  Default: 197.6
 
 -h --help                              show this help
 
 
-Reads a SpecFile from a single OTF mapping observation and creates
-various visualizations
+Reads a SpecFile from a single OTF mapping observation and creates various visualizations
 
 Tsys is only present for SpecFiles created after 6-mar-2021, data produce before this needs --skip_tsys.
 
-Bug:  tsys pixel number can be wrong is not all pixels are in the SpecFile
+Bug:  tsys pixel number can be wrong if not all pixels are in the SpecFile
+
+The radiometer equation adherence cannot be properly done if the specfile header does not
+contain the integration time and channel width. Normally for SEQ we use 0.1sec integration
+and:
+* 2048 channels in 800 MHz -> FACTOR=197.6
+* 4096 channels in 400 MHz -> FACTOR=98.8
+* 8192 channels in 200 MH  -> FACTOR=49.4
 
 The --plots METHOD is a new feature to allow switching between interactive
 (the default method) and a batch style. For example
@@ -56,6 +65,11 @@ def main(argv):
     plots           = av['--plots']
     box             = av['--box']
     skip_tsys       = av['--skip_tsys']
+    show_radio      = av['--show_radiometer']
+    factor          = av['--radiometer_factor']
+
+    show_radio = True
+    factor = 197.4
 
     import matplotlib
     if plots == None:
@@ -88,6 +102,7 @@ def main(argv):
         SV.sequoia_rms_histogram(pix_list, rms_cut)
         SV.sequoia_mean_spectra_plot(pix_list, rms_cut)
         if not skip_tsys: SV.sequoia_tsys_spectra_plot(pix_list)
+        if show_radio: SV.sequoia_radiometer(pix_list,rms_cut,factor)
     else:
         SV.xy_position_plot(False,box=box)
         #SV.sx_position_plot(False)
@@ -97,6 +112,7 @@ def main(argv):
         SV.pixel_rms_histogram(show_pixel, rms_cut)
         SV.pixel_mean_spectrum_plot(show_pixel, rms_cut)
         if not skip_tsys: SV.pixel_tsys_spectra_plot(show_pixel)
+        if show_radio: SV.pixel_radiometer(show_pixel,factor)
     
     Plots.show()
     
