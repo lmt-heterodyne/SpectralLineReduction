@@ -482,7 +482,6 @@ class RoachSpec():
                 mean-square error
         """
         if baseline_order < 0:
-            print("RoachSpec: Skipping baseline subtraction")
             baseline = 0.0 * spectrum
             rms = 1.0  # @todo 
             return (baseline,rms)
