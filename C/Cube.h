@@ -42,7 +42,7 @@ int cube_z_index(Cube* C, float x, float y);
 
 void write_netcdf_cube(Cube* C, char *filename); 
 
-void write_fits_cube(Cube *C, char *filename);
+void write_fits_cube(Cube *C, char *filename, char *comment);
 
 void print_fits_error(int);
 

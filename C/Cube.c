@@ -231,7 +231,7 @@ void write_netcdf_cube(Cube *C, char *filename)
   nc_close(ncid);  
 }
 
-void write_fits_cube(Cube *C, char *filename)
+void write_fits_cube(Cube *C, char *filename, char *file_comment)
 {
   int i,j,k,ii,ic;
   int retval, status;
@@ -576,6 +576,8 @@ void write_fits_cube(Cube *C, char *filename)
   fits_write_comment(fptr, comment, &status);
   fits_write_history(fptr, C->history2, &status);
 
+  fits_write_comment(fptr, file_comment, &status);
+  
   // write the data cube
   if((retval=fits_write_img(fptr, TFLOAT, 1, C->ncube, buffer, &status)) != 0)
     print_fits_error(status);
