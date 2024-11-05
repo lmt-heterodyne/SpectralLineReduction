@@ -17,7 +17,7 @@ void initialize_convolve_function(ConvolveFunction *CF, float resolution_size, f
   CF->n_cells = (int) floor(rmax*CF->resolution_size/CF->cell_size) + 1;
   CF->array = (float*)malloc(CF->npts*sizeof(float));
   if (rmax == 0) {
-    printf("Warning: only using central cell, no real convolution\n")
+    printf("Warning: only using central cell, no real convolution\n");
     CF->n_cells = 0;
   }
 }
