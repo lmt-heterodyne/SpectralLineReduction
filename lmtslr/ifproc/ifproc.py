@@ -308,13 +308,16 @@ class IFProc():
             self.velocity_system = self.nc.variables['Header.Source.VelSys'][0]
 
             try:
-                self.line_list = ast.literal_eval(str(netCDF4.chartostring(
-                    self.nc.variables['Header.Source.LineList'][:])
-                    ).decode().strip())
-                self.baseline_list = ast.literal_eval(str(
-                    netCDF4.chartostring(self.nc.variables[
-                        'Header.Source.BaselineList'][:])).decode().strip())
+                # self.line_list = ast.literal_eval(str(netCDF4.chartostring(
+                #     self.nc.variables['Header.Source.LineList'][:])
+                #     ).decode().strip())
+                # self.baseline_list = ast.literal_eval(str(
+                #     netCDF4.chartostring(self.nc.variables[
+                #         'Header.Source.BaselineList'][:])).decode().strip())
+                self.line_list = ast.literal_eval(b''.join(self.nc.variables['Header.Source.LineList'][:]).decode().strip())                
+                self.baseline_list = ast.literal_eval(b''.join(self.nc.variables['Header.Source.BaselineList'][:]).decode().strip())                
             except Exception as e:
+                print('linelist', e)
                 self.line_list = []
                 self.baseline_list = []
             try:
