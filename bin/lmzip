@@ -1,0 +1,50 @@
+#! /bin/bash
+#
+#    List contents on DATA_LMT based on matching one or more words in series
+#
+# data_lmt/
+# |----ifproc/
+# |----spectrometer/
+#      |-----roach0/
+#      |-----roach1/
+#      |-----roach2/
+#      |-----roach3/
+# |----RedshiftChassis0/
+# |----RedshiftChassis1/
+# |----RedshiftChassis2/
+# |----RedshiftChassis3/
+#
+#   Example filenames:
+#    ifproc_2020-02-18_090910_00_0001.nc
+#    roach0_90910_0_1_NGC5194_2020-02-18_060822.nc
+#    RedshiftChassis0_2020-03-05_092083_00_0001.nc
+#
+# warning:  ifproc has 6 digits with leading 0, roach has just 5
+
+log=$DATA_LMT/data_lmt.log
+
+
+if [ $# = 0  ]; then
+    echo "Usage: lmzip zipfile OBSNUM [OBSNUM ...]"
+    echo "  Find all RAW data with given OBSNUM and place them in the zipfile"
+    echo "  You probably want to use lmtinfo.py to match up the obsnum= and calobsnum="
+    exit 0
+fi
+
+zip=$1
+
+touch $zip
+zipfile=$(realpath $zip)
+rm -f $zip
+
+shift
+
+cd $DATA_LMT
+
+ls -l  $(lmtar.py $*)
+
+zip -r $zipfile $(lmtar.py $*)
+
+echo Written $zip :
+ls -l $zipfile
+

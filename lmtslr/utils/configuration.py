@@ -36,7 +36,7 @@ use_otf_cal = boolean(default=False)
 # select spectral x axis
 x_axis = option('VLSR', 'VSKY', 'VBARY', 'VSRC', 'FLSR', 'FSKY', 'FBARY', 'FSRC', default='VLSR')
 # baseline order
-b_order = integer(min=0, max=4, default=0)
+b_order = integer(min=-1, max=4, default=0)
 # list of lists for baselines
 b_regions = string(default='[[-193, -93], [107,207]]')
 # list of lists for line fit regions
@@ -71,7 +71,7 @@ tsys = float(min=10, default=200)
 # select spectral x axis
 x_axis = option('VLSR', 'VSKY', 'VBARY', 'VSRC', 'FLSR', 'FSKY', 'FBARY', 'FSRC', default='VLSR')
 # baseline order
-b_order = integer(min=0, max=4, default=0)
+b_order = integer(min=-1, max=4, default=0)
 # list of lists for baselines
 b_regions = string(default='[[-193, -93], [107,207]]')
 # list of lists for line fit regions

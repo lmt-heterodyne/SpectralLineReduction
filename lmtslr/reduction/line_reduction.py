@@ -89,13 +89,19 @@ class Line(object):
                 spectrum where baseline is to be fit
             n (int): not used
             baseline_order (int): order of polynomial to be fit to 
-                baseline (used in np.polyfit)
+                baseline (used in np.polyfit).
+                Use -1 to skip a baseline subtraction.
         Result:
             baseline (np array): polynomial from baseline fit
             rms (float): rms of data about polynomial fit in regions
             yarray (np.array): yarray is modified by subtracting the 
-                baseline polynomial
+                baseline polynomial for baseline_order >= 0
         """
+        if baseline_order < 0:
+            print("Line: Skipping baseline subtraction")
+            self.baseline = 0.0 * self.yarray
+            self.rms      = 1.0
+            return
         input_baseline_list = np.array(list)
         baseline_list = input_baseline_list[np.where(np.isfinite(
             self.yarray[input_baseline_list]) == True)[0]]
