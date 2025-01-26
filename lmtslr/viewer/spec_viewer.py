@@ -8,20 +8,8 @@ date: May 2018
 changes:
 python 3
 """
-import matplotlib
-gui_env = ['TKAgg','Agg','GTKAgg','Qt4Agg','WXAgg']
-for gui in gui_env:
-    try:
-        print("SV Testing", gui)
-        #matplotlib.use(gui,warn=False)
-        matplotlib.use(gui)
-        from matplotlib import pyplot as pl
-        from matplotlib import mlab as mlab
-        print("SV Using:", matplotlib.get_backend())
-        break
-    except Exception as e:
-        print(e)
-        continue
+import matplotlib.pyplot as pl
+import matplotlib.mlab as mlab
 import numpy as np
 import math
 
