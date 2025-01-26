@@ -151,6 +151,10 @@ int main(int argc, char *argv[])
   initialize_plane(&T, n);
   initialize_plane_axis(&T, X_AXIS, 0.0, (n[0]-1.)/2.+1., OTF.cell_size, "X", "arcsec");
   initialize_plane_axis(&T, Y_AXIS, 0.0, (n[1]-1.)/2.+1., OTF.cell_size, "Y", "arcsec");
+  
+  initialize_plane(&A, n);
+  initialize_plane_axis(&A, X_AXIS, 0.0, (n[0]-1.)/2.+1., OTF.cell_size, "X", "arcsec");
+  initialize_plane_axis(&A, Y_AXIS, 0.0, (n[1]-1.)/2.+1., OTF.cell_size, "Y", "arcsec");
 
   if (OTF.model)
     read_fits_plane(&A, OTF.a_filename);
@@ -231,8 +235,8 @@ int main(int argc, char *argv[])
       S.use[1002] = 1;
 #endif
 
-#if 0
-      // hack only doing actual center cell
+#if 1
+      // hack only doing actual center cell, i.e. no convolution
       CF.n_cells = 0;
 #endif
   
@@ -258,7 +262,7 @@ int main(int argc, char *argv[])
 	  if( (ix>=0) && (iy>=0) )
 	    {
 	      // first loop finding the normalization of weights (do we?)
-#if 1	      
+#if 0
 	      float wsum = 1.0;
 #else	      
 	      float wsum = 0.0;
@@ -273,6 +277,7 @@ int main(int argc, char *argv[])
 		    weight = get_weight(&CF, distance);
 		    wsum += weight;
 		  } // ii,jj
+	      printf("wsum=%g\n",wsum);
 #endif	      
 
 	      // actual loop accumulating weights
@@ -302,6 +307,7 @@ int main(int argc, char *argv[])
 		      C.cube[iz+k] = C.cube[iz+k] + weight * spectrum[k];
 		    izp = plane_index(&W, C.caxis[X_AXIS][ix+ii], C.caxis[Y_AXIS][iy+jj]);
 		    W.plane[izp] = W.plane[izp] + weight;
+		    A.plane[izp] = A.plane[izp] + weight/rmsweight;         // cumulated time (normalized)
 		    T.plane[izp] = T.plane[izp] + weight*weight*tsys*tsys;  // radiometer
 		    if (ii==0 && jj==0)
 		      M.plane[izp] = 1;
@@ -340,7 +346,9 @@ int main(int argc, char *argv[])
 	    for(k=0;k<C.n[Z_AXIS];k++)
 	      C.cube[iz+k] = NAN;
 	  T.plane[izp] = sqrt(T.plane[izp])/W.plane[izp];
+	  //T.plane[izp] = sqrt(T.plane[izp]/A.plane[izp]);
 	  T.plane[izp] = T.plane[izp]/sqrt(dfdt);                 // T
+	  //  T.plane[izp] = T.plane[izp]/sqrt(A.plane[izp]);
 #else
 	  // old style with fuzzy_edge=0 "hardcoded"
           if(M.plane[izp] > 0.0 && W.plane[izp] > 0.0 )         // M
