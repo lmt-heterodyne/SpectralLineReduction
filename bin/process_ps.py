@@ -31,6 +31,14 @@ def main(argv):
     nscans = len(Opts.obs_list)
     npixels = len(Opts.pix_list)
 
+    import matplotlib
+    if Opts.show:
+        matplotlib.use('qt5agg')
+    else:
+        matplotlib.use('agg')
+    import matplotlib.pyplot as plt
+    print('mpl backend spectra',matplotlib.get_backend())
+
     # for 1MM:   0 for pix_list=0,2 and 1 for pix_list=1,3
     bank_hack = -1
 
