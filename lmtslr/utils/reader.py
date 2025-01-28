@@ -86,6 +86,8 @@ def read_obsnum_ps(obsnum, list_of_pixels, bank,
             specbank.roach[ipix].reduce_ps_spectrum(stype=stype, normal_ps=True, 
                 calibrate=True, 
                 tsys_spectrum=specbank_cal.roach[ipix].tsys_spectrum)
+            print("PJT keep tsys_spectrum=",specbank_cal.roach[ipix].tsys_spectrum)
+            specbank.roach[ipix].tsys_spectrum = specbank_cal.roach[ipix].tsys_spectrum
     else:
         # reduce all spectra - uncalibrated
         for ipix in range(specbank.npix):
