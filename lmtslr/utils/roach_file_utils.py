@@ -20,7 +20,6 @@ def lookup_roach_files(obsnum,
         (filenames (list), result (int)) : list of file names, number 
         of files found
     """
-    debug=True
     if path == None:
         if 'DATA_LMT' in os.environ:
             path = os.environ['DATA_LMT'] + '/spectrometer'
@@ -68,16 +67,18 @@ def find_roach_from_pixel(pixel_id):
             return [i]
     return []
 
-def create_roach_list(pixel_list, bank=0):
+def create_roach_list(pixel_list, bank=0, maxroach=8):
     """
     Returns list of roach boards to be read given a list of pixels.
     Args:
         pixel_list (list): list of target pixels
-        bank (integer):    bank=0 can loop over roach0..3
-                           bank=1 can loop over roach4..7
+        bank (integer):    bank=0 can loop over roach0..3 for SEQ, but 0 for 1MM
+                           bank=1 can loop over roach4..7 for SEQ, but 0 for 1MM
     Returns:
         roach_list (list): list of roach boards to be read
     """
+    if maxroach==1:    # special for 1MM
+        return ['roach0']
     rid = [0, 0, 0, 0, 0, 0, 0, 0]
     for pixel_id in pixel_list:
         r = find_roach_from_pixel(pixel_id)

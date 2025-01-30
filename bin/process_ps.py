@@ -31,6 +31,14 @@ def main(argv):
     nscans = len(Opts.obs_list)
     npixels = len(Opts.pix_list)
 
+    import matplotlib
+    if Opts.show:
+        matplotlib.use('qt5agg')
+    else:
+        matplotlib.use('agg')
+    import matplotlib.pyplot as plt
+    print('mpl backend spectra',matplotlib.get_backend())
+
     # for 1MM:   0 for pix_list=0,2 and 1 for pix_list=1,3
     bank_hack = -1
 
@@ -42,6 +50,8 @@ def main(argv):
                              Opts.use_cal,
                              tsys=Opts.tsys,
                              path=Opts.data_path)
+        tsys = S.roach[0].tsys_spectrum
+        print("PJT TSYS",tsys)
         #   set bank_hack on the first time
         if bank_hack < 0:
             if I.receiver == 'Msip1mm':
@@ -88,14 +98,14 @@ def main(argv):
     edge = 64
     if len(LineList) >  0:
         fp = open(Opts.output,"w")
-        fp.write("# vlsr  TA(K) (average of %d beams)\n" % len(LineList))
+        fp.write("# vlsr  TA(K) Tsys(K)     (average of %d beams  %d channels)\n" % (len(LineList), len(LineList[0])))
         for i in range(edge,len(LineList[0].xarray)-edge):
             ysum = 0.0
             for j in range(len(LineList)):
                 ysum = ysum + LineList[j].yarray[i]
             ysum = ysum / len(LineList);
-            fp.write("%g %g\n" %
-                     (LineList[0].xarray[i],ysum))
+            fp.write("%g %g %g\n" %
+                     (LineList[0].xarray[i],ysum,tsys[i]))
         fp.close()
 
 if __name__ == '__main__':
