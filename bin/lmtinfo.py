@@ -15,7 +15,7 @@
 #
 #
 
-_version="5-aug-2024"
+_version="30-jan-2025"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -330,7 +330,8 @@ def slr_summary(ifproc, rc=False):
             # print('# Warning: PJT bbtime',bbtime.shape,'for obsnum',obsnum)
             bbtime = bbtime[:,0]
     else:
-        print('# receiver %s not supported yet' % receiver)
+        #print('# receiver %s not supported yet' % receiver)
+        print('# a unsupported receiver was reported, probably corrupted data')
         sys.exit(1)
 
     bufpos = nc.variables['Data.TelescopeBackend.BufPos'][:]
