@@ -1134,24 +1134,25 @@ class SpecBankData(SpecBank):
         g_list = []
         n_list = []
         mp_list = []
+
+        mins = np.zeros(len(pixel_list),dtype=int)
+        for ipix in pixel_list:
+            i  = self.find_pixel_index(ipix)
+            mins[i] = len(self.roach[i].ons)
+        min_samples = np.min(mins)
         for ipix in pixel_list:
             i = self.find_pixel_index(ipix)
             mp_list.append(ipix)
-            t_list.append(self.roach[i].spec_time[self.roach[i].ons])
-            x_list.append(self.roach[i].xmap[self.roach[i].ons])
-            y_list.append(self.roach[i].ymap[self.roach[i].ons])
-            az_list.append(self.roach[i].azmap[self.roach[i].ons])
-            el_list.append(self.roach[i].elmap[self.roach[i].ons])
-            ra_list.append(self.roach[i].ramap[self.roach[i].ons])
-            dec_list.append(self.roach[i].decmap[self.roach[i].ons])
-            l_list.append(self.roach[i].lmap[self.roach[i].ons])
-            b_list.append(self.roach[i].bmap[self.roach[i].ons])
-            p_list.append(self.roach[i].pmap[self.roach[i].ons])
-            g_list.append(self.roach[i].gmap[self.roach[i].ons])            
-            n_list.append(len(self.roach[i].xmap[self.roach[i].ons]))
-            data_list.append(self.roach[i].integrate_spectra(channel_list, 
+            t_list.append(self.roach[i].spec_time[self.roach[i].ons[:min_samples]])
+            x_list.append(self.roach[i].xmap[self.roach[i].ons[:min_samples]])
+            y_list.append(self.roach[i].ymap[self.roach[i].ons[:min_samples]])
+            p_list.append(self.roach[i].pmap[self.roach[i].ons[:min_samples]])
+            n_list.append(len(self.roach[i].xmap[self.roach[i].ons[:min_samples]]))
+            dl = self.roach[i].integrate_spectra(channel_list, 
                 n_channel_list, baseline_list, n_baseline_list, 
-                baseline_order, type=type))
+                baseline_order, type=type)
+            data_list.append(dl[:min_samples])
+
         self.map_pixel_list = np.array(mp_list)
         self.map_t = np.array(t_list)
         self.map_x = np.array(x_list)
