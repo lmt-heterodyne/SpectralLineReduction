@@ -15,7 +15,7 @@
 #
 #
 
-_version="30-jan-2025"
+_version="10-feb-2025"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -822,10 +822,10 @@ if len(sys.argv) == 2:
         print(header)
     elif sys.argv[1] == 'grep' or sys.argv[1] == 'find':
         print(header)
-        grep([])
+        grep([],"-a")
     elif sys.argv[1] == 'grepw' or sys.argv[1] == 'findw':
         print(header)
-        grep([],"-w")
+        grep([],"-wa")
     elif os.path.isdir(sys.argv[1]):
         data_lmt = sys.argv[1]
         print(header)
@@ -842,12 +842,12 @@ elif len(sys.argv) == 3:
     # special cases:
     if sys.argv[1] == "grep" or sys.argv[1] == "find":
         print(header)
-        grep(sys.argv[2:])
+        grep(sys.argv[2:],"-a")
         sys.exit(0)
         
     if sys.argv[1] == "grepw" or sys.argv[1] == "findw":
         print(header)
-        grep(sys.argv[2:],"-w")
+        grep(sys.argv[2:],"-wa")
         sys.exit(0)
 
     # newer than an obsnum for incremental build
@@ -871,11 +871,11 @@ else:
     # grep allows more terms
     if sys.argv[1] == "grep":
         print(header)
-        grep(sys.argv[2:])
+        grep(sys.argv[2:],"-a")
         sys.exit(0)
     if sys.argv[1] == "grepw":
         print(header)
-        grep(sys.argv[2:],"-w")
+        grep(sys.argv[2:],"-wa")
         sys.exit(0)
 
     # otherwise illegal options, so give help
