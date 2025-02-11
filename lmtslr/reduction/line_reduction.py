@@ -52,32 +52,62 @@ class Line(object):
     def __len__(self):
         return self.nchan
 
-    def eliminate(self, list, interpolate=True):
+    def eliminate(self, clist, interpolate=True):
         """
         Sets yarray values to nan according to input list so that 
         channels can be ignored in functions.
         Args:
-            list (list): list of channels that are to be eliminated
-            interpolate (boolean):   if to interpolate instead
+            clist (list): list of channels that are to be eliminated/interpolated
+            interpolate (boolean):   if to interpolate instead of NaN
         Returns:
             none
         """
+        def consecutive_integers(numbers):
+            # note numbers need to be sorted
+            if not numbers:
+                return []
+    
+            results = []
+            start = numbers[0]
+            end = numbers[0]
+
+            for i in range(1, len(numbers)):
+                if numbers[i] == end + 1:
+                    end = numbers[i]
+                else:
+                    if start != end:
+                        results.append((start, end))
+                    else:
+                        results.append((start,start))
+                    start = numbers[i]
+                    end = numbers[i]
+
+            if start != end:
+                results.append((start, end))
+            else:
+                results.append((start,start))
+            return results
         # ensure elements of the list fall in the range of selected channels
         i0 = self.iarray[0]
         i1 = self.iarray[len(self.iarray)-1]
         if interpolate:
-            for i in list:
-                if i<=i0 or i >=i1: continue
-                j = np.where(self.iarray == i)[0][0]
+            for (j0,j1) in consecutive_integers(clist):
+                if j0<=i0 or j1>=i1: continue
+                j = np.where(self.iarray == j0)[0][0]
                 if True:
-                    self.yarray[j] = (self.yarray[j-1] + self.yarray[j+1])/2.0
+                    k0 = j
+                    k1 = j+j1-j0
+                    # print("CONSEQ:",j0,j1,k0,k1)
+                    for k in range(k0,k1+1):
+                        self.yarray[k] = (self.yarray[k0-1] + self.yarray[k1+1])/2.0
+                    # @todo  do a linear interpolation inbetween 
                 else:
                     self.yarray[j] = (self.yarray[j-2] + self.yarray[j+2])/2.0
                     self.yarray[j-1] = self.yarray[j]
                     self.yarray[j-2] = self.yarray[j]
                     
         else:
-            for i in list:
+            for i in clist:
                 if i<=i0 or i >=i1: continue                
                 self.yarray[np.where(self.iarray == i)] = np.nan
 

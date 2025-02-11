@@ -150,7 +150,7 @@ def read_obsnum_bs(obsnum, list_of_pixels, bank,
     ifproc_cal = IFProcCal(ifproc_cal_file)
     ifproc_cal.compute_tsys()
     print("Bs beams:",ifproc.bs_beams)
-    printf("receiver",ifproc.receiver)
+    print("receiver",ifproc.receiver)
     if list_of_pixels is None:
         list_of_pixels = ifproc.bs_beams
     roach_list = create_roach_list(list_of_pixels,bank,maxroach=8)   # @todo fix maxroach

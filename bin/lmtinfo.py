@@ -332,6 +332,7 @@ def slr_summary(ifproc, rc=False):
     else:
         #print('# receiver %s not supported yet' % receiver)
         print('# a unsupported receiver was reported, probably corrupted data')
+        # obsnums 125122 .. 125126 (RSR) receiver name seems corrupted
         sys.exit(1)
 
     bufpos = nc.variables['Data.TelescopeBackend.BufPos'][:]
