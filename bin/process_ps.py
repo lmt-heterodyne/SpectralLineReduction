@@ -51,7 +51,7 @@ def main(argv):
                              tsys=Opts.tsys,
                              path=Opts.data_path)
         tsys = S.roach[0].tsys_spectrum
-        print("PJT TSYS",tsys)
+        print("PJT TSYS[]",tsys)
         #   set bank_hack on the first time
         if bank_hack < 0:
             if I.receiver == 'Msip1mm':
@@ -76,7 +76,7 @@ def main(argv):
 
     # prepare for subsetting the line and do a baseline subtraction
     #print("Line/Baseline:",Opts.b_order, Opts.b_regions, Opts.l_regions)
-    Opts.b_order = 3
+    Opts.b_order = 0
     print("Line/Baseline:",Opts.b_order,Opts.slice)
 
     # show all the plots just to illustrate reduction
@@ -98,14 +98,18 @@ def main(argv):
     edge = 64
     if len(LineList) >  0:
         fp = open(Opts.output,"w")
-        fp.write("# vlsr  TA(K) Tsys(K)     (average of %d beams  %d channels)\n" % (len(LineList), len(LineList[0])))
+        fp.write("# vlsr  TA(K) Tsys(K) (<%d beams>) beam1 beam2 ...\n" % (len(LineList)))
+        fp.write("#      %d channels - 2 * %d edge)\n" % (len(LineList[0]), edge))
         for i in range(edge,len(LineList[0].xarray)-edge):
             ysum = 0.0
             for j in range(len(LineList)):
                 ysum = ysum + LineList[j].yarray[i]
             ysum = ysum / len(LineList);
-            fp.write("%g %g %g\n" %
-                     (LineList[0].xarray[i],ysum,tsys[i]))
+            fp.write("%g %g %g" % (LineList[0].xarray[i],ysum,tsys[i]))
+            # write each beam
+            for j in range(len(LineList)):
+                fp.write(" %g" % LineList[j].yarray[i])
+            fp.write("\n")
         fp.close()
 
 if __name__ == '__main__':
