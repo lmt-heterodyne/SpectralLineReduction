@@ -630,7 +630,8 @@ class RoachSpec():
                 self.tsys_spectrum[:] = self.tsys
             print("SPEC TSYS[%d] = %g +/- %g (%d channels)" % (self.pixel, self.tsys, tsysstd, len(self.tsys_spectrum)))
         else:
-            print('ObsNum %d Roach %d does not have calibration data'%(self.obsnum, self.roach_id))
+            print('ObsNum %d Roach %d does not have calibration data [%d,%d,%d,%d]'%
+                  (self.obsnum, self.roach_id, self.ons, self.refs, self.nskys, self.nhots))
             self.tsys_spectrum = np.zeros(self.nchan)
             self.tsys = 0.
 
