@@ -15,7 +15,7 @@
 #
 #
 
-_version="10-feb-2025"
+_version="3-apr-2025"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -300,6 +300,7 @@ def slr_summary(ifproc, rc=False):
     scannum = nc.variables['Header.Dcs.ScanNum'][0]    
     receiver = b''.join(nc.variables['Header.Dcs.Receiver'][:]).decode().strip()
     tau = nc.variables['Header.Radiometer.Tau'][0]
+    valid = nc.variables['Header.ScanFile.Valid'][0]
     
     vlsr = nc.variables['Header.Source.Velocity'][0]
     src = b''.join(nc.variables['Header.Source.SourceName'][:]).decode().strip()
@@ -442,6 +443,7 @@ def slr_summary(ifproc, rc=False):
         print('subobsnum=%s' % subobsnum)
         print('scannum=%s' % scannum)
         print('calobsnum=%s' % calobsnum)
+        print('valid=%d' % valid)
         print('obspgm="%s"' % obspgm)
         if obspgm=='Map':
             print('map_coord="%s"' % map_coord)
@@ -538,6 +540,8 @@ def rsr_summary(rsr_file, rc=False):
         pid = b''.join(nc.variables['Header.Dcs.ProjectId'][:]).decode().strip()
     except:
         pid = "Unknown"
+
+    valid = nc.variables['Header.ScanFile.Valid'][0]    
         
     # Header.Dcs.ObsNum = 33551 ;
     obsnum = nc.variables['Header.Dcs.ObsNum'][0]
@@ -643,6 +647,7 @@ def rsr_summary(rsr_file, rc=False):
         print('subobsnum=%s' % subobsnum)
         print('scannum=%s' % scannum)
         print('calobsnum=%s' % calobsnum)
+        print('valid=%d' % valid)        
         print('obspgm="%s"' % obspgm)
         print('obsgoal="%s"' % obsgoal)
         print('ProjectId="%s"' % pid)
