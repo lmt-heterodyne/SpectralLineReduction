@@ -135,7 +135,6 @@ def today():
     find what happened today in the yyyy-mm-dd  $(date +%Y-%m-%d) format
     """
     cmd = "lmtinfo.py grep $(date +%Y-%m-%d)"
-    print("TODAY: ",cmd)
     os.system(cmd)
 
 def build():
