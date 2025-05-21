@@ -15,7 +15,7 @@
 #
 #
 
-_version="3-apr-2025"
+_version="21-may-2025"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -27,6 +27,7 @@ Usage: lmtinfo.py OBSNUM
        lmtinfo.py grep  [TERM1 [TERM2 ...]]
        lmtinfo.py grepw [TERM1 [TERM2 ...]]
        lmtinfo.py find  [TERM1 [TERM2 ...]]
+       lmtinfo.py today
 
 -h --help      This help
 -v --version   Script version
@@ -61,6 +62,7 @@ lmtot:    return the LMTOT (observing) file to stdout
 grep:     search in database, terms are logically AND-ed - partial matches allowed
 grepw:    search in database, terms are logically AND-ed and words need to match exactly
 find:     search in database, terms are logically AND-ed
+today:    search in database for today
 
 version = %s
 
@@ -127,6 +129,14 @@ def last():
         return int(lines[-1])
     print("# Warning: no %s found" % fn)
     return -1
+
+def today():
+    """
+    find what happened today in the yyyy-mm-dd  $(date +%Y-%m-%d) format
+    """
+    cmd = "lmtinfo.py grep $(date +%Y-%m-%d)"
+    print("TODAY: ",cmd)
+    os.system(cmd)
 
 def build():
     """
@@ -826,6 +836,9 @@ if len(sys.argv) == 2:
     # replacement for $DATA_LMT
     if sys.argv[1] == 'data':
         print(header)
+    elif sys.argv[1] == 'today':
+        today()
+        sys.exit(0)        
     elif sys.argv[1] == 'grep' or sys.argv[1] == 'find':
         print(header)
         grep([],"-a")
