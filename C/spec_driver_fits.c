@@ -118,8 +118,8 @@ int main(int argc, char *argv[])
 
   // prints the convolution function ; n_cells denotes how much we will use?
   // @todo the scaling of delta is wrong, but irrelevant
-  printf("CF.n_cells= %d delta=%g  cell=%g resol=%g otf_select=%d\n",
-	 CF.n_cells,CF.delta,CF.cell_size,CF.resolution_size,OTF.otf_select);
+  printf("CF.n_cells= %d CF.npts= %d delta=%g  cell=%g resol=%g otf_select=%d\n",
+	 CF.n_cells,CF.npts,CF.delta,CF.cell_size,CF.resolution_size,OTF.otf_select);
 #if 0
   printf("r(arcsec)  conv.array\n");
   for(i=0;i< CF.npts;i++)
