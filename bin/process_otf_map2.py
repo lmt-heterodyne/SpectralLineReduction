@@ -24,6 +24,8 @@
 --slice SLICE                      enter list to specify slice from spectrum for processing
 --sample PIXEL,S0,S1               Series of sample sections per pixel to be removed from SpecFile (not implemented yet)
 --restfreq RESTFREQ                Override the rest frequency (in GHz) for this bank. [Default: -1]
+--offx OFFX                        Optional pointing offset in X. [default: 0]
+--offy OFFY                        Optional pointing offset in Y. [default: 0]
 
 -h --help                          show this help
 
@@ -84,6 +86,9 @@ def main(argv):
     if Opts.bank < 0:
         print("Fixing BANK", Opts.bank)
         Opts.bank = 0
+
+    # new pointing offsets in 2025
+    print("New 2025 pointing offsets correction: ",Opts.offx, Opts.offy)
     
     # check to see whether output file exists and remove it if it does
     if os.path.isfile(Opts.output_file_name) == True:
@@ -101,7 +106,7 @@ def main(argv):
                            map_coord=Opts.map_coord,
                            path=Opts.data_path)
 
-    specfile = SpecFile(I, S, Opts.pix_list)
+    specfile = SpecFile(I, S, Opts.pix_list, Opts.offx, Opts.offy)
     specfile.set_history(history)
     specfile.set_line_parameters(vslice=[Opts.slice[0], Opts.slice[1]],
                                  b_order=Opts.b_order,

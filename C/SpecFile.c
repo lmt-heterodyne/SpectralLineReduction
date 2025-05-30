@@ -67,7 +67,7 @@ int read_spec_file(SpecFile *S, char *filename)
     ERR(retval);
 
   int obsnum_id, mapcoord_id, source_id,source_x,source_y,crval_id,crpix_id,cdelt_id,ctype_id,caxis_id;
-  int deltaf_id, deltat_id;
+  int deltaf_id, deltat_id, offx_id, offy_id;
   int rf_id, vlsr_id, do_id, do_rc, do_version, do_history;
   /* Get the varids of the observation header */
   if ((retval = nc_inq_varid(ncid, "Header.Obs.ObsNum", &obsnum_id)))
@@ -90,6 +90,10 @@ int read_spec_file(SpecFile *S, char *filename)
   if ((retval = nc_inq_varid(ncid, "Header.LineData.DeltaFrequency", &deltaf_id)))
     ERR(retval);
   if ((retval = nc_inq_varid(ncid, "Header.Obs.DumpTime", &deltat_id)))
+    ERR(retval);
+  if ((retval = nc_inq_varid(ncid, "Header.Obs.OffX", &offx_id)))
+    ERR(retval);
+  if ((retval = nc_inq_varid(ncid, "Header.Obs.OffY", &offy_id)))
     ERR(retval);
   if ((retval = nc_inq_varid(ncid, "Header.Obs.DateObs", &do_id)))
     ERR(retval);
@@ -176,6 +180,10 @@ int read_spec_file(SpecFile *S, char *filename)
     ERR(retval);
   if((retval = nc_get_var_float(ncid, deltat_id, &S->deltat)) != NC_NOERR)
     ERR(retval);
+  if((retval = nc_get_var_float(ncid, offx_id, &S->OffX)) != NC_NOERR)
+    ERR(retval);
+  if((retval = nc_get_var_float(ncid, offy_id, &S->OffY)) != NC_NOERR)
+    ERR(retval);
   if((retval = nc_get_var(ncid,do_id, S->date_obs)) != NC_NOERR)
     ERR(retval);
   if((retval = nc_get_var(ncid,do_rc, S->receiver)) != NC_NOERR)
@@ -185,7 +193,6 @@ int read_spec_file(SpecFile *S, char *filename)
   if((retval = nc_get_var(ncid,do_history, S->history)) != NC_NOERR)
     ERR(retval);
   printf("SpecFile version %s\n",version);
-  
 
   if((retval = nc_get_var_double(ncid, crval_id, &S->CRVAL)) != NC_NOERR)
     ERR(retval);
@@ -242,7 +249,14 @@ int read_spec_file(SpecFile *S, char *filename)
       S->YPos[i] += dy;
     }
   }
-
+  if (S->OffX != 0 || S->OffY != 0) {
+    printf("Fixing pointing offsets\n");
+    for (i=0; i<nspec; i++) {
+      S->XPos[i] -= S->OffX;
+      S->YPos[i] -= S->OffY;
+    }
+  }
+  
   for (i=0; i<nspec; i++)
     S->use[i] = 1;
 
@@ -294,6 +308,7 @@ int read_spec_file(SpecFile *S, char *filename)
   printf("X-range: %g %g   Y-range: %g %g arcsec\n",xmin,xmax,ymin,ymax);
   printf("X-ramp:  %g %g   Y-ramp:  %g %g arcsec\n",xmin+3*bs,xmax-3*bs,ymin+3*bs,ymax-3*bs);
   printf("MapSize: %g x %g arcsec\n", xmax-xmin, ymax-ymin);
+  printf("Pointing offset: %g %g\n", S->OffX, S->OffY);
 
   /* Close the file, freeing all resources. */
   if ((retval = nc_close(ncid)))
