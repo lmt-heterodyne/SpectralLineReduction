@@ -5,7 +5,8 @@ obsnum=$1
 
 if [ -z "$obsnum" ]; then
     echo usage: $0 obsnum
-    echo "Reports the ifproc Header variables for SEQ."
+    echo "Reports the ifproc Header variables for SEQ"
+    echo "  and the first line of the Data (time dependent) variables"
     echo "For RSR it actually also reports the netCDF variables of the RedshiftChassis0 file"
     exit 0
 fi
@@ -24,6 +25,7 @@ rm $tmp.rc
 if [ ! -z "$rawnc" ]; then
     echo "$rawnc"
     ncdump -l 256 $rawnc | grep '^ Header' | column -s= -t 
+    ncdump -l 256 $rawnc | grep '^ Data' | column -s= -t
 else
     echo $ifproc does not exist
 fi
