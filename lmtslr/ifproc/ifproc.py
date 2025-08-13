@@ -173,6 +173,7 @@ class IFProc():
             self.azim = self.nc.variables['Header.Telescope.AzDesPos'][0] * 180 / np.pi
             self.elev = self.nc.variables['Header.Telescope.ElDesPos'][0] * 180 / np.pi
             self.m1ZernikeC0 = self.nc.variables['Header.M1.ZernikeC'][0]
+            self.m1ZernikeC = self.nc.variables['Header.M1.ZernikeC'][:]
 
             key = 'Header.M1.ReqPos'
             if key in self.nc.variables:
