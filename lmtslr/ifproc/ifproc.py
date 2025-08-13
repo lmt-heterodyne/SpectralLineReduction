@@ -288,6 +288,8 @@ class IFProc():
                 self.ylength = self.nc.variables['Header.Map.YLength'][0] * 206264.8
                 self.xstep = self.nc.variables['Header.Map.XStep'][0]
                 self.ystep = self.nc.variables['Header.Map.YStep'][0]
+                self.xramp = self.nc.variables['Header.Map.XRamp'][0]
+                self.yramp = self.nc.variables['Header.Map.YRamp'][0]
                 self.xoffset = self.nc.variables['Header.Map.XOffset'][0]
                 self.yoffset = self.nc.variables['Header.Map.YOffset'][0]
                 self.rows = self.nc.variables['Header.Map.RowsPerScan'][0]
@@ -549,6 +551,8 @@ class IFProcData(IFProc):
                 self.ylength = self.nc.variables['Header.Map.YLength'][0]*206264.8
                 self.xstep = self.nc.variables['Header.Map.XStep'][0]
                 self.ystep = self.nc.variables['Header.Map.YStep'][0]
+                self.xramp = self.nc.variables['Header.Map.XRamp'][0]
+                self.yramp = self.nc.variables['Header.Map.YRamp'][0]
                 self.xoffset = self.nc.variables['Header.Map.XOffset'][0]
                 self.yoffset = self.nc.variables['Header.Map.YOffset'][0]
                 self.rows = self.nc.variables['Header.Map.RowsPerScan'][0]
