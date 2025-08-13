@@ -35,7 +35,7 @@ class RoachSpec():
     Base class to deal with a single time series of spectra.
     """
     def __init__(self, obsnum, roach_id, roach_input, nchan, bandwidth, nspec,
-                 raw_spec, spec_time, xmap, ymap, azmap, elmap, ramap, decmap, lmap, bmap, pmap, gmap, bufpos):
+                 raw_spec, spec_time, xmap, ymap, azmap, elmap, ramap, decmap, lmap, bmap, pmap, gmap, bufpos, backend_hold):
         """
         Constructor for RoachSpec class.
         Args:
@@ -52,6 +52,7 @@ class RoachSpec():
            pmap (array): not used
            gmap (array): not used
            bufpos (int): type of observation
+           backend_hold (int) : hold condition   ###FPS### added hold condition August 7 2025 FPS
         Returns:
             none
         """
@@ -74,6 +75,7 @@ class RoachSpec():
         self.pmap = pmap
         self.gmap = gmap
         self.bufpos = bufpos
+        self.backend_hold = backend_hold        ###FPS### added backend hld condition August 7 2025  FPS
         self.tsys_aver = False    # @todo should be True (july-2023 discussion)
         self.tsyscal = None
         self.ncal = 0
@@ -786,6 +788,8 @@ class SpecBank():
             self.ifproc.galang, bounds_error=False)
         self.bufpos_interpolation_function = interpolate.interp1d(self.ifproc.time,
             self.ifproc.bufpos, kind='nearest', bounds_error=False)
+        self.hold_interpolation_function = interpolate.interp1d(self.ifproc.time,
+            self.ifproc.backend_hold, kind='nearest', bounds_error=False)     ###FPS### added hold variable August 7 2025 FPS
 
         self.gaps = np.where(self.ifproc.bufpos[:-1] != self.ifproc.bufpos[1:])[0]
         self.time_gaps_0 = np.append([self.ifproc.time[0]], self.ifproc.time[self.gaps + 1])
@@ -1064,7 +1068,8 @@ class SpecBank():
                 pmap   = self.p_interpolation_function(      np.ma.getdata(spec_time, subok=False))
                 gmap   = self.g_interpolation_function(      np.ma.getdata(spec_time, subok=False))
                 bufpos = self.bufpos_interpolation_function( np.ma.getdata(spec_time, subok=False))
-
+                backend_hold = self.hold_interpolation_function(
+                    np.ma.getdata(spec_time, subok=False))    ###FPS### added hold condition data August 7 2025 FPS
                 # correct the interpolated arrays to remove points not in range for interpolation
                 l = len(self.time_gaps_1)
                 cond = False
@@ -1083,6 +1088,7 @@ class SpecBank():
                 pmap = pmap[cond]
                 gmap = gmap[cond]
                 bufpos = bufpos[cond].astype(int)
+                backend_hold = backend_hold[cond].astype(int)  ###FPS### added hold condition data August 7 2025 FPS
                 raw_spec = raw_spec[cond]
                 
                 nspec = len(spec_time)
@@ -1094,8 +1100,13 @@ class SpecBank():
                 # our list
                 self.roach.append(RoachSpec(obsnum, roach_index, input_chan, 
                                             nchan, bandwidth, nspec, raw_spec,
-                                            spec_time, xmap, ymap, azmap, elmap, ramap, decmap, lmap, bmap, pmap, gmap,
-                                            bufpos))
+                                            spec_time,
+                                            xmap, ymap,
+                                            azmap, elmap,
+                                            ramap, decmap,
+                                            lmap, bmap,
+                                            pmap, gmap,
+                                            bufpos, backend_hold))
             nc.close()
         else:
             print('%s does not exist for roach_id=%d'%(self.filename, 
@@ -1157,11 +1168,13 @@ class SpecBankData(SpecBank):
         dec_list = []
         l_list = []
         b_list = []
+        hold_list = []  ###FPS### added hold condition August 7 2025 FPS
         p_list = []
         g_list = []
         n_list = []
         mp_list = []
 
+        #######  We have to be sure that there are the same number of samples - FPS September 13, 2024
         mins = np.zeros(len(pixel_list),dtype=int)
         for ipix in pixel_list:
             i  = self.find_pixel_index(ipix)
@@ -1174,6 +1187,7 @@ class SpecBankData(SpecBank):
             x_list.append(self.roach[i].xmap[self.roach[i].ons[:min_samples]])
             y_list.append(self.roach[i].ymap[self.roach[i].ons[:min_samples]])
             p_list.append(self.roach[i].pmap[self.roach[i].ons[:min_samples]])
+            hold_list.append(self.roach[i].backend_hold[self.roach[i].ons[:min_samples]])  ###FPS### added hold condition August 7 2025 FPS
             n_list.append(len(self.roach[i].xmap[self.roach[i].ons[:min_samples]]))
             dl = self.roach[i].integrate_spectra(channel_list, 
                 n_channel_list, baseline_list, n_baseline_list, 
@@ -1192,6 +1206,7 @@ class SpecBankData(SpecBank):
         self.map_b = np.array(b_list)
         self.map_p = np.array(p_list)
         self.map_g = np.array(g_list)
+        self.map_hold = np.array(hold_list)      ###FPS### added hold condition August 7 2025 FPS
         self.map_n = np.array(n_list)
         self.map_bufpos = np.array(n_list)
         self.map_data = np.array(data_list)
