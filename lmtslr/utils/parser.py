@@ -24,6 +24,8 @@ class HandleProcessOptions():
         self.b_regions = [[],[]]
         self.l_regions = [[],[]]
         self.slice = []
+        self.offx = 0
+        self.offy = 0
         self.output_file_name = ''
         
     def read_config_file(self, filename):
@@ -117,6 +119,10 @@ class HandleProcessOptions():
                 self.l_regions = eval(arg)
             elif opt in ("--slice"):
                 self.slice = eval(arg)
+            elif opt in ("--offx"):
+                self.offx = eval(arg)
+            elif opt in ("--offy"):
+                self.offy = eval(arg)
 
             elif opt in ("-o", "--output"):
                 self.output_file_name = arg
@@ -164,6 +170,8 @@ class HandleProcessOptions():
         print('baseline regions = ',self.b_regions)
         print('line regions     = ',self.l_regions)
         print('slice            = ',self.slice)
+        print('offx             = ',self.offx)
+        print('offy             = ',self.offy)
         print('output file      = ',self.output_file_name)
         print(' ')
         
@@ -194,8 +202,9 @@ class HandleProcessOptions():
         print('--b_order        : set polynomial baseline order')
         print('--b_regions      : enter list of lists for baseline regions')
         print('--l_regions      : enter list of lists for line fit regions')
-        print('--slice          : enter list to specify slice from spectrum \
-            for processing')
+        print('--slice          : enter list to specify slice from spectrum for processing')
+        print('--offx           : pointing offset in X')
+        print('--offy           : pointing offset in Y')
         print(' ')
 
 

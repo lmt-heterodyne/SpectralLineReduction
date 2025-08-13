@@ -189,7 +189,7 @@ class RoachSpec():
     def compute_tsys_spectra(self, bdrop=100, edrop=100):
         """
         Computes the TSYS, typically for an otf_cal=1
-        See also compute_tsys_spectrum()
+        See also compute_tsys_spectrum(), also where we despiked
         """
         self.tsys_spectra = np.zeros((self.nhots, self.nchan))
         tsys = np.zeros(self.nhots)
@@ -201,9 +201,10 @@ class RoachSpec():
             tsys_spec = 280.0 * sky_spectrum/(hot_spectrum - sky_spectrum)
             # find the index where tsys_spec is finite
             indx_fin = np.where(np.isfinite(tsys_spec))
-            # compute tsys as mean of tsys_spec
-            tsys[ihot] = np.mean(tsys_spec[indx_fin][bdrop:self.nchan-edrop])
-            # find index where tsys_spec is infinite
+            # compute tsys as mean/median of tsys_spec
+            # tsys[ihot] = np.mean(tsys_spec[indx_fin][bdrop:self.nchan-edrop])
+            tsys[ihot] = np.median(tsys_spec[indx_fin][bdrop:self.nchan-edrop])            
+            # find index where tsys_spec is infinite    @todo find spikes
             indx_inf = np.where(np.isinf(tsys_spec))
             # replace with mean
             tsys_spec[indx_inf] = tsys[ihot]
@@ -579,6 +580,29 @@ class RoachSpec():
             none
         See also compute_tsys_spectra()
         """
+        def despike(data, n=10, fix=None, delta=4):
+            """
+            Find positive spikes  
+            If the whole spectrum (which can be 8k channels) is tried, this often results
+            in not finding all the spikes. But looping in 'n=10' (or so) sections, it works.
+            """
+            nchan = len(data)
+            for i in range(n):
+                ddata = data[i*(nchan//n):(i+1)*(nchan//n)-1]
+                d = ddata[:-1]-ddata[1:]
+                std = np.nanstd(d)
+                idx = np.where(d > std * delta)
+                med = np.nanmedian(ddata)
+                if len(idx) > 0:
+                    d[idx] = 0.0
+                    std = np.nanstd(d)
+                    print(f"Fixing spikes at {idx}: {data[idx]}  [fix with {med} d_std={std}?]")
+                    # print(f"Min/Max {data.min()} {data.max()}")
+                    if fix == None:
+                        ddata[idx] = med
+                    else:
+                        ddata[idx] = fix
+            
         if ((self.nhots>0) and (self.nskys>0)):
             hot_spectrum = np.median(self.raw_spec[self.hots,:], axis=0)
             sky_spectrum = np.median(self.raw_spec[self.skys,:], axis=0)
@@ -587,6 +611,7 @@ class RoachSpec():
                                                        sky_spectrum)
             # find the index where tsys_spectrum in finite
             indx_fin = np.where(np.isfinite(self.tsys_spectrum))
+                
             # compute tsys as the mean of finite tsys_spectrum
             self.tsys = np.mean(self.tsys_spectrum[indx_fin][bdrop:self.nchan - edrop])
             tsysstd = np.std(self.tsys_spectrum[indx_fin][bdrop:self.nchan - edrop])
@@ -594,17 +619,19 @@ class RoachSpec():
             indx_inf = np.where(np.isinf(self.tsys_spectrum))
             # replace infinite tsys_spectrum with the mean
             self.tsys_spectrum[indx_inf] = self.tsys
+            # despike (in sections)
+            despike(self.tsys_spectrum, fix=self.tsys)
+            
             # find the index where tsys_spectrum in nan
             indx_nan = np.where(np.isnan(self.tsys_spectrum))
             # replace nan tsys_spectrum with the mean
             self.tsys_spectrum[indx_nan] = self.tsys
             if self.tsys_aver:
                 self.tsys_spectrum[:] = self.tsys
-                
-            #print("TSYS: ",self.tsys_spectrum[:])
-            print("SPEC TSYS[%d] = %g +/- %g (%d channels)" % (self.pixel,self.tsys, tsysstd, len(self.tsys_spectrum)))
+            print("SPEC TSYS[%d] = %g +/- %g (%d channels)" % (self.pixel, self.tsys, tsysstd, len(self.tsys_spectrum)))
         else:
-            print('ObsNum %d Roach %d does not have calibration data'%(self.obsnum, self.roach_id))
+            print('ObsNum %d Roach %d does not have calibration data [%d,%d,%d,%d]'%
+                  (self.obsnum, self.roach_id, self.nons, self.nrefs, self.nskys, self.nhots))
             self.tsys_spectrum = np.zeros(self.nchan)
             self.tsys = 0.
 

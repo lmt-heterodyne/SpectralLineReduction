@@ -25,6 +25,11 @@ import traceback
 
 from lmtslr.ifproc.RSRUtilities import TempSens # move into utils folder?
 from lmtslr.utils.ifproc_file_utils import lookup_ifproc_file
+
+# April 2025 hack for 1MM (see IFProc below)
+_teltime1 = 'Data.TelescopeBackend.TelTime'        # sometimes fails
+_teltime2 = 'Data.TelescopeBackend.BackendTime'    # new one to try if the one old fails?
+
 """
 def lookup_ifproc_file(obsnum,path='/data_lmt/ifproc/'):
     filename = ''
@@ -117,22 +122,29 @@ class IFProc():
             self.source_coord_sys = self.nc.variables['Header.Source.CoordSys'][0]
             self.vlsr = self.nc.variables['Header.Source.Velocity'][0]
 
-            date_obs = self.nc.variables['Data.TelescopeBackend.TelTime'][0].tolist()
+            if _teltime2 in self.nc.variables:
+                # 1MM hack April 2025
+                self._teltime = _teltime2
+                print("WARNING: using %s for TelTime" % _teltime2)
+            else:
+                self._teltime = _teltime1
+
+            date_obs = self.nc.variables[self._teltime][0].tolist()
             self.date_obs = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%dT%H:%M:%S')
             self.date_ymd = datetime.datetime.fromtimestamp(date_obs).strftime('%Y-%m-%d')
             print("%s obs-start %s" % (self.date_obs, self.filename))
 
-            date_obs2 = self.nc.variables['Data.TelescopeBackend.TelTime'][-1:].tolist()[0]
+            date_obs2 = self.nc.variables[self._teltime][-1:].tolist()[0]
             date_obs2 = datetime.datetime.fromtimestamp(date_obs2).strftime('%Y-%m-%dT%H:%M:%S')
             print("%s obs-stop  %s" % (date_obs2, self.filename))
-            delta1 = self.nc.variables['Data.TelescopeBackend.TelTime'][-1:].tolist()[0] - \
-                     self.nc.variables['Data.TelescopeBackend.TelTime'][0].tolist()
+            delta1 = self.nc.variables[self._teltime][-1:].tolist()[0] - \
+                     self.nc.variables[self._teltime][0].tolist()
             print("delta1 %6.1f sec" % delta1)
             if True:
                 # report on the stats of BufPos
                 delta2 = 0
                 on = self.nc.variables['Header.Dcs.ObsNum'][0]
-                tt = self.nc.variables['Data.TelescopeBackend.TelTime'][:]
+                tt = self.nc.variables[self._teltime][:]
                 bp = self.nc.variables['Data.TelescopeBackend.BufPos'][:]            
                 nt  = len(tt)
                 tt0 = tt[0]
@@ -566,7 +578,7 @@ class IFProcData(IFProc):
             print('WARNING: ObsPgm type %s for Obsum %d is not identified'%(self.obspgm, self.obsnum))
 
         # data arrays
-        self.time = self.nc.variables['Data.TelescopeBackend.TelTime'][:]
+        self.time = self.nc.variables[self._teltime][:]
         self.bufpos = self.nc.variables['Data.TelescopeBackend.BufPos'][:]
         # AzEl map
         self.azmap = self.nc.variables['Data.TelescopeBackend.TelAzMap'][:]* 206264.8
@@ -745,7 +757,7 @@ class IFProcCal(IFProc):
                                                                self.obspgm))
 
         # data arrays
-        self.time = self.nc.variables['Data.TelescopeBackend.TelTime'][:]
+        self.time = self.nc.variables[self._teltime][:]
         self.azmap = self.nc.variables['Data.TelescopeBackend.TelAzMap'][:]
         self.elmap = self.nc.variables['Data.TelescopeBackend.TelElMap'][:]
         self.xmap = self.azmap

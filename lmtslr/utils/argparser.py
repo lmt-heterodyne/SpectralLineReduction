@@ -95,6 +95,10 @@ class HandleOTFProcessOptions(HandleOptions):
                             help="enter list of lists for line fit regions")
         self.parser.add_argument("--slice", dest="slice", type=str,
                             help="enter list to specify slice from spectrum for processing")
+        self.parser.add_argument("--offx", dest="offx", type=float,
+                            help="pointing offset in X")
+        self.parser.add_argument("--offy", dest="offy", type=float,
+                            help="pointing offset in Y")
 
         args = self.parser.parse_args(args)
         if 'help' in args.__dict__:

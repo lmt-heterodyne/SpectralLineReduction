@@ -41,6 +41,8 @@ typedef struct
   int *use;
   float *XPos;                         // arcsec offset w.r.t. x_position
   float *YPos;                         // arcsec offset w.r.t. y_position
+  float OffX;                          // extra pointing error shift in X (new in 2025)
+  float OffY;                          // extra pointing error shift in Y (new in 2025)
   float *RMS;                          // K
   float deltaf;                        // deltaFreq * deltaTime for radiometer equation
   float deltat;                        // deltaFreq * deltaTime for radiometer equation

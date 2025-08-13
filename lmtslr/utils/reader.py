@@ -55,7 +55,8 @@ def read_obsnum_ps(obsnum, list_of_pixels, bank,
     path = get_data_lmt(path)
 
     # ifproc
-    ifproc_file = lookup_ifproc_file(obsnum, path=os.path.join(path, 'ifproc'))
+    ifproc_file = lookup_ifproc_file(obsnum,
+                                     path=os.path.join(path, 'ifproc'))
     ifproc = IFProcData(ifproc_file)
     ifproc_cal_file = lookup_ifproc_file(ifproc.calobsnum,
                                          path=os.path.join(path, 'ifproc'))
@@ -63,13 +64,13 @@ def read_obsnum_ps(obsnum, list_of_pixels, bank,
     ifproc_cal.compute_tsys()
     print("PJT2", ifproc.receiver)
     
-    # look up files to match pixel list
     if ifproc.receiver == 'Msip1mm':
         maxroach = 1
     else:
         maxroach = 8
+    # look up files to match pixel list
     roach_list = create_roach_list(list_of_pixels,bank,maxroach)
-    print("PJT2",list_of_pixels,bank,roach_list)
+    print("PJT2_ps",list_of_pixels,bank,roach_list)
     files, nfiles = lookup_roach_files(obsnum, roach_list,
                                        path=os.path.join(path, 'spectrometer'))
 
@@ -150,11 +151,17 @@ def read_obsnum_bs(obsnum, list_of_pixels, bank,
     ifproc_cal = IFProcCal(ifproc_cal_file)
     ifproc_cal.compute_tsys()
     print("Bs beams:",ifproc.bs_beams)
-    printf("receiver",ifproc.receiver)
+    print("receiver",ifproc.receiver)
     if list_of_pixels is None:
         list_of_pixels = ifproc.bs_beams
-    roach_list = create_roach_list(list_of_pixels,bank,maxroach=8)   # @todo fix maxroach
-    print("PJT2",roach_list)
+        
+    if ifproc.receiver == 'Msip1mm':
+        maxroach = 1
+    else:
+        maxroach = 8
+    # look up files to match pixel list
+    roach_list = create_roach_list(list_of_pixels,bank,maxroach)   # @todo check maxroach for 1MM
+    print("PJT2_bs",roach_list)
     files, nfiles = lookup_roach_files(obsnum, roach_list,
                                        path=os.path.join(path, 'spectrometer'))
     
@@ -241,11 +248,8 @@ def read_obsnum_otf(obsnum, list_of_pixels, bank,
         specbank (obj): spec_bank_data object with the actual spectral data
     """
     print("PJT map_coord",map_coord)
-    path = get_data_lmt(path)    
-    # look up files to match pixel list
-    roach_list = create_roach_list(list_of_pixels,bank)
-    files, nfiles = lookup_roach_files(obsnum, roach_list,
-                                       path=os.path.join(path, 'spectrometer'))
+    path = get_data_lmt(path)
+
     ifproc_file = lookup_ifproc_file(obsnum,
                                      path=os.path.join(path, 'ifproc'))
     ifproc = IFProcData(ifproc_file,map_coord=map_coord)
@@ -253,6 +257,16 @@ def read_obsnum_otf(obsnum, list_of_pixels, bank,
     ifproc_cal_file = lookup_ifproc_file(ifproc.calobsnum, path=os.path.join(path, 'ifproc'))
     ifproc_cal = IFProcCal(ifproc_cal_file)
     ifproc_cal.compute_tsys()
+    
+    if ifproc.receiver == 'Msip1mm':
+        maxroach = 1
+    else:
+        maxroach = 8
+    # look up files to match pixel list
+    roach_list = create_roach_list(list_of_pixels,bank, maxroach)
+    files, nfiles = lookup_roach_files(obsnum, roach_list,
+                                       path=os.path.join(path, 'spectrometer'))
+    
 
     # create the spec_bank object.  This reads all the roaches in the list "files"
     specbank = SpecBankData(files, ifproc,

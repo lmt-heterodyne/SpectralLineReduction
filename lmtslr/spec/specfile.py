@@ -20,10 +20,10 @@ from lmtslr.reduction.line_reduction import LineData, NetCDFLineHeader
 from lmtslr.utils.reader import count_otf_spectra
 from lmtslr.grid.grid import Grid
 
-_version =  "11-jul-2023"        # only modify this if anything in the output SpecFile has been changed
+_version =  "29-may-2025"        # only modify this if anything in the output SpecFile has been changed
 
 class SpecFile():
-    def __init__(self, ifproc, specbank, pix_list):
+    def __init__(self, ifproc, specbank, pix_list, offx=0, offy=0):
         self.version = _version
         self.ifproc = ifproc
         self.specbank = specbank
@@ -34,6 +34,8 @@ class SpecFile():
         self.nchan0 = -1
         self.b_order = 0
         self.b_regions, self.l_regions = [], []
+        self.offx = offx
+        self.offy = offy
         self.eliminate_list = []
 
     def set_history(self, history):
@@ -115,6 +117,14 @@ class SpecFile():
         # the DumpTime
         nc_dumptime = self.ncout.createVariable('Header.Obs.DumpTime', 'f4')
         self.ncout.variables['Header.Obs.DumpTime'][0] = self.ifproc.dumptime
+
+        # the OffX
+        nc_offx = self.ncout.createVariable('Header.Obs.OffX', 'f4')
+        self.ncout.variables['Header.Obs.OffX'][0] = self.offx
+
+        # the OffY
+        nc_offy = self.ncout.createVariable('Header.Obs.OffY', 'f4')
+        self.ncout.variables['Header.Obs.OffY'][0] = self.offy
 
         # copy the source name into netCDF header
         nc_source = self.ncout.createVariable('Header.Obs.SourceName', 'c', ('nlabel',))

@@ -15,7 +15,7 @@
 #
 #
 
-_version="30-jan-2025"
+_version="21-may-2025"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -27,6 +27,7 @@ Usage: lmtinfo.py OBSNUM
        lmtinfo.py grep  [TERM1 [TERM2 ...]]
        lmtinfo.py grepw [TERM1 [TERM2 ...]]
        lmtinfo.py find  [TERM1 [TERM2 ...]]
+       lmtinfo.py today
 
 -h --help      This help
 -v --version   Script version
@@ -61,6 +62,7 @@ lmtot:    return the LMTOT (observing) file to stdout
 grep:     search in database, terms are logically AND-ed - partial matches allowed
 grepw:    search in database, terms are logically AND-ed and words need to match exactly
 find:     search in database, terms are logically AND-ed
+today:    search in database for today
 
 version = %s
 
@@ -127,6 +129,13 @@ def last():
         return int(lines[-1])
     print("# Warning: no %s found" % fn)
     return -1
+
+def today():
+    """
+    find what happened today in the yyyy-mm-dd  $(date +%Y-%m-%d) format
+    """
+    cmd = "lmtinfo.py grep $(date +%Y-%m-%d)"
+    os.system(cmd)
 
 def build():
     """
@@ -300,6 +309,7 @@ def slr_summary(ifproc, rc=False):
     scannum = nc.variables['Header.Dcs.ScanNum'][0]    
     receiver = b''.join(nc.variables['Header.Dcs.Receiver'][:]).decode().strip()
     tau = nc.variables['Header.Radiometer.Tau'][0]
+    valid = nc.variables['Header.ScanFile.Valid'][0]
     
     vlsr = nc.variables['Header.Source.Velocity'][0]
     src = b''.join(nc.variables['Header.Source.SourceName'][:]).decode().strip()
@@ -442,6 +452,7 @@ def slr_summary(ifproc, rc=False):
         print('subobsnum=%s' % subobsnum)
         print('scannum=%s' % scannum)
         print('calobsnum=%s' % calobsnum)
+        print('valid=%d' % valid)
         print('obspgm="%s"' % obspgm)
         if obspgm=='Map':
             print('map_coord="%s"' % map_coord)
@@ -538,6 +549,8 @@ def rsr_summary(rsr_file, rc=False):
         pid = b''.join(nc.variables['Header.Dcs.ProjectId'][:]).decode().strip()
     except:
         pid = "Unknown"
+
+    valid = nc.variables['Header.ScanFile.Valid'][0]    
         
     # Header.Dcs.ObsNum = 33551 ;
     obsnum = nc.variables['Header.Dcs.ObsNum'][0]
@@ -643,6 +656,7 @@ def rsr_summary(rsr_file, rc=False):
         print('subobsnum=%s' % subobsnum)
         print('scannum=%s' % scannum)
         print('calobsnum=%s' % calobsnum)
+        print('valid=%d' % valid)        
         print('obspgm="%s"' % obspgm)
         print('obsgoal="%s"' % obsgoal)
         print('ProjectId="%s"' % pid)
@@ -821,12 +835,15 @@ if len(sys.argv) == 2:
     # replacement for $DATA_LMT
     if sys.argv[1] == 'data':
         print(header)
+    elif sys.argv[1] == 'today':
+        today()
+        sys.exit(0)        
     elif sys.argv[1] == 'grep' or sys.argv[1] == 'find':
         print(header)
-        grep([])
+        grep([],"-a")
     elif sys.argv[1] == 'grepw' or sys.argv[1] == 'findw':
         print(header)
-        grep([],"-w")
+        grep([],"-wa")
     elif os.path.isdir(sys.argv[1]):
         data_lmt = sys.argv[1]
         print(header)
@@ -843,12 +860,12 @@ elif len(sys.argv) == 3:
     # special cases:
     if sys.argv[1] == "grep" or sys.argv[1] == "find":
         print(header)
-        grep(sys.argv[2:])
+        grep(sys.argv[2:],"-a")
         sys.exit(0)
         
     if sys.argv[1] == "grepw" or sys.argv[1] == "findw":
         print(header)
-        grep(sys.argv[2:],"-w")
+        grep(sys.argv[2:],"-wa")
         sys.exit(0)
 
     # newer than an obsnum for incremental build
@@ -872,11 +889,11 @@ else:
     # grep allows more terms
     if sys.argv[1] == "grep":
         print(header)
-        grep(sys.argv[2:])
+        grep(sys.argv[2:],"-a")
         sys.exit(0)
     if sys.argv[1] == "grepw":
         print(header)
-        grep(sys.argv[2:],"-w")
+        grep(sys.argv[2:],"-wa")
         sys.exit(0)
 
     # otherwise illegal options, so give help
