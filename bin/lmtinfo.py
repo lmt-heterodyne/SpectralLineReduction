@@ -15,7 +15,7 @@
 #
 #
 
-_version="21-may-2025"
+_version="19-aug-2025"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -85,7 +85,7 @@ else:
 
 arguments = docopt(_help,options_first=True, version=_version)
 
-header = "# Y-M-D_T_H:M:S       ObsNum  Receiver   ObsGoal      ObgPgm      SourceName                ProjectId                   RestFreq      VLSR    TINT    RA          DEC        AZ     EL   A1 E1"
+header = "# Y-M-D_T_H:M:S       ObsNum  Receiver   ObsGoal      ObgPgm      SourceName                ProjectId                   RestFreq      VLSR    TINT    RA          DEC        AZ     EL     AzOff   ElOff VALID"
 
 def grep(terms, flags=""):
     """
@@ -500,8 +500,8 @@ def slr_summary(ifproc, rc=False):
         print("config=%s__SEQ__%s__%s__%s" % (pid,obspgm,src,alist(restfreq)))
         print("# </lmtinfo>")
     else:
-        print("%-20s %7s  %-10s %-12s %-11s %-25s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %
-              (date_obs, obsnum, instrument, obsgoal, obspgm +(('('+map_coord+'/'+map_motion[0]+')') if obspgm=='Map' else ''), src, pid, restfreq[0], vlsr, tint, ra, dec, az, el, az1, el1))
+        print("%-20s %7s  %-10s %-12s %-11s %-25s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %7.1f %7.1f  %d" %
+              (date_obs, obsnum, instrument, obsgoal, obspgm +(('('+map_coord+'/'+map_motion[0]+')') if obspgm=='Map' else ''), src, pid, restfreq[0], vlsr, tint, ra, dec, az, el, az1, el1, valid))
 
     # -end slr_summary() 
 
@@ -692,8 +692,8 @@ def rsr_summary(rsr_file, rc=False):
         #print(date_obs, obsnum, obsgoal, obspgm, src,  pid,         tint,   ra,    dec,   az,   el)
         if True:
             #print("%-20s %7s  %-10s %-12s %-11s %-25s %-30s %8.4f %5.f    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %g %g" %
-            print("%-20s %7d  %-10s %-12s %-11s %-25s %-30s      0.0     0    %6.1f  %10.6f %10.6f  %5.1f %5.1f  0 0" %
-              (date_obs, obsnum, instrument, obsgoal, obspgm+(('('+map_coord+')') if obspgm=='Map' else ''), src,  pid,         tint,   ra,    dec,   az,   el))
+            print("%-20s %7d  %-10s %-12s %-11s %-25s %-30s      0.0     0    %6.1f  %10.6f %10.6f  %5.1f %5.1f  %7.1f %7.1f  %d" %
+              (date_obs, obsnum, instrument, obsgoal, obspgm+(('('+map_coord+')') if obspgm=='Map' else ''), src,  pid,         tint,   ra,    dec,   az,   el, 0.0, 0.0, valid))
 
     # -end  rsr_summary()
 
