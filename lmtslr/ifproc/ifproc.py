@@ -185,6 +185,7 @@ class IFProc():
             self.azim = self.nc.variables['Header.Telescope.AzDesPos'][0] * 180 / np.pi
             self.elev = self.nc.variables['Header.Telescope.ElDesPos'][0] * 180 / np.pi
             self.m1ZernikeC0 = self.nc.variables['Header.M1.ZernikeC'][0]
+            self.m1ZernikeC = self.nc.variables['Header.M1.ZernikeC'][:]
 
             key = 'Header.M1.ReqPos'
             if key in self.nc.variables:
@@ -287,6 +288,8 @@ class IFProc():
                 self.ylength = self.nc.variables['Header.Map.YLength'][0] * 206264.8
                 self.xstep = self.nc.variables['Header.Map.XStep'][0]
                 self.ystep = self.nc.variables['Header.Map.YStep'][0]
+                self.xramp = self.nc.variables['Header.Map.XRamp'][0] * 206264.8
+                self.yramp = self.nc.variables['Header.Map.YRamp'][0] * 206264.8
                 self.xoffset = self.nc.variables['Header.Map.XOffset'][0]
                 self.yoffset = self.nc.variables['Header.Map.YOffset'][0]
                 self.rows = self.nc.variables['Header.Map.RowsPerScan'][0]
@@ -548,6 +551,8 @@ class IFProcData(IFProc):
                 self.ylength = self.nc.variables['Header.Map.YLength'][0]*206264.8
                 self.xstep = self.nc.variables['Header.Map.XStep'][0]
                 self.ystep = self.nc.variables['Header.Map.YStep'][0]
+                self.xramp = self.nc.variables['Header.Map.XRamp'][0] * 206264.8
+                self.yramp = self.nc.variables['Header.Map.YRamp'][0] * 206264.8
                 self.xoffset = self.nc.variables['Header.Map.XOffset'][0]
                 self.yoffset = self.nc.variables['Header.Map.YOffset'][0]
                 self.rows = self.nc.variables['Header.Map.RowsPerScan'][0]
@@ -579,6 +584,7 @@ class IFProcData(IFProc):
         # data arrays
         self.time = self.nc.variables[self._teltime][:]
         self.bufpos = self.nc.variables['Data.TelescopeBackend.BufPos'][:]
+        self.backend_hold = self.nc.variables['Data.TelescopeBackend.Hold'][:] ###FPS### Added back end hold - August 7 2025 FPS
         # AzEl map
         self.azmap = self.nc.variables['Data.TelescopeBackend.TelAzMap'][:]* 206264.8
         self.elmap = self.nc.variables['Data.TelescopeBackend.TelElMap'][:]* 206264.8
@@ -768,6 +774,7 @@ class IFProcCal(IFProc):
         self.parang = np.zeros(len(self.azmap))
         self.galang = np.zeros(len(self.azmap))
         self.bufpos = self.nc.variables['Data.TelescopeBackend.BufPos'][:]
+        self.backend_hold = self.nc.variables['Data.TelescopeBackend.Hold'][:] ###FPS### Added back end hold - August 7 2025 FPS
         self.chop_option = 0
         if 'ifproc' in filename:
             self.bb_level = self.nc.variables['Data.IfProc.BasebandLevel'][:]
