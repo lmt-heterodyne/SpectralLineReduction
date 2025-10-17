@@ -15,7 +15,7 @@
 #
 #
 
-_version="19-aug-2025"
+_version="17-oct-2025"
 
 _help = """
 Usage: lmtinfo.py OBSNUM
@@ -96,24 +96,26 @@ def grep(terms, flags=""):
         print("# Logfile %s does not exist, use the build option to create it" % logfile)
         sys.exit(1)
 
+    grep = "grep --binary-files=text"
+
     if len(terms) == 0:
-        cmd = "grep %s -v ^# %s" %\
-        (flags,logfile)
+        cmd = "%s %s -v ^# %s" %\
+        (grep,flags,logfile)
     elif len(terms) == 1:
-        cmd = "grep %s -i %s %s" %\
-        (flags,terms[0],logfile)
+        cmd = "%s %s -i %s %s" %\
+        (grep,flags,terms[0],logfile)
     elif len(terms) == 2:
-        cmd = "grep %s -i %s %s | grep %s -i %s" %\
-        (flags,terms[0],logfile,flags,terms[1])
+        cmd = "%s %s -i %s %s | grep %s -i %s" %\
+        (grep,flags,terms[0],logfile,flags,terms[1])
     elif len(terms) == 3:
-        cmd = "grep %s -i %s %s | grep %s -i %s | grep %s -i %s" %\
-        (flags,terms[0],logfile,flags,terms[1],flags,terms[2])
+        cmd = "%s %s -i %s %s | grep %s -i %s | grep %s -i %s" %\
+        (grep,flags,terms[0],logfile,flags,terms[1],flags,terms[2])
     elif len(terms) == 4:
-        cmd = "grep %s -i %s %s | grep %s -i %s | grep %s -i %s | grep %s -i %s" %\
-        (flags,terms[0],logfile,flags,terms[1],flags,terms[2],flags,terms[3])
+        cmd = "%s %s -i %s %s | grep %s -i %s | grep %s -i %s | grep %s -i %s" %\
+        (grep,flags,terms[0],logfile,flags,terms[1],flags,terms[2],flags,terms[3])
     elif len(terms) == 5:
-        cmd = "grep %s -i %s %s | grep %s -i %s | grep %s -i %s | grep %s -i %s | grep %s -i %s" %\
-        (flags,terms[0],logfile,flags,terms[1],flags,terms[2],flags,terms[3],flags,terms[4])
+        cmd = "%s %s -i %s %s | grep %s -i %s | grep %s -i %s | grep %s -i %s | grep %s -i %s" %\
+        (grep,flags,terms[0],logfile,flags,terms[1],flags,terms[2],flags,terms[3],flags,terms[4])
     else:
         print("# Too many arguments for now")
         sys.exit(1)        
