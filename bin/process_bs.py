@@ -108,7 +108,7 @@ def main(argv):
         for i in range(edge,len(LineList[0].xarray)-edge):
             fp.write("%g %g  %g %g\n" %
                      (LineList[0].xarray[i],
-                      0.5*(LineList[0].yarray[i] - LineList[1].yarray[i]),    # @todo   should do Tsys weighted
+                      0.5*(LineList[1].yarray[i] - LineList[0].yarray[i]),    # @todo   should do Tsys weighted // why does order matter?
                       S.roach[0].tsys_spectrum[i] if Opts.use_cal else S.roach[0].tsys_spectrum,
                       S.roach[1].tsys_spectrum[i] if Opts.use_cal else S.roach[1].tsys_spectrum))
         fp.close()
