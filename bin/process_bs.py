@@ -73,7 +73,7 @@ def main(argv):
                         label.append("%d/%d/%d" % (obs,Opts.pix_list[i],iblock))
                     
                 
-            else:
+            elif blocks == -1:
                 # creates spectrum
                 nblocks = 1
                 I,S = read_obsnum_bs(obs,
@@ -99,6 +99,8 @@ def main(argv):
                     LD.set_x_axis(Opts.x_axis)
                     LineList.append(LD)
                     label.append("%d/%d" % (obs,pix_list[i]))
+            else:
+                print("Unsupported blocks=%d" % blocks)
 
     # show all the plots just to illustrate reduction
     # this will be replaced by write out of spectra to FITS file.
@@ -131,7 +133,7 @@ def main(argv):
     if Opts.show:
         plt.show()
     else:
-        pout = 'bs%d.png' % block
+        pout = 'bs%d__%d.png' % (block,Opts.bank)
         plt.savefig(pout)
         print("%s written" % pout)
 
