@@ -172,10 +172,12 @@ class IFProc():
             self.source_B = self.nc.variables['Header.Source.B'][0]            
             self.obspgm = b''.join(self.nc.variables['Header.Dcs.ObsPgm'][:]).decode().strip()
             self.obsgoal = b''.join(self.nc.variables['Header.Dcs.ObsGoal'][:]).decode().strip()
-            if 'ifproc' in filename:
+            if 'Header.IfProc.CalObsNum' in self.nc.variables:
                 self.calobsnum = self.nc.variables['Header.IfProc.CalObsNum'][0]
-            elif 'lmttpm' in filename:
+            elif 'Header.LmtTpm.CalObsNum' in self.nc.variables:
                 self.calobsnum = self.nc.variables['Header.LmtTpm.CalObsNum'][0]
+            elif 'Header.TelescopeBackend.CalObsNum' in self.nc.variables:
+                self.calobsnum = self.nc.variables['Header.TelescopeBackend.CalObsNum'][0]
             else:
                 self.calobsnum = 0
                     
