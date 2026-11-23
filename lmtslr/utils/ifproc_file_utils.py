@@ -81,16 +81,17 @@ def lookup_ifproc_file_all(obsnum, path=None, debug=False):
         paths += ['/data_lmt/lmttpm/']
     if 'tel' not in path:
         paths += ['/data_lmt/tel/']
+    if 'tel_sim' not in path:
+        paths += ['/data_lmt/tel_sim/']
     if 'tel_toltec' not in path:
         paths += ['/data_lmt/tel_toltec/']
 
     if debug:
         print(paths)
 
+    filenames = []
     for path in paths:
-        filenames = glob.glob(os.path.join(path, '*_%06d_*.nc' % obsnum))
-        if len(filenames) > 0:
-            if debug:
-                print('found %s' % (filenames[0]))
-            return filenames
-    return []
+        filenames += glob.glob(os.path.join(path, '*_%06d_*.nc' % obsnum))
+    if debug:
+        print('found %s' % (filenames))
+    return filenames
